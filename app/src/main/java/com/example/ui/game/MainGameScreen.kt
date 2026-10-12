@@ -1,0 +1,252 @@
+package com.example.ui.game
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.testTag
+import com.example.audio.GameSoundManager
+import com.example.data.UserPreferencesRepository
+import com.example.engine.WormsGameEngine
+import kotlin.math.atan2
+
+@Composable
+fun MainGameScreen(
+    userPrefs: UserPreferencesRepository,
+    soundManager: GameSoundManager,
+    onBackToLobby: () -> Unit
+) {
+    val userData by userPrefs.userData.collectAsState()
+    val engine = remember { WormsGameEngine(soundManager, userData) }
+
+    val hudState by engine.hudState.collectAsState()
+    val leaderboard by engine.leaderboard.collectAsState()
+
+    var isPaused by remember { mutableStateOf(false) }
+    var showGameOver by remember { mutableStateOf(false) }
+
+    // Intercept hardware back button
+    BackHandler {
+        if (!isPaused && !engine.isGameOver) {
+            isPaused = true
+            engine.isPaused = true
+        } else if (isPaused) {
+            isPaused = false
+            engine.isPaused = false
+        } else {
+            onBackToLobby()
+        }
+    }
+
+    // High performance 60 FPS Game Loop
+    // renderTick is read SOLELY inside Canvas draw scope so ONLY the draw phase is re-executed
+    // Recomposition of the UI tree is avoided completely!
+    var renderTick by remember { mutableLongStateOf(0L) }
+    var lastFrameTimeNanos by remember { mutableLongStateOf(0L) }
+
+    LaunchedEffect(isPaused, engine.isGameOver) {
+        lastFrameTimeNanos = 0L
+        while (true) {
+            withFrameNanos { frameTimeNanos ->
+                if (lastFrameTimeNanos == 0L) {
+                    lastFrameTimeNanos = frameTimeNanos
+                } else {
+                    val dt = ((frameTimeNanos - lastFrameTimeNanos) / 1_000_000_000f).coerceIn(0.005f, 0.04f)
+                    lastFrameTimeNanos = frameTimeNanos
+                    if (!isPaused && !engine.isGameOver) {
+                        engine.update(dt)
+                        renderTick++
+                    }
+                    if (engine.isGameOver && !showGameOver) {
+                        showGameOver = true
+                        userPrefs.recordGameResult(
+                            score = engine.player.mass.toInt(),
+                            kills = engine.player.kills,
+                            length = engine.player.bodyPoints.size,
+                            coinsEarned = engine.coinsCollectedInSession
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // Full-screen touch control: Touching or dragging ANYWHERE steers the worm immediately
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("main_game_screen")
+            .pointerInput(Unit) {
+                detectDragGestures(
+                    onDragStart = { offset ->
+                        val center = Offset(size.width / 2f, size.height / 2f)
+                        val diff = offset - center
+                        val angle = atan2(diff.y, diff.x)
+                        engine.setPlayerTargetAngle(angle)
+                    },
+                    onDrag = { change, _ ->
+                        change.consume()
+                        val center = Offset(size.width / 2f, size.height / 2f)
+                        val diff = change.position - center
+                        val angle = atan2(diff.y, diff.x)
+                        engine.setPlayerTargetAngle(angle)
+                    }
+                )
+            }
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = { offset ->
+                        val center = Offset(size.width / 2f, size.height / 2f)
+                        val diff = offset - center
+                        val angle = atan2(diff.y, diff.x)
+                        engine.setPlayerTargetAngle(angle)
+                    }
+                )
+            }
+    ) {
+        // High performance Canvas
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val _tick = renderTick // State read solely in draw scope for 60fps canvas redraw!
+            val screenCenterX = size.width / 2f
+            val screenCenterY = size.height / 2f
+            val zoom = engine.cameraZoom
+
+            // Center camera on Player head
+            val playerHead = engine.player.head
+            val cameraOffset = Offset(
+                screenCenterX - playerHead.x * zoom,
+                screenCenterY - playerHead.y * zoom
+            )
+
+            // 1. Draw arena background and borders
+            WormsRenderer.drawArenaBackground(
+                drawScope = this,
+                cameraOffset = cameraOffset,
+                zoom = zoom,
+                arenaCenter = engine.arenaCenter,
+                arenaRadius = engine.arenaRadius
+            )
+
+            // 2. Draw Food items (culled against viewport)
+            val viewMargin = 90f
+            val w = size.width
+            val h = size.height
+            for (i in engine.foods.indices) {
+                val food = engine.foods[i]
+                val sx = food.position.x * zoom + cameraOffset.x
+                val sy = food.position.y * zoom + cameraOffset.y
+                if (sx >= -viewMargin && sx <= w + viewMargin &&
+                    sy >= -viewMargin && sy <= h + viewMargin
+                ) {
+                    WormsRenderer.drawFood(this, food, Offset(sx, sy), zoom)
+                }
+            }
+
+            // 3. Draw Potions (culled)
+            for (i in engine.potions.indices) {
+                val potion = engine.potions[i]
+                val sx = potion.position.x * zoom + cameraOffset.x
+                val sy = potion.position.y * zoom + cameraOffset.y
+                if (sx >= -viewMargin && sx <= w + viewMargin &&
+                    sy >= -viewMargin && sy <= h + viewMargin
+                ) {
+                    WormsRenderer.drawPotion(this, potion, Offset(sx, sy), zoom)
+                }
+            }
+
+            // 4. Draw AI Bots
+            for (i in engine.bots.indices) {
+                val bot = engine.bots[i]
+                WormsRenderer.drawWorm(
+                    drawScope = this,
+                    worm = bot,
+                    cameraOffset = cameraOffset,
+                    zoom = zoom,
+                    isProtected = false,
+                    gameTime = engine.gameTimeSeconds
+                )
+            }
+
+            // 5. Draw Player Worm (with invulnerability shield if protected)
+            WormsRenderer.drawWorm(
+                drawScope = this,
+                worm = engine.player,
+                cameraOffset = cameraOffset,
+                zoom = zoom,
+                isProtected = engine.isPlayerProtected,
+                gameTime = engine.gameTimeSeconds
+            )
+
+            // 6. Draw Particles
+            WormsRenderer.drawParticles(this, engine.particles, cameraOffset, zoom)
+        }
+
+        // HUD Overlay (recomposes at smooth 10 Hz only, zero lag!)
+        GameHud(
+            hudState = hudState,
+            leaderboard = leaderboard,
+            controlMode = userData.controlMode,
+            onDirectionChange = { angle ->
+                engine.setPlayerTargetAngle(angle)
+            },
+            onBoostChange = { boosting ->
+                engine.setPlayerBoosting(boosting)
+            },
+            onPauseClick = {
+                isPaused = true
+                engine.isPaused = true
+            }
+        )
+
+        // Pause Modal
+        if (isPaused && !engine.isGameOver) {
+            PauseDialog(
+                soundEnabled = userData.soundEnabled,
+                vibrationEnabled = userData.vibrationEnabled,
+                onResume = {
+                    isPaused = false
+                    engine.isPaused = false
+                },
+                onRestart = {
+                    isPaused = false
+                    showGameOver = false
+                    engine.startNewGame()
+                },
+                onToggleSound = { userPrefs.toggleSound(it) },
+                onToggleVibration = { userPrefs.toggleVibration(it) },
+                onQuitToLobby = onBackToLobby
+            )
+        }
+
+        // Game Over Modal
+        if (showGameOver) {
+            GameOverDialog(
+                score = engine.player.mass.toInt(),
+                highScore = userData.highScore,
+                kills = engine.player.kills,
+                length = engine.player.bodyPoints.size,
+                coinsEarned = engine.coinsCollectedInSession,
+                onPlayAgain = {
+                    showGameOver = false
+                    isPaused = false
+                    engine.startNewGame()
+                },
+                onBackToLobby = onBackToLobby
+            )
+        }
+    }
+}
