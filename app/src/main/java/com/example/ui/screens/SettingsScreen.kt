@@ -2,7 +2,10 @@ package com.example.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -13,18 +16,25 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Gamepad
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.OpenWith
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -34,10 +44,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -46,13 +55,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.AppLanguage
 import com.example.data.ControlMode
+import com.example.data.StringsHelper
 import com.example.data.UserGameData
+import com.example.model.MapTheme
 
 @Composable
 fun SettingsScreen(
@@ -61,31 +76,34 @@ fun SettingsScreen(
     onToggleSound: (Boolean) -> Unit,
     onToggleVibration: (Boolean) -> Unit,
     onUpdateName: (String) -> Unit,
-    onUpdateJoystick: (offsetX: Int, offsetY: Int, scale: Float) -> Unit,
-    onUpdateBoost: (offsetX: Int, offsetY: Int, scale: Float) -> Unit,
+    onOpenLayoutEditor: () -> Unit,
     onResetControls: () -> Unit,
+    onSetLanguage: (AppLanguage) -> Unit,
+    onSetMapTheme: (MapTheme) -> Unit,
     onBack: () -> Unit
 ) {
     BackHandler { onBack() }
 
+    val lang = userData.language
     var nameInput by remember(userData.playerName) { mutableStateOf(userData.playerName) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF10131F))
+            .background(Color(0xFF0F1322))
             .testTag("settings_screen")
     ) {
         // TOP APP BAR
         Surface(
-            color = Color(0xFF1A1F33),
+            color = Color(0xFF161B2E),
             border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C3454)),
+            shadowElevation = 8.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 10.dp, bottom = 8.dp, start = 12.dp, end = 16.dp),
+                    .padding(top = 10.dp, bottom = 10.dp, start = 12.dp, end = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
@@ -94,142 +112,379 @@ fun SettingsScreen(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Kembali",
+                        contentDescription = StringsHelper.get("cancel", lang),
                         tint = Color.White
                     )
                 }
-                Text(
-                    text = "PENGATURAN & KUSTOMISASI",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color.White,
-                    fontWeight = FontWeight.Black
-                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    Text(
+                        text = StringsHelper.get("settings", lang).uppercase(),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color.White,
+                        fontWeight = FontWeight.Black
+                    )
+                    Text(
+                        text = "Sesuaikan kontrol, bahasa, tema peta, dan profil pemain",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFFA0AEC0)
+                    )
+                }
             }
         }
 
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 320.dp),
-            contentPadding = PaddingValues(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        // SINGLE VERTICAL SCROLLING COLUMN (No 2 columns / no 2 rows grid!)
+        LazyColumn(
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .widthIn(max = 760.dp)
+                .align(Alignment.CenterHorizontally)
         ) {
-            // JOYSTICK & BOOST POSITION CUSTOMIZER (The requested feature!)
+            // 1. TATA LETAK KONTROL (Direct Visual Drag & Drop Layout Editor)
             item {
                 Surface(
                     shape = RoundedCornerShape(20.dp),
-                    color = Color(0xFF1A1F33),
+                    color = Color(0xFF171D33),
                     border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFF4ADE80)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column(modifier = Modifier.padding(18.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Tune, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(20.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "EDIT POSISI JOYSTICK & BOOST",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = Color(0xFF4ADE80),
-                                    fontWeight = FontWeight.Black
-                                )
+                                Surface(
+                                    shape = CircleShape,
+                                    color = Color(0x334ADE80),
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(Icons.Default.Tune, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(20.dp))
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = StringsHelper.get("edit_layout", lang),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = Color(0xFF4ADE80),
+                                        fontWeight = FontWeight.Black
+                                    )
+                                    Text(
+                                        text = "Atur langsung tombol joystick & boost dengan menyentuh layar",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color(0xFFA0AEC0)
+                                    )
+                                }
                             }
+
                             OutlinedButton(
                                 onClick = onResetControls,
                                 shape = RoundedCornerShape(10.dp),
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFF9100))
                             ) {
                                 Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(14.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("Reset Posisi", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Text(StringsHelper.get("reset_layout", lang), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                             }
                         }
 
-                        Text(
-                            text = "Sesuaikan jarak kontrol agar nyaman dijangkau jempol HP kamu:",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFFA0AEC0),
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        )
+                        Spacer(modifier = Modifier.height(14.dp))
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        // Big Button to open Direct Drag & Drop Editor
+                        Button(
+                            onClick = onOpenLayoutEditor,
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4ADE80)),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp)
+                                .shadow(8.dp, RoundedCornerShape(14.dp), spotColor = Color(0xFF4ADE80))
+                        ) {
+                            Icon(Icons.Default.OpenWith, contentDescription = null, tint = Color.Black, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "BUKA EDITOR TATA LETAK TOMBOL (GESER LANGSUNG)",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = Color.Black,
+                                fontWeight = FontWeight.Black
+                            )
+                        }
 
-                        // Joystick Left Spacing
-                        Text(
-                            text = "Jarak Joystick dari Kiri Layar: ${userData.joystickOffsetX} dp",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.White
-                        )
-                        Slider(
-                            value = userData.joystickOffsetX.toFloat(),
-                            onValueChange = { onUpdateJoystick(it.toInt(), userData.joystickOffsetY, userData.joystickScale) },
-                            valueRange = 10f..120f,
-                            colors = SliderDefaults.colors(thumbColor = Color(0xFF4ADE80), activeTrackColor = Color(0xFF4ADE80))
-                        )
+                        Spacer(modifier = Modifier.height(10.dp))
 
-                        // Joystick Bottom Spacing
-                        Text(
-                            text = "Jarak Joystick dari Bawah Layar: ${userData.joystickOffsetY} dp",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.White
-                        )
-                        Slider(
-                            value = userData.joystickOffsetY.toFloat(),
-                            onValueChange = { onUpdateJoystick(userData.joystickOffsetX, it.toInt(), userData.joystickScale) },
-                            valueRange = 10f..120f,
-                            colors = SliderDefaults.colors(thumbColor = Color(0xFF4ADE80), activeTrackColor = Color(0xFF4ADE80))
-                        )
-
-                        // Boost Right Spacing
-                        Text(
-                            text = "Jarak Tombol Boost dari Kanan Layar: ${userData.boostOffsetX} dp",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFFFF9100)
-                        )
-                        Slider(
-                            value = userData.boostOffsetX.toFloat(),
-                            onValueChange = { onUpdateBoost(it.toInt(), userData.boostOffsetY, userData.boostScale) },
-                            valueRange = 10f..120f,
-                            colors = SliderDefaults.colors(thumbColor = Color(0xFFFF9100), activeTrackColor = Color(0xFFFF9100))
-                        )
-
-                        // Boost Bottom Spacing
-                        Text(
-                            text = "Jarak Tombol Boost dari Bawah Layar: ${userData.boostOffsetY} dp",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFFFF9100)
-                        )
-                        Slider(
-                            value = userData.boostOffsetY.toFloat(),
-                            onValueChange = { onUpdateBoost(userData.boostOffsetX, it.toInt(), userData.boostScale) },
-                            valueRange = 10f..120f,
-                            colors = SliderDefaults.colors(thumbColor = Color(0xFFFF9100), activeTrackColor = Color(0xFFFF9100))
-                        )
+                        // Current Position Stats Pill
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = Color(0xFF101424),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF283252)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Posisi Joystick: ${userData.joystickOffsetX}dp kiri, ${userData.joystickOffsetY}dp bawah (${(userData.joystickScale * 100).toInt()}%)",
+                                    fontSize = 11.sp,
+                                    color = Color(0xFF81C784)
+                                )
+                                Text(
+                                    text = "Tombol Boost: ${userData.boostOffsetX}dp kanan, ${userData.boostOffsetY}dp bawah (${(userData.boostScale * 100).toInt()}%)",
+                                    fontSize = 11.sp,
+                                    color = Color(0xFFFFB74D)
+                                )
+                            }
+                        }
                     }
                 }
             }
 
-            // CONTROL MODE SECTION
+            // 2. PENGATURAN BAHASA (Indonesia, English, Korean, Turkish, Arabic, Vietnamese, Taiwan)
             item {
                 Surface(
                     shape = RoundedCornerShape(20.dp),
-                    color = Color(0xFF1A1F33),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C3454)),
+                    color = Color(0xFF171D33),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF353D63)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "MODE KENDALI",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = Color(0xFF00E5FF),
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = CircleShape,
+                                color = Color(0x3300E5FF),
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Default.Language, contentDescription = null, tint = Color(0xFF00E5FF), modifier = Modifier.size(20.dp))
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = StringsHelper.get("language", lang),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color(0xFF00E5FF),
+                                    fontWeight = FontWeight.Black
+                                )
+                                Text(
+                                    text = "Pilih bahasa tampilan dalam permainan",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFFA0AEC0)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Languages Grid / Flow
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            AppLanguage.entries.take(4).forEach { appLang ->
+                                val isSelected = userData.language == appLang
+                                Surface(
+                                    onClick = { onSetLanguage(appLang) },
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = if (isSelected) Color(0xFF00E5FF) else Color(0xFF222944),
+                                    border = androidx.compose.foundation.BorderStroke(
+                                        1.dp,
+                                        if (isSelected) Color(0xFF00E5FF) else Color(0xFF353D63)
+                                    ),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(text = appLang.flagEmoji, fontSize = 20.sp)
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = appLang.displayName,
+                                            fontSize = 11.sp,
+                                            fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold,
+                                            color = if (isSelected) Color.Black else Color.White
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            AppLanguage.entries.drop(4).forEach { appLang ->
+                                val isSelected = userData.language == appLang
+                                Surface(
+                                    onClick = { onSetLanguage(appLang) },
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = if (isSelected) Color(0xFF00E5FF) else Color(0xFF222944),
+                                    border = androidx.compose.foundation.BorderStroke(
+                                        1.dp,
+                                        if (isSelected) Color(0xFF00E5FF) else Color(0xFF353D63)
+                                    ),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(text = appLang.flagEmoji, fontSize = 20.sp)
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = appLang.displayName,
+                                            fontSize = 11.sp,
+                                            fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold,
+                                            color = if (isSelected) Color.Black else Color.White
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. TEMA PETA ARENA (Map Themes)
+            item {
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = Color(0xFF171D33),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF353D63)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = CircleShape,
+                                color = Color(0x33FFD700),
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Default.Map, contentDescription = null, tint = Color(0xFFFFD700), modifier = Modifier.size(20.dp))
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = StringsHelper.get("map_theme", lang),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color(0xFFFFD700),
+                                    fontWeight = FontWeight.Black
+                                )
+                                Text(
+                                    text = "Pilih tema arena luas dengan visual atmosfer dan efek khusus",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFFA0AEC0)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Map Themes Selection Cards
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            MapTheme.entries.forEach { theme ->
+                                val isSelected = userData.mapTheme == theme
+                                Surface(
+                                    onClick = { onSetMapTheme(theme) },
+                                    shape = RoundedCornerShape(14.dp),
+                                    color = if (isSelected) Color(0xFF262E4D) else Color(0xFF1B2138),
+                                    border = androidx.compose.foundation.BorderStroke(
+                                        width = if (isSelected) 2.dp else 1.dp,
+                                        color = if (isSelected) theme.borderColor else Color(0xFF2C3454)
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(text = theme.icon, fontSize = 24.sp)
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Column {
+                                                Text(
+                                                    text = theme.title,
+                                                    style = MaterialTheme.typography.titleSmall,
+                                                    color = if (isSelected) theme.borderColor else Color.White,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                                Text(
+                                                    text = theme.description,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = Color(0xFFA0AEC0),
+                                                    fontSize = 11.sp
+                                                )
+                                            }
+                                        }
+
+                                        if (isSelected) {
+                                            Surface(
+                                                shape = CircleShape,
+                                                color = theme.borderColor,
+                                                modifier = Modifier.size(22.dp)
+                                            ) {
+                                                Box(contentAlignment = Alignment.Center) {
+                                                    Icon(Icons.Default.Check, contentDescription = null, tint = Color.Black, modifier = Modifier.size(15.dp))
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 4. MODE KENDALI (Joystick vs Touch Follow)
+            item {
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = Color(0xFF171D33),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF353D63)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = CircleShape,
+                                color = Color(0x334ADE80),
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Default.Gamepad, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(20.dp))
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "MODE KENDALI CACING",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color(0xFF4ADE80),
+                                    fontWeight = FontWeight.Black
+                                )
+                                Text(
+                                    text = "Metode navigasi cacing di layar ponsel",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFFA0AEC0)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -278,22 +533,35 @@ fun SettingsScreen(
                 }
             }
 
-            // AUDIO & HAPTICS
+            // 5. AUDIO & HAPTICS
             item {
                 Surface(
                     shape = RoundedCornerShape(20.dp),
-                    color = Color(0xFF1A1F33),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C3454)),
+                    color = Color(0xFF171D33),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF353D63)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "SUARA & GETARAN",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = Color(0xFFFF9100),
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = CircleShape,
+                                color = Color(0x33FF9100),
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Default.VolumeUp, contentDescription = null, tint = Color(0xFFFF9100), modifier = Modifier.size(20.dp))
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = "AUDIO & EFEK GETARAN",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color(0xFFFF9100),
+                                fontWeight = FontWeight.Black
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -303,9 +571,13 @@ fun SettingsScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.VolumeUp, contentDescription = null, tint = Color.White)
                                 Spacer(modifier = Modifier.width(10.dp))
-                                Text("Efek Suara Game", style = MaterialTheme.typography.bodyLarge, color = Color.White)
+                                Text(StringsHelper.get("sound", lang), style = MaterialTheme.typography.bodyLarge, color = Color.White)
                             }
-                            Switch(checked = userData.soundEnabled, onCheckedChange = onToggleSound)
+                            Switch(
+                                checked = userData.soundEnabled,
+                                onCheckedChange = onToggleSound,
+                                colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF4ADE80), checkedTrackColor = Color(0x664ADE80))
+                            )
                         }
 
                         Spacer(modifier = Modifier.height(10.dp))
@@ -318,30 +590,47 @@ fun SettingsScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.Vibration, contentDescription = null, tint = Color.White)
                                 Spacer(modifier = Modifier.width(10.dp))
-                                Text("Getaran Haptik Taktil", style = MaterialTheme.typography.bodyLarge, color = Color.White)
+                                Text(StringsHelper.get("vibration", lang), style = MaterialTheme.typography.bodyLarge, color = Color.White)
                             }
-                            Switch(checked = userData.vibrationEnabled, onCheckedChange = onToggleVibration)
+                            Switch(
+                                checked = userData.vibrationEnabled,
+                                onCheckedChange = onToggleVibration,
+                                colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFFFF9100), checkedTrackColor = Color(0x66FF9100))
+                            )
                         }
                     }
                 }
             }
 
-            // PLAYER NAME
+            // 6. PROFIL PEMAIN (Name)
             item {
                 Surface(
                     shape = RoundedCornerShape(20.dp),
-                    color = Color(0xFF1A1F33),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C3454)),
+                    color = Color(0xFF171D33),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF353D63)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "PROFIL CACING",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = Color(0xFFFFD700),
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = CircleShape,
+                                color = Color(0x33FFD700),
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFFFFD700), modifier = Modifier.size(20.dp))
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = StringsHelper.get("player_name", lang),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color(0xFFFFD700),
+                                fontWeight = FontWeight.Black
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         OutlinedTextField(
                             value = nameInput,
@@ -363,35 +652,36 @@ fun SettingsScreen(
                 }
             }
 
-            // ABOUT
+            // 7. TENTANG GAME & ARENA LUAR INFO
             item {
                 Surface(
                     shape = RoundedCornerShape(20.dp),
-                    color = Color(0xFF1A1F33),
+                    color = Color(0xFF171D33),
                     border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C3454)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(18.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(Icons.Default.Info, contentDescription = null, tint = Color(0xFFA0AEC0))
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.width(14.dp))
                         Column {
                             Text(
-                                text = "nana tayantuh - Arena Luar Edition",
+                                text = "nana tayantuh - Arena Luar Open World Edition",
                                 style = MaterialTheme.typography.titleSmall,
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Versi 1.1.0 • Event 7 Hari • Arena Luar, Time Attack, Battle Royale",
+                                text = "Versi 1.2.0 • Radius Arena Luar 3800px (Area 7600x7600) • 5 Tema Peta Eksklusif • Event 7 Hari • 7 Pilihan Bahasa",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color(0xFFA0AEC0)
                             )
                         }
                     }
                 }
+                Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }

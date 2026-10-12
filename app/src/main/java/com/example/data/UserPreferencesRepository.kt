@@ -3,6 +3,7 @@ package com.example.data
 import android.content.Context
 import android.content.SharedPreferences
 import com.example.model.FaceAccessory
+import com.example.model.MapTheme
 import com.example.model.SkinId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -48,7 +49,10 @@ data class UserGameData(
     val joystickScale: Float = 1.05f,
     val boostOffsetX: Int = 36, // dp from right edge
     val boostOffsetY: Int = 36, // dp from bottom edge
-    val boostScale: Float = 1.05f
+    val boostScale: Float = 1.05f,
+    // Language & Map Theme Customization
+    val language: AppLanguage = AppLanguage.INDONESIAN,
+    val mapTheme: MapTheme = MapTheme.GREEN_MEADOW
 ) {
     companion object {
         val DAILY_REWARDS = listOf(
@@ -144,6 +148,12 @@ class UserPreferencesRepository(context: Context) {
         val boostY = prefs.getInt("boost_offset_y", 36)
         val boostScale = prefs.getFloat("boost_scale", 1.05f)
 
+        val langStr = prefs.getString("app_language", AppLanguage.INDONESIAN.code) ?: AppLanguage.INDONESIAN.code
+        val language = AppLanguage.fromCode(langStr)
+
+        val themeStr = prefs.getString("map_theme", MapTheme.GREEN_MEADOW.id) ?: MapTheme.GREEN_MEADOW.id
+        val mapTheme = MapTheme.fromId(themeStr)
+
         return UserGameData(
             playerName = name,
             coins = coins,
@@ -170,7 +180,9 @@ class UserPreferencesRepository(context: Context) {
             joystickScale = joyScale,
             boostOffsetX = boostX,
             boostOffsetY = boostY,
-            boostScale = boostScale
+            boostScale = boostScale,
+            language = language,
+            mapTheme = mapTheme
         )
     }
 
@@ -402,5 +414,15 @@ class UserPreferencesRepository(context: Context) {
     fun toggleVibration(enabled: Boolean) {
         prefs.edit().putBoolean("vibration_enabled", enabled).apply()
         _userData.value = _userData.value.copy(vibrationEnabled = enabled)
+    }
+
+    fun setLanguage(lang: AppLanguage) {
+        prefs.edit().putString("app_language", lang.code).apply()
+        _userData.value = _userData.value.copy(language = lang)
+    }
+
+    fun setMapTheme(theme: MapTheme) {
+        prefs.edit().putString("map_theme", theme.id).apply()
+        _userData.value = _userData.value.copy(mapTheme = theme)
     }
 }

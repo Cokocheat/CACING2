@@ -16,6 +16,7 @@ import com.example.model.FoodItem
 import com.example.model.FoodType
 import com.example.model.GameConfig
 import com.example.model.GameParticle
+import com.example.model.MapTheme
 import com.example.model.PatternType
 import com.example.model.PotionItem
 import com.example.model.PotionType
@@ -33,15 +34,19 @@ object WormsRenderer {
         cameraOffset: Offset,
         zoom: Float,
         arenaCenter: Vec2,
-        arenaRadius: Float
+        arenaRadius: Float,
+        mapTheme: MapTheme = MapTheme.GREEN_MEADOW
     ) {
         with(drawScope) {
+            // Draw background fill
+            drawRect(color = mapTheme.bgColor)
+
             // Draw grid lines
             val gridSize = 100f * zoom
             val startX = (cameraOffset.x % gridSize)
             val startY = (cameraOffset.y % gridSize)
 
-            val gridColor = Color(0xFF1E243D)
+            val gridColor = mapTheme.gridColor
             var x = startX
             while (x < size.width) {
                 drawLine(
@@ -72,18 +77,18 @@ object WormsRenderer {
 
             // Danger outer glow
             drawCircle(
-                color = Color(0x33FF1744),
-                radius = radiusOnScreen + 16f * zoom,
+                color = mapTheme.glowColor.copy(alpha = 0.25f),
+                radius = radiusOnScreen + 18f * zoom,
                 center = centerOnScreen,
-                style = Stroke(width = 24f * zoom)
+                style = Stroke(width = 28f * zoom)
             )
 
             // Outer danger border line
             drawCircle(
-                color = Color(0xFFFF1744),
+                color = mapTheme.borderColor,
                 radius = radiusOnScreen,
                 center = centerOnScreen,
-                style = Stroke(width = 6f * zoom)
+                style = Stroke(width = 7f * zoom)
             )
         }
     }
@@ -94,110 +99,305 @@ object WormsRenderer {
             val x = screenPos.x
             val y = screenPos.y
 
+            // Ambient ground contact shadow for all foods
+            drawOval(
+                color = Color(0x38000000),
+                topLeft = Offset(x - r * 0.95f, y + r * 0.45f),
+                size = Size(r * 1.9f, r * 0.55f)
+            )
+
             when (food.type) {
-                FoodType.DONUT -> {
-                    // Golden pastry base
-                    drawCircle(color = Color(0xFFE0A96D), radius = r, center = screenPos)
-                    // Pink frosting
-                    drawCircle(color = Color(0xFFFF4081), radius = r * 0.85f, center = screenPos)
-                    // Donut hole
-                    drawCircle(color = Color(0xFF10131F), radius = r * 0.35f, center = screenPos)
-                    // Sprinkles
-                    drawCircle(color = Color(0xFFFFEB3B), radius = r * 0.12f, center = Offset(x - r * 0.45f, y - r * 0.3f))
-                    drawCircle(color = Color(0xFF00E5FF), radius = r * 0.12f, center = Offset(x + r * 0.4f, y - r * 0.4f))
-                    drawCircle(color = Color(0xFF76FF03), radius = r * 0.12f, center = Offset(x + r * 0.35f, y + r * 0.35f))
-                    drawCircle(color = Color(0xFFFFFFFF), radius = r * 0.12f, center = Offset(x - r * 0.35f, y + r * 0.4f))
-                }
                 FoodType.BURGER -> {
-                    // Bun bottom
+                    // 1. Bottom toasted golden bun
                     drawRoundRect(
-                        color = Color(0xFFD49B4F),
-                        topLeft = Offset(x - r, y + r * 0.2f),
-                        size = Size(r * 2f, r * 0.7f),
-                        cornerRadius = CornerRadius(r * 0.3f, r * 0.3f)
+                        color = Color(0xFFC78338),
+                        topLeft = Offset(x - r * 1.05f, y + r * 0.25f),
+                        size = Size(r * 2.1f, r * 0.65f),
+                        cornerRadius = CornerRadius(r * 0.35f, r * 0.35f)
                     )
-                    // Patty & lettuce
+                    // 2. Juicy grilled dark beef patty
                     drawRoundRect(
-                        color = Color(0xFF4E342E),
-                        topLeft = Offset(x - r * 0.95f, y - r * 0.05f),
-                        size = Size(r * 1.9f, r * 0.4f),
+                        color = Color(0xFF3E2319),
+                        topLeft = Offset(x - r * 1.0f, y - r * 0.02f),
+                        size = Size(r * 2.0f, r * 0.45f),
                         cornerRadius = CornerRadius(r * 0.2f, r * 0.2f)
                     )
-                    drawRoundRect(
-                        color = Color(0xFF00E676),
-                        topLeft = Offset(x - r * 0.9f, y - r * 0.3f),
-                        size = Size(r * 1.8f, r * 0.3f),
-                        cornerRadius = CornerRadius(r * 0.15f, r * 0.15f)
+                    // Grill line accents
+                    drawLine(
+                        color = Color(0xFF26140D),
+                        start = Offset(x - r * 0.6f, y + r * 0.05f),
+                        end = Offset(x + r * 0.6f, y + r * 0.25f),
+                        strokeWidth = 1.5f * zoom
                     )
-                    // Top bun
-                    drawRoundRect(
-                        color = Color(0xFFFFB74D),
-                        topLeft = Offset(x - r, y - r),
-                        size = Size(r * 2f, r * 0.85f),
-                        cornerRadius = CornerRadius(r * 0.6f, r * 0.6f)
-                    )
-                    // Sesame seeds
-                    drawCircle(color = Color(0xFFFFF9C4), radius = r * 0.08f, center = Offset(x - r * 0.35f, y - r * 0.5f))
-                    drawCircle(color = Color(0xFFFFF9C4), radius = r * 0.08f, center = Offset(x + r * 0.3f, y - r * 0.55f))
-                    drawCircle(color = Color(0xFFFFF9C4), radius = r * 0.08f, center = Offset(x, y - r * 0.7f))
-                }
-                FoodType.CHEESE -> {
-                    val path = Path().apply {
-                        moveTo(x - r * 0.9f, y + r * 0.8f)
-                        lineTo(x + r * 0.9f, y + r * 0.8f)
-                        lineTo(x, y - r * 0.9f)
+                    // 3. Melted cheddar cheese triangle corner
+                    val cheesePath = Path().apply {
+                        moveTo(x - r * 0.9f, y + r * 0.05f)
+                        lineTo(x + r * 0.9f, y + r * 0.05f)
+                        lineTo(x + r * 0.2f, y + r * 0.45f)
+                        lineTo(x - r * 0.3f, y + r * 0.15f)
                         close()
                     }
-                    drawPath(path, color = Color(0xFFFFD54F), style = Fill)
-                    // Holes
-                    drawCircle(color = Color(0xFFFFB300), radius = r * 0.2f, center = Offset(x - r * 0.2f, y + r * 0.3f))
-                    drawCircle(color = Color(0xFFFFB300), radius = r * 0.14f, center = Offset(x + r * 0.3f, y + r * 0.1f))
+                    drawPath(cheesePath, color = Color(0xFFFFC107), style = Fill)
+                    // 4. Fresh ruffled green lettuce
+                    drawRoundRect(
+                        color = Color(0xFF00E676),
+                        topLeft = Offset(x - r * 1.1f, y - r * 0.32f),
+                        size = Size(r * 2.2f, r * 0.36f),
+                        cornerRadius = CornerRadius(r * 0.25f, r * 0.25f)
+                    )
+                    // Lettuce leaf ripples
+                    drawCircle(color = Color(0xFF69F0AE), radius = r * 0.22f, center = Offset(x - r * 0.8f, y - r * 0.2f))
+                    drawCircle(color = Color(0xFF69F0AE), radius = r * 0.24f, center = Offset(x + r * 0.8f, y - r * 0.2f))
+                    // 5. Ripe sliced red tomato
+                    drawRoundRect(
+                        color = Color(0xFFFF1744),
+                        topLeft = Offset(x - r * 0.85f, y - r * 0.45f),
+                        size = Size(r * 1.7f, r * 0.22f),
+                        cornerRadius = CornerRadius(r * 0.1f, r * 0.1f)
+                    )
+                    // 6. Top plump golden bun
+                    drawRoundRect(
+                        color = Color(0xFFFFA726),
+                        topLeft = Offset(x - r * 1.05f, y - r * 1.05f),
+                        size = Size(r * 2.1f, r * 0.95f),
+                        cornerRadius = CornerRadius(r * 0.7f, r * 0.7f)
+                    )
+                    // Bun top gloss shine
+                    drawOval(
+                        color = Color(0x66FFFFFF),
+                        topLeft = Offset(x - r * 0.7f, y - r * 0.95f),
+                        size = Size(r * 1.4f, r * 0.35f)
+                    )
+                    // Crispy ivory sesame seeds
+                    drawOval(color = Color(0xFFFFF9C4), topLeft = Offset(x - r * 0.45f, y - r * 0.65f), size = Size(r * 0.2f, r * 0.1f))
+                    drawOval(color = Color(0xFFFFF9C4), topLeft = Offset(x + r * 0.3f, y - r * 0.68f), size = Size(r * 0.2f, r * 0.1f))
+                    drawOval(color = Color(0xFFFFF9C4), topLeft = Offset(x - r * 0.1f, y - r * 0.8f), size = Size(r * 0.2f, r * 0.1f))
+                    drawOval(color = Color(0xFFFFF9C4), topLeft = Offset(x + r * 0.55f, y - r * 0.45f), size = Size(r * 0.18f, r * 0.09f))
                 }
-                FoodType.WATERMELON_SLICE -> {
-                    // Green rind
+
+                FoodType.DONUT -> {
+                    // 1. Golden baked dough base
+                    drawCircle(color = Color(0xFFE0A96D), radius = r, center = screenPos)
+                    drawCircle(color = Color(0xFFC68B4E), radius = r * 0.95f, center = screenPos, style = Stroke(width = 2.5f * zoom))
+                    // 2. Thick glossy strawberry frosting with drips
+                    drawCircle(color = Color(0xFFFF4081), radius = r * 0.88f, center = screenPos)
+                    // Icing drip droplets
+                    drawCircle(color = Color(0xFFFF4081), radius = r * 0.24f, center = Offset(x - r * 0.6f, y + r * 0.4f))
+                    drawCircle(color = Color(0xFFFF4081), radius = r * 0.26f, center = Offset(x + r * 0.55f, y + r * 0.45f))
+                    drawCircle(color = Color(0xFFFF4081), radius = r * 0.22f, center = Offset(x + r * 0.1f, y + r * 0.7f))
+                    // 3. Donut center hole
+                    drawCircle(color = Color(0xFF101424), radius = r * 0.36f, center = screenPos)
+                    drawCircle(color = Color(0xFFB07234), radius = r * 0.42f, center = screenPos, style = Stroke(width = 1.5f * zoom))
+                    // 4. White glossy crescent highlight
                     drawArc(
-                        color = Color(0xFF2E7D32),
+                        color = Color(0x99FFFFFF),
+                        startAngle = 190f,
+                        sweepAngle = 100f,
+                        useCenter = false,
+                        topLeft = Offset(x - r * 0.75f, y - r * 0.75f),
+                        size = Size(r * 1.5f, r * 1.5f),
+                        style = Stroke(width = 3.5f * zoom, cap = StrokeCap.Round)
+                    )
+                    // 5. Colorful crisp sprinkles
+                    drawRoundRect(color = Color(0xFFFFEB3B), topLeft = Offset(x - r * 0.55f, y - r * 0.3f), size = Size(r * 0.3f, r * 0.12f), cornerRadius = CornerRadius(2f, 2f))
+                    drawRoundRect(color = Color(0xFF00E5FF), topLeft = Offset(x + r * 0.35f, y - r * 0.45f), size = Size(r * 0.12f, r * 0.3f), cornerRadius = CornerRadius(2f, 2f))
+                    drawRoundRect(color = Color(0xFF76FF03), topLeft = Offset(x + r * 0.4f, y + r * 0.25f), size = Size(r * 0.28f, r * 0.12f), cornerRadius = CornerRadius(2f, 2f))
+                    drawRoundRect(color = Color(0xFFFFFFFF), topLeft = Offset(x - r * 0.4f, y + r * 0.35f), size = Size(r * 0.12f, r * 0.28f), cornerRadius = CornerRadius(2f, 2f))
+                    drawRoundRect(color = Color(0xFFFF9100), topLeft = Offset(x - r * 0.1f, y - r * 0.65f), size = Size(r * 0.28f, r * 0.11f), cornerRadius = CornerRadius(2f, 2f))
+                }
+
+                FoodType.WATERMELON_SLICE -> {
+                    // 1. Dark green outer rind
+                    drawArc(
+                        color = Color(0xFF1B5E20),
                         startAngle = 0f,
                         sweepAngle = 180f,
                         useCenter = true,
                         topLeft = Offset(x - r, y - r),
-                        size = Size(r * 2, r * 2)
+                        size = Size(r * 2f, r * 2f)
                     )
-                    // Red flesh
+                    // 2. Light lime inner rind rim
+                    drawArc(
+                        color = Color(0xFF81C784),
+                        startAngle = 0f,
+                        sweepAngle = 180f,
+                        useCenter = true,
+                        topLeft = Offset(x - r * 0.9f, y - r * 0.9f),
+                        size = Size(r * 1.8f, r * 1.8f)
+                    )
+                    // 3. Vibrant sweet red flesh
                     drawArc(
                         color = Color(0xFFFF1744),
                         startAngle = 0f,
                         sweepAngle = 180f,
                         useCenter = true,
-                        topLeft = Offset(x - r * 0.82f, y - r * 0.82f),
-                        size = Size(r * 1.64f, r * 1.64f)
+                        topLeft = Offset(x - r * 0.78f, y - r * 0.78f),
+                        size = Size(r * 1.56f, r * 1.56f)
                     )
-                    // Seeds
-                    drawCircle(color = Color(0xFF212121), radius = r * 0.09f, center = Offset(x - r * 0.35f, y + r * 0.3f))
-                    drawCircle(color = Color(0xFF212121), radius = r * 0.09f, center = Offset(x, y + r * 0.45f))
-                    drawCircle(color = Color(0xFF212121), radius = r * 0.09f, center = Offset(x + r * 0.35f, y + r * 0.3f))
+                    // White gloss shine arc
+                    drawArc(
+                        color = Color(0x66FFFFFF),
+                        startAngle = 20f,
+                        sweepAngle = 60f,
+                        useCenter = false,
+                        topLeft = Offset(x - r * 0.65f, y - r * 0.65f),
+                        size = Size(r * 1.3f, r * 1.3f),
+                        style = Stroke(width = 2.5f * zoom, cap = StrokeCap.Round)
+                    )
+                    // 4. Black teardrop seeds with white glint
+                    fun drawSeed(sx: Float, sy: Float) {
+                        drawOval(color = Color(0xFF1A1A1A), topLeft = Offset(sx - r * 0.08f, sy - r * 0.14f), size = Size(r * 0.16f, r * 0.26f))
+                        drawCircle(color = Color.White, radius = r * 0.04f, center = Offset(sx - r * 0.02f, sy - r * 0.06f))
+                    }
+                    drawSeed(x - r * 0.42f, y + r * 0.28f)
+                    drawSeed(x, y + r * 0.48f)
+                    drawSeed(x + r * 0.42f, y + r * 0.28f)
+                    drawSeed(x - r * 0.2f, y + r * 0.38f)
+                    drawSeed(x + r * 0.2f, y + r * 0.38f)
                 }
-                FoodType.GOLDEN_COIN -> {
-                    drawCircle(color = Color(0xFFFFD700), radius = r, center = screenPos)
-                    drawCircle(color = Color(0xFFFFA000), radius = r * 0.85f, center = screenPos, style = Stroke(width = 2f * zoom))
-                    drawCircle(color = Color(0xFFFFF59D), radius = r * 0.3f, center = screenPos)
+
+                FoodType.CHEESE -> {
+                    // 3D Isometric Golden Cheese Wedge
+                    val sidePath = Path().apply {
+                        moveTo(x - r * 0.85f, y + r * 0.8f)
+                        lineTo(x + r * 0.85f, y + r * 0.8f)
+                        lineTo(x + r * 0.95f, y + r * 0.5f)
+                        lineTo(x - r * 0.75f, y + r * 0.5f)
+                        close()
+                    }
+                    drawPath(sidePath, color = Color(0xFFE69A00), style = Fill)
+
+                    val topPath = Path().apply {
+                        moveTo(x - r * 0.85f, y + r * 0.5f)
+                        lineTo(x + r * 0.85f, y + r * 0.5f)
+                        lineTo(x, y - r * 0.9f)
+                        close()
+                    }
+                    drawPath(topPath, color = Color(0xFFFFD54F), style = Fill)
+
+                    // Swiss cheese holes with inner shadow
+                    fun drawHole(hx: Float, hy: Float, hr: Float) {
+                        drawCircle(color = Color(0xFFC77C00), radius = hr, center = Offset(hx, hy))
+                        drawCircle(color = Color(0xFFFFE082), radius = hr * 0.85f, center = Offset(hx, hy + hr * 0.2f))
+                    }
+                    drawHole(x - r * 0.25f, y + r * 0.15f, r * 0.2f)
+                    drawHole(x + r * 0.32f, y + r * 0.05f, r * 0.15f)
+                    drawHole(x, y + r * 0.32f, r * 0.16f)
                 }
+
+                FoodType.PIZZA -> {
+                    // Crust arc
+                    val crustPath = Path().apply {
+                        moveTo(x - r * 0.85f, y - r * 0.8f)
+                        lineTo(x + r * 0.85f, y - r * 0.8f)
+                        lineTo(x + r * 0.95f, y - r * 0.55f)
+                        lineTo(x - r * 0.95f, y - r * 0.55f)
+                        close()
+                    }
+                    drawPath(crustPath, color = Color(0xFFC6843D), style = Fill)
+
+                    // Cheese slice body
+                    val cheeseSlice = Path().apply {
+                        moveTo(x - r * 0.85f, y - r * 0.6f)
+                        lineTo(x + r * 0.85f, y - r * 0.6f)
+                        lineTo(x, y + r * 0.9f)
+                        close()
+                    }
+                    drawPath(cheeseSlice, color = Color(0xFFFFD54F), style = Fill)
+
+                    // Pepperoni slices
+                    fun drawPepperoni(px: Float, py: Float) {
+                        drawCircle(color = Color(0xFFC62828), radius = r * 0.22f, center = Offset(px, py))
+                        drawCircle(color = Color(0xFF8E0000), radius = r * 0.06f, center = Offset(px - r * 0.05f, py - r * 0.05f))
+                    }
+                    drawPepperoni(x - r * 0.3f, y - r * 0.2f)
+                    drawPepperoni(x + r * 0.25f, y - r * 0.15f)
+                    drawPepperoni(x, y + r * 0.28f)
+                    // Green herb speckles
+                    drawCircle(color = Color(0xFF2E7D32), radius = r * 0.04f, center = Offset(x - r * 0.1f, y - r * 0.05f))
+                    drawCircle(color = Color(0xFF2E7D32), radius = r * 0.04f, center = Offset(x + r * 0.1f, y + r * 0.08f))
+                }
+
+                FoodType.CUPCAKE -> {
+                    // Ribbed baking cup
+                    val cupPath = Path().apply {
+                        moveTo(x - r * 0.7f, y)
+                        lineTo(x + r * 0.7f, y)
+                        lineTo(x + r * 0.5f, y + r * 0.8f)
+                        lineTo(x - r * 0.5f, y + r * 0.8f)
+                        close()
+                    }
+                    drawPath(cupPath, color = Color(0xFF90CAF9), style = Fill)
+                    // Pleats
+                    drawLine(color = Color(0xFF42A5F5), start = Offset(x - r * 0.2f, y), end = Offset(x - r * 0.15f, y + r * 0.8f), strokeWidth = 1.5f)
+                    drawLine(color = Color(0xFF42A5F5), start = Offset(x + r * 0.2f, y), end = Offset(x + r * 0.15f, y + r * 0.8f), strokeWidth = 1.5f)
+
+                    // Fluffy swirled frosting
+                    drawCircle(color = Color(0xFFFF80AB), radius = r * 0.55f, center = Offset(x, y - r * 0.15f))
+                    drawCircle(color = Color(0xFFF48FB1), radius = r * 0.42f, center = Offset(x, y - r * 0.45f))
+                    drawCircle(color = Color(0xFFFF4081), radius = r * 0.28f, center = Offset(x, y - r * 0.7f))
+
+                    // Glossy red cherry with stem
+                    drawCircle(color = Color(0xFFFF1744), radius = r * 0.2f, center = Offset(x, y - r * 0.95f))
+                    drawCircle(color = Color.White, radius = r * 0.06f, center = Offset(x - r * 0.06f, y - r * 1.0f))
+                    drawLine(color = Color(0xFF5D4037), start = Offset(x, y - r * 1.05f), end = Offset(x + r * 0.2f, y - r * 1.35f), strokeWidth = 2f)
+                }
+
                 FoodType.APPLE -> {
-                    drawCircle(color = Color(0xFFFF1744), radius = r, center = screenPos)
-                    // Leaf
-                    drawOval(
-                        color = Color(0xFF4CAF50),
-                        topLeft = Offset(x - r * 0.2f, y - r * 1.3f),
-                        size = Size(r * 0.6f, r * 0.4f)
-                    )
+                    // Red glossy apple
+                    drawCircle(color = Color(0xFFFF1744), radius = r * 0.95f, center = Offset(x, y + r * 0.05f))
+                    // Specular radial reflection
+                    drawCircle(color = Color(0x66FFFFFF), radius = r * 0.35f, center = Offset(x - r * 0.35f, y - r * 0.25f))
+                    // Woody stem
+                    drawLine(color = Color(0xFF4E342E), start = Offset(x, y - r * 0.85f), end = Offset(x + r * 0.1f, y - r * 1.25f), strokeWidth = 2.5f * zoom)
+                    // Crisp green leaf
+                    drawOval(color = Color(0xFF4CAF50), topLeft = Offset(x + r * 0.05f, y - r * 1.35f), size = Size(r * 0.6f, r * 0.35f))
                 }
+
+                FoodType.STRAWBERRY -> {
+                    // Red berry body
+                    val berryPath = Path().apply {
+                        moveTo(x - r * 0.7f, y - r * 0.4f)
+                        lineTo(x + r * 0.7f, y - r * 0.4f)
+                        lineTo(x, y + r * 0.95f)
+                        close()
+                    }
+                    drawPath(berryPath, color = Color(0xFFFF1744), style = Fill)
+                    drawCircle(color = Color(0xFFFF1744), radius = r * 0.7f, center = Offset(x, y - r * 0.3f))
+                    // Yellow seeds
+                    drawCircle(color = Color(0xFFFFF59D), radius = r * 0.06f, center = Offset(x - r * 0.25f, y - r * 0.1f))
+                    drawCircle(color = Color(0xFFFFF59D), radius = r * 0.06f, center = Offset(x + r * 0.25f, y - r * 0.1f))
+                    drawCircle(color = Color(0xFFFFF59D), radius = r * 0.06f, center = Offset(x, y + r * 0.3f))
+                    // Green calyx leaves
+                    drawCircle(color = Color(0xFF2E7D32), radius = r * 0.25f, center = Offset(x - r * 0.35f, y - r * 0.75f))
+                    drawCircle(color = Color(0xFF2E7D32), radius = r * 0.25f, center = Offset(x + r * 0.35f, y - r * 0.75f))
+                    drawCircle(color = Color(0xFF4CAF50), radius = r * 0.25f, center = Offset(x, y - r * 0.8f))
+                }
+
+                FoodType.GOLDEN_COIN -> {
+                    // 3D Golden Coin
+                    drawCircle(color = Color(0xFFFFA000), radius = r, center = screenPos)
+                    drawCircle(color = Color(0xFFFFD700), radius = r * 0.85f, center = screenPos)
+                    drawCircle(color = Color(0xFFFFE082), radius = r * 0.6f, center = screenPos)
+                    // Embossed star
+                    drawCircle(color = Color.White, radius = r * 0.2f, center = screenPos)
+                }
+
+                FoodType.BOOST_DROP -> {
+                    // Pulsing electric energetic spark
+                    drawCircle(color = Color(0x55FFEB3B), radius = r * 1.5f, center = screenPos)
+                    drawCircle(color = Color(0xFFFFEB3B), radius = r, center = screenPos)
+                    drawCircle(color = Color.White, radius = r * 0.45f, center = screenPos)
+                }
+
                 FoodType.DEATH_FEAST -> {
-                    // Glowing Feast Bonanza
-                    drawCircle(color = Color(0x44FF1744), radius = r * 1.5f, center = screenPos)
-                    drawCircle(color = Color(0xFFFF5252), radius = r, center = screenPos)
-                    drawCircle(color = Color(0xFFFFD54F), radius = r * 0.6f, center = screenPos)
-                    drawCircle(color = Color.White, radius = r * 0.25f, center = screenPos)
+                    // Glowing Banquet Deluxe
+                    drawCircle(color = Color(0x44FF1744), radius = r * 1.6f, center = screenPos)
+                    drawCircle(color = Color(0xFFFF5252), radius = r * 1.1f, center = screenPos)
+                    drawCircle(color = Color(0xFFFFD54F), radius = r * 0.65f, center = screenPos)
+                    drawCircle(color = Color.White, radius = r * 0.3f, center = screenPos)
                 }
+
                 else -> {
                     // Standard treats
                     drawCircle(color = food.type.primaryColor, radius = r, center = screenPos)

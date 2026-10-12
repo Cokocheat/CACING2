@@ -395,7 +395,7 @@ fun GameHud(
                 .padding(top = 68.dp)
         ) {
             hudState.recentKillEvent?.let { kill ->
-                KillBanner(killEvent = kill)
+                KillBanner(killEvent = kill, playerName = userData.playerName)
             }
         }
 
@@ -457,71 +457,49 @@ fun GameHud(
 }
 
 @Composable
-fun KillBanner(killEvent: KillEvent) {
-    val infiniteTransition = rememberInfiniteTransition(label = "killGlow")
-    val glowScale by infiniteTransition.animateFloat(
-        initialValue = 1.0f,
-        targetValue = 1.04f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(400, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "glowScale"
-    )
-
+fun KillBanner(killEvent: KillEvent, playerName: String = "Kamu") {
     Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = Color(0xEE160F26),
-        border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFFF5252)),
-        shadowElevation = 12.dp,
-        modifier = Modifier
-            .scale(glowScale)
-            .shadow(12.dp, RoundedCornerShape(16.dp), spotColor = Color(0xFFFF5252))
+        shape = RoundedCornerShape(20.dp),
+        color = Color(0xDD12172A),
+        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFF5252)),
+        shadowElevation = 8.dp
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(text = "⚔️", fontSize = 22.sp)
-            Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(text = "⚔️", fontSize = 16.sp)
+            Text(
+                text = "$playerName  ➜  ${killEvent.victimName}",
+                style = MaterialTheme.typography.titleSmall,
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = Color(0x33FFD700)
+            ) {
+                Text(
+                    text = "+${killEvent.coinsEarned} 🪙",
+                    fontSize = 12.sp,
+                    color = Color(0xFFFFD700),
+                    fontWeight = FontWeight.Black,
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                )
+            }
+            if (killEvent.streak > 1) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color(0xFFFF5252)
+                ) {
                     Text(
-                        text = "MUSUH TERELIMINASI: ",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFFFF7272),
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = killEvent.victimName,
-                        style = MaterialTheme.typography.titleSmall,
+                        text = "x${killEvent.streak}",
+                        fontSize = 11.sp,
                         color = Color.White,
-                        fontWeight = FontWeight.Black
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "🪙 +${killEvent.coinsEarned} Koin",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFFFFD700),
-                        fontWeight = FontWeight.Bold
-                    )
-                    if (killEvent.streak > 1) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = Color(0xFFFF5252)
-                        ) {
-                            Text(
-                                text = "COMBO x${killEvent.streak}!",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color.White,
-                                fontWeight = FontWeight.Black,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
-                                fontSize = 10.sp
-                            )
-                        }
-                    }
                 }
             }
         }

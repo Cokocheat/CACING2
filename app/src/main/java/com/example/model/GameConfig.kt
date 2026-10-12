@@ -7,11 +7,11 @@ enum class GameMode(val title: String, val subtitle: String, val icon: String) {
 }
 
 object GameConfig {
-    const val ARENA_RADIUS = 2200f
-    const val ARENA_CENTER_X = 2200f
-    const val ARENA_CENTER_Y = 2200f
-    const val ARENA_WIDTH = 4400f
-    const val ARENA_HEIGHT = 4400f
+    const val ARENA_RADIUS = 3800f
+    const val ARENA_CENTER_X = 3800f
+    const val ARENA_CENTER_Y = 3800f
+    const val ARENA_WIDTH = 7600f
+    const val ARENA_HEIGHT = 7600f
 
     const val INITIAL_MASS = 25f
     const val BASE_SPEED = 180f
@@ -22,9 +22,9 @@ object GameConfig {
     const val SEGMENT_SPACING = 14f
     const val INITIAL_SEGMENTS = 14
 
-    const val FOOD_COUNT_TARGET = 180
-    const val POTION_COUNT_TARGET = 10
-    const val BOT_COUNT_TARGET = 10
+    const val FOOD_COUNT_TARGET = 360
+    const val POTION_COUNT_TARGET = 16
+    const val BOT_COUNT_TARGET = 14
 
     const val MAGNET_BASE_RADIUS = 240f
     const val MAGNET_UPGRADED_MAX = 420f

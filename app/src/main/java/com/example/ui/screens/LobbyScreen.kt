@@ -57,8 +57,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.StringsHelper
 import com.example.data.UserGameData
 import com.example.model.GameMode
+import com.example.model.MapTheme
 import com.example.model.Vec2
 import com.example.model.Worm
 import com.example.ui.game.DailyLoginDialog
@@ -75,7 +77,8 @@ fun LobbyScreen(
     onOpenRecords: () -> Unit,
     onOpenSettings: () -> Unit,
     onUpdateName: (String) -> Unit,
-    onClaimDailyReward: () -> Unit
+    onClaimDailyReward: () -> Unit,
+    onSetMapTheme: (MapTheme) -> Unit = {}
 ) {
     var nameInput by remember(userData.playerName) { mutableStateOf(userData.playerName) }
     var selectedMode by remember { mutableStateOf(GameMode.OPEN_ARENA) }
@@ -152,6 +155,33 @@ fun LobbyScreen(
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                             letterSpacing = 1.sp
                         )
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    // Map Theme Quick Selector
+                    Surface(
+                        onClick = {
+                            val nextIndex = (userData.mapTheme.ordinal + 1) % MapTheme.entries.size
+                            onSetMapTheme(MapTheme.entries[nextIndex])
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color(0xFF1B233D),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, userData.mapTheme.borderColor)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = userData.mapTheme.icon, fontSize = 13.sp)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = userData.mapTheme.title,
+                                fontSize = 11.sp,
+                                color = userData.mapTheme.borderColor,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
 

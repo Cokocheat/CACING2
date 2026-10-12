@@ -18,20 +18,24 @@ import com.example.audio.GameSoundManager
 import com.example.data.UserPreferencesRepository
 import com.example.model.GameMode
 import com.example.ui.game.MainGameScreen
+import com.example.ui.screens.ControlLayoutEditorScreen
 import com.example.ui.screens.LobbyScreen
 import com.example.ui.screens.RecordsScreen
 import com.example.ui.screens.SettingsScreen
+import com.example.ui.screens.SplashScreen
 import com.example.ui.screens.UpgradesScreen
 import com.example.ui.screens.WardrobeScreen
 import com.example.ui.theme.GameDarkBg
 
 enum class AppScreen {
+    SPLASH,
     LOBBY,
     GAMEPLAY,
     WARDROBE,
     UPGRADES,
     RECORDS,
-    SETTINGS
+    SETTINGS,
+    LAYOUT_EDITOR
 }
 
 @Composable
@@ -45,7 +49,7 @@ fun MainScreen() {
     soundManager.soundEnabled = userData.soundEnabled
     soundManager.vibrationEnabled = userData.vibrationEnabled
 
-    var currentScreen by remember { mutableStateOf(AppScreen.LOBBY) }
+    var currentScreen by remember { mutableStateOf(AppScreen.SPLASH) }
     var selectedGameMode by remember { mutableStateOf(GameMode.OPEN_ARENA) }
 
     Surface(
@@ -58,6 +62,12 @@ fun MainScreen() {
             label = "ScreenTransition"
         ) { screen ->
             when (screen) {
+                AppScreen.SPLASH -> {
+                    SplashScreen(
+                        language = userData.language,
+                        onLoadingComplete = { currentScreen = AppScreen.LOBBY }
+                    )
+                }
                 AppScreen.LOBBY -> {
                     LobbyScreen(
                         userData = userData,
@@ -70,7 +80,8 @@ fun MainScreen() {
                         onOpenRecords = { currentScreen = AppScreen.RECORDS },
                         onOpenSettings = { currentScreen = AppScreen.SETTINGS },
                         onUpdateName = { userPrefs.updatePlayerName(it) },
-                        onClaimDailyReward = { userPrefs.claimDailyReward() }
+                        onClaimDailyReward = { userPrefs.claimDailyReward() },
+                        onSetMapTheme = { userPrefs.setMapTheme(it) }
                     )
                 }
                 AppScreen.GAMEPLAY -> {
@@ -111,10 +122,22 @@ fun MainScreen() {
                         onToggleSound = { userPrefs.toggleSound(it) },
                         onToggleVibration = { userPrefs.toggleVibration(it) },
                         onUpdateName = { userPrefs.updatePlayerName(it) },
-                        onUpdateJoystick = { x, y, scale -> userPrefs.updateJoystickSettings(x, y, scale) },
-                        onUpdateBoost = { x, y, scale -> userPrefs.updateBoostSettings(x, y, scale) },
+                        onOpenLayoutEditor = { currentScreen = AppScreen.LAYOUT_EDITOR },
                         onResetControls = { userPrefs.resetControlSettings() },
+                        onSetLanguage = { userPrefs.setLanguage(it) },
+                        onSetMapTheme = { userPrefs.setMapTheme(it) },
                         onBack = { currentScreen = AppScreen.LOBBY }
+                    )
+                }
+                AppScreen.LAYOUT_EDITOR -> {
+                    ControlLayoutEditorScreen(
+                        userData = userData,
+                        onSaveLayout = { joyX, joyY, joyScale, boostX, boostY, boostScale ->
+                            userPrefs.updateJoystickSettings(joyX, joyY, joyScale)
+                            userPrefs.updateBoostSettings(boostX, boostY, boostScale)
+                        },
+                        onResetDefaults = { userPrefs.resetControlSettings() },
+                        onBack = { currentScreen = AppScreen.SETTINGS }
                     )
                 }
             }

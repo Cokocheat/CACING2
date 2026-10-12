@@ -552,11 +552,22 @@ fun DailyLoginDialog(
                         }
                     }
 
-                    IconButton(
+                    Surface(
                         onClick = onDismiss,
-                        modifier = Modifier.size(32.dp)
+                        shape = CircleShape,
+                        color = Color(0xFF2C1E34),
+                        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFF5252)),
+                        shadowElevation = 6.dp,
+                        modifier = Modifier.size(38.dp)
                     ) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = "Tutup", tint = Color.White)
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Tutup Event",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                 }
 
@@ -715,6 +726,21 @@ fun DailyLoginDialog(
                             )
                         }
                     }
+                }
+
+                // Explicit Bottom Close Button
+                OutlinedButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFA0AEC0)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF353D63))
+                ) {
+                    Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Tutup", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 }
             }
         }

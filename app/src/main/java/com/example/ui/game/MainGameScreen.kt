@@ -146,7 +146,8 @@ fun MainGameScreen(
                 cameraOffset = cameraOffset,
                 zoom = zoom,
                 arenaCenter = engine.arenaCenter,
-                arenaRadius = engine.currentArenaRadius
+                arenaRadius = engine.currentArenaRadius,
+                mapTheme = userData.mapTheme
             )
 
             // 2. Draw Food items (culled against viewport)
