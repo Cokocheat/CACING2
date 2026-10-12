@@ -37,7 +37,8 @@ data class Worm(
     // Facial expressions
     var mouthOpen: Float = 0f,
     var blinkTimer: Float = 2f,
-    var isBlinking: Boolean = false
+    var isBlinking: Boolean = false,
+    var boostParticleTimer: Float = 0f
 ) {
     val segmentRadius: Float
         get() {

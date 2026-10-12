@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,22 +23,26 @@ import androidx.compose.ui.platform.testTag
 import com.example.audio.GameSoundManager
 import com.example.data.UserPreferencesRepository
 import com.example.engine.WormsGameEngine
+import com.example.model.GameMode
 import kotlin.math.atan2
 
 @Composable
 fun MainGameScreen(
     userPrefs: UserPreferencesRepository,
     soundManager: GameSoundManager,
+    gameMode: GameMode = GameMode.OPEN_ARENA,
     onBackToLobby: () -> Unit
 ) {
     val userData by userPrefs.userData.collectAsState()
-    val engine = remember { WormsGameEngine(soundManager, userData) }
+    val engine = remember(gameMode) { WormsGameEngine(soundManager, userData, gameMode) }
 
     val hudState by engine.hudState.collectAsState()
     val leaderboard by engine.leaderboard.collectAsState()
 
     var isPaused by remember { mutableStateOf(false) }
+    var showReviveDialog by remember { mutableStateOf(false) }
     var showGameOver by remember { mutableStateOf(false) }
+    var currentReviveCost by remember { mutableIntStateOf(30) }
 
     // Intercept hardware back button
     BackHandler {
@@ -53,8 +58,6 @@ fun MainGameScreen(
     }
 
     // High performance 60 FPS Game Loop
-    // renderTick is read SOLELY inside Canvas draw scope so ONLY the draw phase is re-executed
-    // Recomposition of the UI tree is avoided completely!
     var renderTick by remember { mutableLongStateOf(0L) }
     var lastFrameTimeNanos by remember { mutableLongStateOf(0L) }
 
@@ -71,14 +74,19 @@ fun MainGameScreen(
                         engine.update(dt)
                         renderTick++
                     }
-                    if (engine.isGameOver && !showGameOver) {
-                        showGameOver = true
-                        userPrefs.recordGameResult(
-                            score = engine.player.mass.toInt(),
-                            kills = engine.player.kills,
-                            length = engine.player.bodyPoints.size,
-                            coinsEarned = engine.coinsCollectedInSession
-                        )
+                    if (engine.isGameOver && !showGameOver && !showReviveDialog) {
+                        if (engine.isVictory) {
+                            showGameOver = true
+                            userPrefs.recordGameResult(
+                                score = engine.player.mass.toInt(),
+                                kills = engine.player.kills,
+                                length = engine.player.bodyPoints.size,
+                                coinsEarned = engine.coinsCollectedInSession
+                            )
+                        } else {
+                            currentReviveCost = engine.calculateReviveCost()
+                            showReviveDialog = true
+                        }
                     }
                 }
             }
@@ -120,7 +128,7 @@ fun MainGameScreen(
     ) {
         // High performance Canvas
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val _tick = renderTick // State read solely in draw scope for 60fps canvas redraw!
+            val _tick = renderTick
             val screenCenterX = size.width / 2f
             val screenCenterY = size.height / 2f
             val zoom = engine.cameraZoom
@@ -138,7 +146,7 @@ fun MainGameScreen(
                 cameraOffset = cameraOffset,
                 zoom = zoom,
                 arenaCenter = engine.arenaCenter,
-                arenaRadius = engine.arenaRadius
+                arenaRadius = engine.currentArenaRadius
             )
 
             // 2. Draw Food items (culled against viewport)
@@ -181,7 +189,7 @@ fun MainGameScreen(
                 )
             }
 
-            // 5. Draw Player Worm (with invulnerability shield if protected)
+            // 5. Draw Player Worm
             WormsRenderer.drawWorm(
                 drawScope = this,
                 worm = engine.player,
@@ -195,11 +203,11 @@ fun MainGameScreen(
             WormsRenderer.drawParticles(this, engine.particles, cameraOffset, zoom)
         }
 
-        // HUD Overlay (recomposes at smooth 10 Hz only, zero lag!)
+        // HUD Overlay
         GameHud(
             hudState = hudState,
             leaderboard = leaderboard,
-            controlMode = userData.controlMode,
+            userData = userData,
             onDirectionChange = { angle ->
                 engine.setPlayerTargetAngle(angle)
             },
@@ -224,11 +232,37 @@ fun MainGameScreen(
                 onRestart = {
                     isPaused = false
                     showGameOver = false
-                    engine.startNewGame()
+                    showReviveDialog = false
+                    engine.startNewGame(gameMode)
                 },
                 onToggleSound = { userPrefs.toggleSound(it) },
                 onToggleVibration = { userPrefs.toggleVibration(it) },
                 onQuitToLobby = onBackToLobby
+            )
+        }
+
+        // Revive Modal (Offer to continue using coins)
+        if (showReviveDialog && !showGameOver) {
+            ReviveDialog(
+                reviveCost = currentReviveCost,
+                playerCoins = userData.coins,
+                wormLength = engine.player.bodyPoints.size,
+                onRevive = {
+                    if (userPrefs.spendCoins(currentReviveCost)) {
+                        showReviveDialog = false
+                        engine.revivePlayer()
+                    }
+                },
+                onGiveUp = {
+                    showReviveDialog = false
+                    showGameOver = true
+                    userPrefs.recordGameResult(
+                        score = engine.player.mass.toInt(),
+                        kills = engine.player.kills,
+                        length = engine.player.bodyPoints.size,
+                        coinsEarned = engine.coinsCollectedInSession
+                    )
+                }
             )
         }
 
@@ -240,10 +274,12 @@ fun MainGameScreen(
                 kills = engine.player.kills,
                 length = engine.player.bodyPoints.size,
                 coinsEarned = engine.coinsCollectedInSession,
+                isVictory = engine.isVictory,
                 onPlayAgain = {
                     showGameOver = false
+                    showReviveDialog = false
                     isPaused = false
-                    engine.startNewGame()
+                    engine.startNewGame(gameMode)
                 },
                 onBackToLobby = onBackToLobby
             )

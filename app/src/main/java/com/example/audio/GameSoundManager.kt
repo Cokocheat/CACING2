@@ -104,6 +104,16 @@ class GameSoundManager(private val context: Context) {
         vibrate(120)
     }
 
+    fun playReviveSound() {
+        playTone(floatArrayOf(330f, 440f, 550f, 660f, 880f), 350, 0.45f)
+        vibrate(90)
+    }
+
+    fun playVictorySound() {
+        playTone(floatArrayOf(523f, 659f, 784f, 1046f), 500, 0.5f)
+        vibrate(100)
+    }
+
     fun vibrate(durationMs: Long) {
         if (!vibrationEnabled || vibrator == null || !vibrator.hasVibrator()) return
         try {

@@ -1,8 +1,16 @@
 package com.example.ui.game
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -50,9 +59,12 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.ControlMode
+import com.example.data.UserGameData
 import com.example.engine.EngineHudState
+import com.example.engine.KillEvent
 import com.example.engine.LeaderboardEntry
 import com.example.model.GameConfig
+import com.example.model.GameMode
 import com.example.model.Vec2
 import kotlin.math.atan2
 import kotlin.math.roundToInt
@@ -62,7 +74,7 @@ import kotlin.math.sqrt
 fun GameHud(
     hudState: EngineHudState,
     leaderboard: List<LeaderboardEntry>,
-    controlMode: ControlMode,
+    userData: UserGameData,
     onDirectionChange: (Float) -> Unit,
     onBoostChange: (Boolean) -> Unit,
     onPauseClick: () -> Unit
@@ -72,15 +84,15 @@ fun GameHud(
             .fillMaxSize()
             .testTag("game_hud_root")
     ) {
-        // TOP BAR HUD: Score, Coins, Protection Shield, Rank, Pause
+        // TOP BAR HUD: Score, Coins, Protection Shield, Rank, Pause, Mode Badge
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 12.dp, start = 16.dp, end = 16.dp),
+                .padding(top = 10.dp, start = 14.dp, end = 14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Top
         ) {
-            // Left Column: Score, Coins, Kills, Shield Status
+            // Left Column: Score, Coins, Kills, Shield Status, Mode Banner
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -155,7 +167,77 @@ fun GameHud(
                         }
                     }
 
-                    // Spawn Protection Shield Pill (prominently shown when invulnerable)
+                    // Mode Specific Info Badge
+                    when (hudState.gameMode) {
+                        GameMode.OPEN_ARENA -> {
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color(0xCC162238),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF4ADE80).copy(alpha = 0.6f))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(text = "🌍", fontSize = 13.sp)
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "Arena Luar",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = Color(0xFF4ADE80),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                        GameMode.TIME_ATTACK -> {
+                            val minutes = (hudState.timeAttackRemaining / 60).toInt()
+                            val seconds = (hudState.timeAttackRemaining % 60).toInt()
+                            val formattedTime = "${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color(0xCC3D1515),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFF5252))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(text = "⏱️", fontSize = 13.sp)
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = formattedTime,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = Color(0xFFFFD700),
+                                        fontWeight = FontWeight.Black
+                                    )
+                                }
+                            }
+                        }
+                        GameMode.BATTLE_ROYALE -> {
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color(0xCC2A1B3D),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBB86FC))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(text = "👑", fontSize = 13.sp)
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "Sisa: ${hudState.aliveBotsCount + 1}",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = Color(0xFFFFD600),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Spawn Protection Shield Pill
                     if (hudState.spawnProtectionRemaining > 0f) {
                         Surface(
                             shape = RoundedCornerShape(14.dp),
@@ -170,7 +252,7 @@ fun GameHud(
                                 Text(text = "🛡️", fontSize = 14.sp)
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "KEBAL AMAN: ${(hudState.spawnProtectionRemaining + 0.9f).toInt()}s",
+                                    text = "KEBAL: ${(hudState.spawnProtectionRemaining + 0.9f).toInt()}s",
                                     style = MaterialTheme.typography.labelMedium,
                                     color = Color(0xFF00E5FF),
                                     fontWeight = FontWeight.Bold
@@ -296,53 +378,151 @@ fun GameHud(
                     // Minimap Radar
                     MinimapRadar(
                         playerPos = hudState.playerPos,
-                        botPositions = hudState.botPositions
+                        botPositions = hudState.botPositions,
+                        arenaRadius = hudState.currentArenaRadius
                     )
                 }
             }
         }
 
-        // BOTTOM CONTROLS: Joystick (Left), Steering Hint (Center), and Turbo Boost Button (Right)
+        // KILL NOTIFICATION BANNER (Top-Center Popping Notification)
+        AnimatedVisibility(
+            visible = hudState.recentKillEvent != null,
+            enter = fadeIn() + scaleIn(initialScale = 0.8f),
+            exit = fadeOut() + scaleOut(targetScale = 0.8f),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 68.dp)
+        ) {
+            hudState.recentKillEvent?.let { kill ->
+                KillBanner(killEvent = kill)
+            }
+        }
+
+        // BOTTOM CONTROLS: Ergonomic & Configurable Joystick (Left), Center Hint, and Boost Button (Right)
+        // 1. Virtual Joystick
+        if (userData.controlMode == ControlMode.JOYSTICK) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(
+                        start = userData.joystickOffsetX.dp,
+                        bottom = userData.joystickOffsetY.dp
+                    )
+            ) {
+                val joySize = (126 * userData.joystickScale).dp
+                VirtualJoystick(
+                    onMove = onDirectionChange,
+                    modifier = Modifier.size(joySize)
+                )
+            }
+        }
+
+        // 2. Center Hint
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = 28.dp, start = 24.dp, end = 24.dp),
-            contentAlignment = Alignment.BottomCenter
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 14.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = Color(0xAA1A1F33),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF353D63))
             ) {
-                // Virtual Joystick on the left
-                if (controlMode == ControlMode.JOYSTICK) {
-                    VirtualJoystick(
-                        onMove = onDirectionChange,
-                        modifier = Modifier.size(130.dp)
-                    )
-                } else {
-                    Spacer(modifier = Modifier.size(130.dp))
-                }
-
-                // Friendly steering guide banner in center
-                Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = Color(0xAA1A1F33),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF353D63))
-                ) {
-                    Text(
-                        text = "👆 Sentuh atau geser layar untuk mengarahkan cacing",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFFCBD5E1),
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
-                    )
-                }
-
-                // Turbo Boost Button on the right
-                TurboBoostButton(
-                    onBoostChange = onBoostChange,
-                    modifier = Modifier.size(80.dp)
+                Text(
+                    text = "👆 Geser jempol atau sentuh layar untuk mengarahkan",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFFCBD5E1),
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
                 )
+            }
+        }
+
+        // 3. Turbo Boost Button
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(
+                    end = userData.boostOffsetX.dp,
+                    bottom = userData.boostOffsetY.dp
+                )
+        ) {
+            val boostSize = (82 * userData.boostScale).dp
+            TurboBoostButton(
+                onBoostChange = onBoostChange,
+                modifier = Modifier.size(boostSize)
+            )
+        }
+    }
+}
+
+@Composable
+fun KillBanner(killEvent: KillEvent) {
+    val infiniteTransition = rememberInfiniteTransition(label = "killGlow")
+    val glowScale by infiniteTransition.animateFloat(
+        initialValue = 1.0f,
+        targetValue = 1.04f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(400, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glowScale"
+    )
+
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = Color(0xEE160F26),
+        border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFFF5252)),
+        shadowElevation = 12.dp,
+        modifier = Modifier
+            .scale(glowScale)
+            .shadow(12.dp, RoundedCornerShape(16.dp), spotColor = Color(0xFFFF5252))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(text = "⚔️", fontSize = 22.sp)
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "MUSUH TERELIMINASI: ",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFFFF7272),
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = killEvent.victimName,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = Color.White,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "🪙 +${killEvent.coinsEarned} Koin",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFFFFD700),
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (killEvent.streak > 1) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = Color(0xFFFF5252)
+                        ) {
+                            Text(
+                                text = "COMBO x${killEvent.streak}!",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White,
+                                fontWeight = FontWeight.Black,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -354,14 +534,15 @@ fun VirtualJoystick(
     modifier: Modifier = Modifier
 ) {
     var thumbOffset by remember { mutableStateOf(Offset.Zero) }
-    val maxRadius = 50f
+    val maxRadius = 48f
 
     Box(
         modifier = modifier
             .testTag("virtual_joystick")
             .clip(CircleShape)
-            .background(Color(0x661A1F33))
-            .border(2.dp, Color(0x994ADE80), CircleShape)
+            .background(Color(0x77161B2E))
+            .border(2.5.dp, Color(0xAA4ADE80), CircleShape)
+            .shadow(8.dp, CircleShape)
             .pointerInput(Unit) {
                 detectDragGestures(
                     onDragStart = { offset ->
@@ -403,7 +584,7 @@ fun VirtualJoystick(
                         colors = listOf(Color(0xFF4ADE80), Color(0xFF16A34A))
                     )
                 )
-                .border(2.dp, Color.White.copy(alpha = 0.8f), CircleShape)
+                .border(2.dp, Color.White.copy(alpha = 0.85f), CircleShape)
                 .shadow(6.dp, CircleShape)
         )
     }
@@ -430,7 +611,7 @@ fun TurboBoostButton(
                 )
             )
             .border(3.dp, if (isPressed) Color(0xFFFFD600) else Color.White, CircleShape)
-            .shadow(if (isPressed) 12.dp else 6.dp, CircleShape)
+            .shadow(if (isPressed) 14.dp else 8.dp, CircleShape)
             .pointerInput(Unit) {
                 detectTapGestures(
                     onPress = {
@@ -469,10 +650,10 @@ fun TurboBoostButton(
 fun MinimapRadar(
     playerPos: Vec2,
     botPositions: List<Vec2>,
+    arenaRadius: Float,
     modifier: Modifier = Modifier
 ) {
     val radarSize = 68.dp
-    val arenaRadius = GameConfig.ARENA_RADIUS
     val arenaCenter = Vec2(GameConfig.ARENA_CENTER_X, GameConfig.ARENA_CENTER_Y)
 
     Surface(
@@ -495,8 +676,17 @@ fun MinimapRadar(
                 style = Stroke(width = 1f)
             )
 
+            // Safe zone border ring
+            val safeZoneScale = (arenaRadius / GameConfig.ARENA_RADIUS) * r * 0.9f
+            drawCircle(
+                color = Color(0x66BB86FC),
+                radius = safeZoneScale,
+                center = Offset(cx, cy),
+                style = Stroke(width = 1.5f)
+            )
+
             // Draw other bots dots
-            val scale = (r * 0.88f) / arenaRadius
+            val scale = (r * 0.88f) / GameConfig.ARENA_RADIUS
             for (i in botPositions.indices) {
                 val bHead = botPositions[i]
                 val dx = (bHead.x - arenaCenter.x) * scale

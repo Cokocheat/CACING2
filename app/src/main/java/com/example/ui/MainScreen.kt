@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.example.audio.GameSoundManager
 import com.example.data.UserPreferencesRepository
+import com.example.model.GameMode
 import com.example.ui.game.MainGameScreen
 import com.example.ui.screens.LobbyScreen
 import com.example.ui.screens.RecordsScreen
@@ -45,6 +46,7 @@ fun MainScreen() {
     soundManager.vibrationEnabled = userData.vibrationEnabled
 
     var currentScreen by remember { mutableStateOf(AppScreen.LOBBY) }
+    var selectedGameMode by remember { mutableStateOf(GameMode.OPEN_ARENA) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -59,18 +61,23 @@ fun MainScreen() {
                 AppScreen.LOBBY -> {
                     LobbyScreen(
                         userData = userData,
-                        onPlayClick = { currentScreen = AppScreen.GAMEPLAY },
+                        onPlayClick = { mode ->
+                            selectedGameMode = mode
+                            currentScreen = AppScreen.GAMEPLAY
+                        },
                         onOpenWardrobe = { currentScreen = AppScreen.WARDROBE },
                         onOpenUpgrades = { currentScreen = AppScreen.UPGRADES },
                         onOpenRecords = { currentScreen = AppScreen.RECORDS },
                         onOpenSettings = { currentScreen = AppScreen.SETTINGS },
-                        onUpdateName = { userPrefs.updatePlayerName(it) }
+                        onUpdateName = { userPrefs.updatePlayerName(it) },
+                        onClaimDailyReward = { userPrefs.claimDailyReward() }
                     )
                 }
                 AppScreen.GAMEPLAY -> {
                     MainGameScreen(
                         userPrefs = userPrefs,
                         soundManager = soundManager,
+                        gameMode = selectedGameMode,
                         onBackToLobby = { currentScreen = AppScreen.LOBBY }
                     )
                 }
@@ -104,6 +111,9 @@ fun MainScreen() {
                         onToggleSound = { userPrefs.toggleSound(it) },
                         onToggleVibration = { userPrefs.toggleVibration(it) },
                         onUpdateName = { userPrefs.updatePlayerName(it) },
+                        onUpdateJoystick = { x, y, scale -> userPrefs.updateJoystickSettings(x, y, scale) },
+                        onUpdateBoost = { x, y, scale -> userPrefs.updateBoostSettings(x, y, scale) },
+                        onResetControls = { userPrefs.resetControlSettings() },
                         onBack = { currentScreen = AppScreen.LOBBY }
                     )
                 }

@@ -58,8 +58,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.UserGameData
+import com.example.model.GameMode
 import com.example.model.Vec2
 import com.example.model.Worm
+import com.example.ui.game.DailyLoginDialog
 import com.example.ui.game.WormsRenderer
 import kotlin.math.PI
 import kotlin.math.sin
@@ -67,14 +69,19 @@ import kotlin.math.sin
 @Composable
 fun LobbyScreen(
     userData: UserGameData,
-    onPlayClick: () -> Unit,
+    onPlayClick: (GameMode) -> Unit,
     onOpenWardrobe: () -> Unit,
     onOpenUpgrades: () -> Unit,
     onOpenRecords: () -> Unit,
     onOpenSettings: () -> Unit,
-    onUpdateName: (String) -> Unit
+    onUpdateName: (String) -> Unit,
+    onClaimDailyReward: () -> Unit
 ) {
     var nameInput by remember(userData.playerName) { mutableStateOf(userData.playerName) }
+    var selectedMode by remember { mutableStateOf(GameMode.OPEN_ARENA) }
+
+    // Daily Login Dialog: Automatically shows up when player can claim today!
+    var showDailyLoginDialog by remember { mutableStateOf(userData.canClaimDailyToday) }
 
     // Floating worm wiggling animation for preview
     val infiniteTransition = rememberInfiniteTransition(label = "wormWiggle")
@@ -114,7 +121,7 @@ fun LobbyScreen(
                 .padding(horizontal = 24.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // TOP HEADER BAR: Game Logo "nana tayantuh", Coins, Settings
+            // TOP HEADER BAR: Game Logo "nana tayantuh", "ARENA LUAR", Event 7 Hari, Coins, Settings
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -122,7 +129,7 @@ fun LobbyScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Game title
+                // Game title & "ARENA LUAR"
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = "nana tayantuh",
@@ -134,23 +141,53 @@ fun LobbyScreen(
                     Spacer(modifier = Modifier.width(10.dp))
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = Color(0xFF242A45)
+                        color = Color(0xFF242A45),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFFD600).copy(alpha = 0.5f))
                     ) {
                         Text(
-                            text = "LANDSCAPE ARENA",
+                            text = "ARENA LUAR",
                             style = MaterialTheme.typography.labelSmall,
                             color = Color(0xFFFFD600),
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            fontWeight = FontWeight.Black,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            letterSpacing = 1.sp
                         )
                     }
                 }
 
-                // Top Right: Coins + Settings
+                // Top Right: Event 7 Hari Button + Coins + Settings
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Event 7 Hari Button
+                    Surface(
+                        onClick = { showDailyLoginDialog = true },
+                        shape = RoundedCornerShape(20.dp),
+                        color = if (userData.canClaimDailyToday) Color(0xFF3B2D54) else Color(0xCC1A1F33),
+                        border = androidx.compose.foundation.BorderStroke(
+                            width = 1.5.dp,
+                            color = if (userData.canClaimDailyToday) Color(0xFFFFD700) else Color(0xFF353D63)
+                        ),
+                        shadowElevation = if (userData.canClaimDailyToday) 6.dp else 2.dp,
+                        modifier = Modifier.testTag("btn_daily_event")
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = "🎁", fontSize = 16.sp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (userData.canClaimDailyToday) "Event 7 Hari (!)" else "Event 7 Hari",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = if (userData.canClaimDailyToday) Color(0xFFFFD700) else Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    // Coins
                     Surface(
                         shape = RoundedCornerShape(20.dp),
                         color = Color(0xCC1A1F33),
@@ -172,6 +209,7 @@ fun LobbyScreen(
                         }
                     }
 
+                    // Settings
                     IconButton(
                         onClick = onOpenSettings,
                         modifier = Modifier
@@ -196,8 +234,8 @@ fun LobbyScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                    .padding(vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(18.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // LEFT COLUMN: Avatar Preview & Feature Navigation
@@ -274,7 +312,7 @@ fun LobbyScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     // BOTTOM ACTION BUTTONS
                     Row(
@@ -310,10 +348,10 @@ fun LobbyScreen(
                     }
                 }
 
-                // RIGHT COLUMN: Name Input, Records card, Big PLAY button
+                // RIGHT COLUMN: Name Input, Mode Selector, High Score, Big PLAY button
                 Column(
                     modifier = Modifier
-                        .weight(1f)
+                        .weight(1.15f)
                         .fillMaxHeight(),
                     verticalArrangement = Arrangement.SpaceBetween,
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -341,6 +379,57 @@ fun LobbyScreen(
                             .testTag("player_name_input")
                     )
 
+                    // GAME MODE SELECTOR (Arena Luar, Time Attack, Battle Royale)
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFF161B2E),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C3454)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp)) {
+                            Text(
+                                text = "PILIH MODE PERMAINAN:",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color(0xFFA0AEC0),
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                GameMode.entries.forEach { mode ->
+                                    val isSelected = selectedMode == mode
+                                    Surface(
+                                        onClick = { selectedMode = mode },
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = if (isSelected) Color(0xFF253350) else Color(0xFF1E243D),
+                                        border = androidx.compose.foundation.BorderStroke(
+                                            width = if (isSelected) 2.dp else 1.dp,
+                                            color = if (isSelected) Color(0xFF4ADE80) else Color(0xFF353D63)
+                                        ),
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Column(
+                                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(text = mode.icon, fontSize = 18.sp)
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = mode.title,
+                                                fontSize = 11.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                color = if (isSelected) Color(0xFF4ADE80) else Color.White,
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     // HIGH SCORE TROPHY BANNER
                     Surface(
                         shape = RoundedCornerShape(16.dp),
@@ -349,12 +438,12 @@ fun LobbyScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(text = "🏆", fontSize = 20.sp)
+                                Text(text = "🏆", fontSize = 18.sp)
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Column {
                                     Text(
@@ -389,10 +478,10 @@ fun LobbyScreen(
 
                     // BIG PLAY BUTTON
                     Button(
-                        onClick = onPlayClick,
+                        onClick = { onPlayClick(selectedMode) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(58.dp)
+                            .height(54.dp)
                             .scale(pulseScale)
                             .shadow(16.dp, RoundedCornerShape(18.dp), spotColor = Color(0xFF4ADE80))
                             .testTag("play_game_button"),
@@ -404,11 +493,11 @@ fun LobbyScreen(
                                 imageVector = Icons.Default.PlayArrow,
                                 contentDescription = null,
                                 tint = Color.Black,
-                                modifier = Modifier.size(30.dp)
+                                modifier = Modifier.size(28.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "MULAI MAIN (ARENA LUAS)",
+                                text = "MULAI MAIN (${selectedMode.title.uppercase()})",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = Color.Black,
                                 fontWeight = FontWeight.Black,
@@ -418,6 +507,19 @@ fun LobbyScreen(
                     }
                 }
             }
+        }
+
+        // Daily Login Event Modal
+        if (showDailyLoginDialog) {
+            DailyLoginDialog(
+                userData = userData,
+                onClaimReward = {
+                    onClaimDailyReward()
+                },
+                onDismiss = {
+                    showDailyLoginDialog = false
+                }
+            )
         }
     }
 }

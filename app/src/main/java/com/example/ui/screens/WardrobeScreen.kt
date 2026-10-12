@@ -1,9 +1,16 @@
 package com.example.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,7 +31,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -40,6 +47,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -58,6 +66,8 @@ import com.example.model.SkinId
 import com.example.model.Vec2
 import com.example.model.Worm
 import com.example.ui.game.WormsRenderer
+import kotlin.math.PI
+import kotlin.math.sin
 
 @Composable
 fun WardrobeScreen(
@@ -71,6 +81,20 @@ fun WardrobeScreen(
     BackHandler { onBack() }
 
     var selectedTab by remember { mutableIntStateOf(0) }
+    // Live preview state allows user to test/view any skin or accessory BEFORE buying
+    var previewSkin by remember { mutableStateOf(userData.equippedSkin) }
+    var previewAccessory by remember { mutableStateOf(userData.equippedAccessory) }
+
+    val infiniteTransition = rememberInfiniteTransition(label = "wormWiggleWardrobe")
+    val wigglePhase by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 2 * PI.toFloat(),
+        animationSpec = infiniteRepeatable(
+            animation = tween(2200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "phase"
+    )
 
     Column(
         modifier = Modifier
@@ -103,7 +127,7 @@ fun WardrobeScreen(
                         )
                     }
                     Text(
-                        text = "LEMARI CACING",
+                        text = "LEMARI SKIN & AKSERORIS",
                         style = MaterialTheme.typography.titleLarge,
                         color = Color.White,
                         fontWeight = FontWeight.Black
@@ -133,12 +157,13 @@ fun WardrobeScreen(
             }
         }
 
-        // LIVE WORM PREVIEW
+        // INTERACTIVE LIVE WORM PREVIEW (Updates dynamically when clicking any item!)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(100.dp)
-                .background(Color(0xFF141829)),
+                .height(115.dp)
+                .background(Color(0xFF141829))
+                .border(1.dp, Color(0xFF2C3454)),
             contentAlignment = Alignment.Center
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
@@ -149,15 +174,16 @@ fun WardrobeScreen(
                     id = "wardrobe_preview",
                     name = userData.playerName,
                     isPlayer = true,
-                    head = Vec2(cx + 40f, cy),
-                    skin = userData.equippedSkin,
-                    accessory = userData.equippedAccessory,
-                    mass = 70f
+                    head = Vec2(cx + 60f, cy),
+                    skin = previewSkin,
+                    accessory = previewAccessory,
+                    mass = 85f
                 ).apply {
                     bodyPoints.clear()
-                    for (i in 0 until 16) {
-                        val px = (cx + 40f) - i * 13f
-                        bodyPoints.add(Vec2(px, cy))
+                    for (i in 0 until 18) {
+                        val wave = sin(wigglePhase + i * 0.45f) * 14f
+                        val px = (cx + 60f) - i * 13f
+                        bodyPoints.add(Vec2(px, cy + wave))
                     }
                 }
 
@@ -167,6 +193,39 @@ fun WardrobeScreen(
                     cameraOffset = Offset.Zero,
                     zoom = 1f
                 )
+            }
+
+            // Preview Info Banner
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 6.dp),
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xDD0E121E),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF4ADE80).copy(alpha = 0.5f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(imageVector = Icons.Default.Visibility, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(13.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Pratinjau: ${previewSkin.title} ${if (previewAccessory != FaceAccessory.NONE) "+ " + previewAccessory.title else ""}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (previewSkin != userData.equippedSkin || previewAccessory != userData.equippedAccessory) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "(Klik item lain untuk mencoba)",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFFFFD700),
+                            fontSize = 10.sp
+                        )
+                    }
+                }
             }
         }
 
@@ -187,7 +246,7 @@ fun WardrobeScreen(
                 onClick = { selectedTab = 0 },
                 text = {
                     Text(
-                        "Skin Tubuh",
+                        "Skin Tubuh Cacing",
                         fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal,
                         color = if (selectedTab == 0) Color(0xFF4ADE80) else Color(0xFFA0AEC0)
                     )
@@ -209,7 +268,7 @@ fun WardrobeScreen(
         // ITEMS GRID
         if (selectedTab == 0) {
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 170.dp),
+                columns = GridCells.Adaptive(minSize = 180.dp),
                 contentPadding = PaddingValues(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -218,13 +277,23 @@ fun WardrobeScreen(
                 items(SkinId.entries) { skin ->
                     val isUnlocked = userData.unlockedSkins.contains(skin)
                     val isEquipped = userData.equippedSkin == skin
+                    val isPreviewing = previewSkin == skin
 
                     Surface(
+                        onClick = { previewSkin = skin },
                         shape = RoundedCornerShape(18.dp),
-                        color = if (isEquipped) Color(0xFF23304E) else Color(0xFF1A1F33),
+                        color = when {
+                            isEquipped -> Color(0xFF23304E)
+                            isPreviewing -> Color(0xFF241D3B)
+                            else -> Color(0xFF1A1F33)
+                        },
                         border = androidx.compose.foundation.BorderStroke(
-                            width = if (isEquipped) 2.dp else 1.dp,
-                            color = if (isEquipped) Color(0xFF4ADE80) else Color(0xFF2C3454)
+                            width = if (isEquipped || isPreviewing) 2.dp else 1.dp,
+                            color = when {
+                                isEquipped -> Color(0xFF4ADE80)
+                                isPreviewing -> Color(0xFFFFD700)
+                                else -> Color(0xFF2C3454)
+                            }
                         ),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -259,7 +328,7 @@ fun WardrobeScreen(
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(10.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = skin.title,
                                 style = MaterialTheme.typography.titleSmall,
@@ -275,40 +344,66 @@ fun WardrobeScreen(
                                 maxLines = 1
                             )
 
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
 
-                            if (isEquipped) {
-                                Surface(
-                                    shape = RoundedCornerShape(10.dp),
-                                    color = Color(0x334ADE80),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF4ADE80))
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                        verticalAlignment = Alignment.CenterVertically
+                            // Action buttons / status
+                            when {
+                                isEquipped -> {
+                                    Surface(
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = Color(0x334ADE80),
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF4ADE80))
                                     ) {
-                                        Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(14.dp))
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text("DIPAKAI", style = MaterialTheme.typography.labelSmall, color = Color(0xFF4ADE80), fontWeight = FontWeight.Bold)
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(14.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("DIPAKAI", style = MaterialTheme.typography.labelSmall, color = Color(0xFF4ADE80), fontWeight = FontWeight.Bold)
+                                        }
                                     }
                                 }
-                            } else if (isUnlocked) {
-                                Button(
-                                    onClick = { onEquipSkin(skin) },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2C3454)),
-                                    shape = RoundedCornerShape(10.dp),
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text("PAKAI", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                                isUnlocked -> {
+                                    Button(
+                                        onClick = {
+                                            onEquipSkin(skin)
+                                            previewSkin = skin
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2C3454)),
+                                        shape = RoundedCornerShape(10.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("PAKAI", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                                    }
                                 }
-                            } else {
-                                Button(
-                                    onClick = { onBuySkin(skin) },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9100)),
-                                    shape = RoundedCornerShape(10.dp),
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text("🪙 ${skin.price}", style = MaterialTheme.typography.labelSmall, color = Color.Black, fontWeight = FontWeight.Bold)
+                                else -> {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        OutlinedButton(
+                                            onClick = { previewSkin = skin },
+                                            shape = RoundedCornerShape(10.dp),
+                                            modifier = Modifier.weight(1f),
+                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF00E5FF))
+                                        ) {
+                                            Text("LIHAT", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        }
+
+                                        Button(
+                                            onClick = {
+                                                if (onBuySkin(skin)) {
+                                                    previewSkin = skin
+                                                }
+                                            },
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9100)),
+                                            shape = RoundedCornerShape(10.dp),
+                                            modifier = Modifier.weight(1.2f)
+                                        ) {
+                                            Text("🪙 ${skin.price}", fontSize = 11.sp, color = Color.Black, fontWeight = FontWeight.Black)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -317,7 +412,7 @@ fun WardrobeScreen(
             }
         } else {
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 170.dp),
+                columns = GridCells.Adaptive(minSize = 180.dp),
                 contentPadding = PaddingValues(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -326,13 +421,23 @@ fun WardrobeScreen(
                 items(FaceAccessory.entries) { acc ->
                     val isUnlocked = userData.unlockedAccessories.contains(acc)
                     val isEquipped = userData.equippedAccessory == acc
+                    val isPreviewing = previewAccessory == acc
 
                     Surface(
+                        onClick = { previewAccessory = acc },
                         shape = RoundedCornerShape(18.dp),
-                        color = if (isEquipped) Color(0xFF23304E) else Color(0xFF1A1F33),
+                        color = when {
+                            isEquipped -> Color(0xFF23304E)
+                            isPreviewing -> Color(0xFF241D3B)
+                            else -> Color(0xFF1A1F33)
+                        },
                         border = androidx.compose.foundation.BorderStroke(
-                            width = if (isEquipped) 2.dp else 1.dp,
-                            color = if (isEquipped) Color(0xFF4ADE80) else Color(0xFF2C3454)
+                            width = if (isEquipped || isPreviewing) 2.dp else 1.dp,
+                            color = when {
+                                isEquipped -> Color(0xFF4ADE80)
+                                isPreviewing -> Color(0xFFFFD700)
+                                else -> Color(0xFF2C3454)
+                            }
                         ),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -367,40 +472,65 @@ fun WardrobeScreen(
                                 maxLines = 1
                             )
 
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
 
-                            if (isEquipped) {
-                                Surface(
-                                    shape = RoundedCornerShape(10.dp),
-                                    color = Color(0x334ADE80),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF4ADE80))
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                        verticalAlignment = Alignment.CenterVertically
+                            when {
+                                isEquipped -> {
+                                    Surface(
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = Color(0x334ADE80),
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF4ADE80))
                                     ) {
-                                        Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(14.dp))
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text("DIPAKAI", style = MaterialTheme.typography.labelSmall, color = Color(0xFF4ADE80), fontWeight = FontWeight.Bold)
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(14.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("DIPAKAI", style = MaterialTheme.typography.labelSmall, color = Color(0xFF4ADE80), fontWeight = FontWeight.Bold)
+                                        }
                                     }
                                 }
-                            } else if (isUnlocked) {
-                                Button(
-                                    onClick = { onEquipAccessory(acc) },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2C3454)),
-                                    shape = RoundedCornerShape(10.dp),
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text("PAKAI", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                                isUnlocked -> {
+                                    Button(
+                                        onClick = {
+                                            onEquipAccessory(acc)
+                                            previewAccessory = acc
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2C3454)),
+                                        shape = RoundedCornerShape(10.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("PAKAI", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                                    }
                                 }
-                            } else {
-                                Button(
-                                    onClick = { onBuyAccessory(acc) },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9100)),
-                                    shape = RoundedCornerShape(10.dp),
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text("🪙 ${acc.price}", style = MaterialTheme.typography.labelSmall, color = Color.Black, fontWeight = FontWeight.Bold)
+                                else -> {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        OutlinedButton(
+                                            onClick = { previewAccessory = acc },
+                                            shape = RoundedCornerShape(10.dp),
+                                            modifier = Modifier.weight(1f),
+                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF00E5FF))
+                                        ) {
+                                            Text("LIHAT", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        }
+
+                                        Button(
+                                            onClick = {
+                                                if (onBuyAccessory(acc)) {
+                                                    previewAccessory = acc
+                                                }
+                                            },
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9100)),
+                                            shape = RoundedCornerShape(10.dp),
+                                            modifier = Modifier.weight(1.2f)
+                                        ) {
+                                            Text("🪙 ${acc.price}", fontSize = 11.sp, color = Color.Black, fontWeight = FontWeight.Black)
+                                        }
+                                    }
                                 }
                             }
                         }

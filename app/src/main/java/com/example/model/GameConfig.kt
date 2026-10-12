@@ -1,5 +1,11 @@
 package com.example.model
 
+enum class GameMode(val title: String, val subtitle: String, val icon: String) {
+    OPEN_ARENA("Arena Luar", "Mode klasik santai tanpa batas waktu", "🌍"),
+    TIME_ATTACK("Time Attack", "3 Menit cetak skor & kill tertinggi!", "⏱️"),
+    BATTLE_ROYALE("Battle Royale", "Zona menyusut, jadilah yang terakhir bertahan!", "👑")
+}
+
 object GameConfig {
     const val ARENA_RADIUS = 2200f
     const val ARENA_CENTER_X = 2200f

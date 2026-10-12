@@ -7,6 +7,7 @@ import com.example.model.FaceAccessory
 import com.example.model.FoodItem
 import com.example.model.FoodType
 import com.example.model.GameConfig
+import com.example.model.GameMode
 import com.example.model.GameParticle
 import com.example.model.PotionItem
 import com.example.model.PotionType
@@ -30,6 +31,13 @@ data class LeaderboardEntry(
     val rank: Int
 )
 
+data class KillEvent(
+    val victimName: String,
+    val streak: Int,
+    val coinsEarned: Int,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
 data class EngineHudState(
     val score: Int = 25,
     val coins: Int = 0,
@@ -38,12 +46,18 @@ data class EngineHudState(
     val spawnProtectionRemaining: Float = 6.0f,
     val activePotions: Map<PotionType, Float> = emptyMap(),
     val playerPos: Vec2 = Vec2.Zero,
-    val botPositions: List<Vec2> = emptyList()
+    val botPositions: List<Vec2> = emptyList(),
+    val gameMode: GameMode = GameMode.OPEN_ARENA,
+    val timeAttackRemaining: Float = 180f,
+    val aliveBotsCount: Int = 0,
+    val currentArenaRadius: Float = GameConfig.ARENA_RADIUS,
+    val recentKillEvent: KillEvent? = null
 )
 
 class WormsGameEngine(
     private val soundManager: GameSoundManager,
-    private val userData: UserGameData
+    private val userData: UserGameData,
+    var gameMode: GameMode = GameMode.OPEN_ARENA
 ) {
     private val idGen = AtomicLong(1)
 
@@ -57,7 +71,8 @@ class WormsGameEngine(
     }
 
     val arenaCenter = Vec2(GameConfig.ARENA_CENTER_X, GameConfig.ARENA_CENTER_Y)
-    val arenaRadius = GameConfig.ARENA_RADIUS
+    var currentArenaRadius: Float = GameConfig.ARENA_RADIUS
+        private set
 
     // Game Entities
     val bots = mutableListOf<Worm>()
@@ -68,18 +83,31 @@ class WormsGameEngine(
     // Game loop state
     var isGameOver = false
         private set
+    var isVictory = false
+        private set
     var isPaused = false
     var coinsCollectedInSession = 0
         private set
     var gameTimeSeconds = 0f
         private set
 
-    // Extended 6-second invulnerability on spawn so player never dies at start
+    // Time Attack countdown
+    var timeAttackRemaining: Float = 180f
+        private set
+
+    // Kill banner tracking
+    var playerKillStreak = 0
+        private set
+    var recentKillEvent: KillEvent? = null
+        private set
+    private var killEventTimer = 0f
+
+    // Extended 6-second invulnerability on spawn
     var spawnProtectionTimer: Float = 6.0f
         private set
     val isPlayerProtected: Boolean get() = spawnProtectionTimer > 0f
 
-    // Smooth camera zoom tracked in engine to avoid Compose state animation lag
+    // Smooth camera zoom
     var cameraZoom: Float = 1.0f
         private set
 
@@ -113,14 +141,21 @@ class WormsGameEngine(
     var player: Worm = createInitialPlayer()
 
     init {
-        startNewGame()
+        startNewGame(gameMode)
     }
 
-    fun startNewGame() {
+    fun startNewGame(mode: GameMode = gameMode) {
+        this.gameMode = mode
         isGameOver = false
+        isVictory = false
         isPaused = false
         coinsCollectedInSession = 0
         gameTimeSeconds = 0f
+        timeAttackRemaining = 180f
+        playerKillStreak = 0
+        recentKillEvent = null
+        killEventTimer = 0f
+        currentArenaRadius = GameConfig.ARENA_RADIUS
         spawnProtectionTimer = 6.0f
         cameraZoom = 1.0f
         foods.clear()
@@ -131,7 +166,7 @@ class WormsGameEngine(
         // Create player
         player = createInitialPlayer()
 
-        // Spawn friendly starting food clusters near player to start eating immediately
+        // Starting food clusters
         repeat(16) {
             val offsetAngle = Random.nextFloat() * 2 * PI.toFloat()
             val dist = Random.nextFloat() * 260f + 60f
@@ -158,8 +193,9 @@ class WormsGameEngine(
             spawnRandomPotion()
         }
 
-        // Spawn AI Bots (guaranteed far away from player spawn point)
-        repeat(GameConfig.BOT_COUNT_TARGET) {
+        // Spawn AI Bots (in Battle Royale, spawn 15 initial bots)
+        val initialBotCount = if (gameMode == GameMode.BATTLE_ROYALE) 14 else GameConfig.BOT_COUNT_TARGET
+        repeat(initialBotCount) {
             spawnBot()
         }
 
@@ -167,9 +203,28 @@ class WormsGameEngine(
         emitHudState()
     }
 
+    fun calculateReviveCost(): Int {
+        val base = Random.nextInt(15, 30)
+        val sizeCost = (player.bodyPoints.size / 5) * Random.nextInt(4, 7)
+        return (base + sizeCost).coerceIn(20, 250)
+    }
+
+    fun revivePlayer() {
+        player.isAlive = true
+        isGameOver = false
+        spawnProtectionTimer = 6.0f
+        // Safe placement near arena center
+        val safeOffset = Vec2(Random.nextFloat() * 100f - 50f, Random.nextFloat() * 100f - 50f)
+        player.head = arenaCenter + safeOffset
+        player.bodyPoints.clear()
+        player.initializeBody()
+        soundManager.playReviveSound()
+        emitHudState()
+    }
+
     private fun randomArenaPoint(margin: Float = 150f): Vec2 {
         val angle = Random.nextFloat() * 2 * PI.toFloat()
-        val r = sqrt(Random.nextFloat()) * (arenaRadius - margin)
+        val r = sqrt(Random.nextFloat()) * (currentArenaRadius - margin).coerceAtLeast(100f)
         return Vec2(
             arenaCenter.x + cos(angle) * r,
             arenaCenter.y + sin(angle) * r
@@ -188,7 +243,8 @@ class WormsGameEngine(
         val type = customType ?: if (Random.nextFloat() < 0.08f) {
             FoodType.GOLDEN_COIN
         } else {
-            FoodType.randomStandard(Random.nextDouble())
+            val allTypes = FoodType.entries.filter { it != FoodType.DEATH_FEAST && it != FoodType.GOLDEN_COIN }
+            allTypes[Random.nextInt(allTypes.size)]
         }
 
         foods.add(
@@ -216,7 +272,6 @@ class WormsGameEngine(
     }
 
     private fun spawnBot() {
-        // Guarantee bots do not spawn within 1300f of player to prevent ambushes or instant deaths
         var spawnPos = randomArenaPoint(300f)
         var tries = 0
         while (tries < 30 && spawnPos.distanceSquaredTo(player.head) < 1300f * 1300f) {
@@ -227,7 +282,6 @@ class WormsGameEngine(
         val botAcc = FaceAccessory.entries[Random.nextInt(FaceAccessory.entries.size)]
         val botName = BOT_NAMES[Random.nextInt(BOT_NAMES.size)]
         val personality = BotPersonality.entries[Random.nextInt(BotPersonality.entries.size)]
-        // Fair starting mass comparable to player
         val startingMass = Random.nextFloat() * 30f + 20f
 
         val bot = Worm(
@@ -265,6 +319,39 @@ class WormsGameEngine(
         if (isPaused || isGameOver) return
         gameTimeSeconds += dt
 
+        // Kill Banner timer
+        if (recentKillEvent != null) {
+            killEventTimer -= dt
+            if (killEventTimer <= 0f) {
+                recentKillEvent = null
+            }
+        }
+
+        // Mode: Time Attack handling
+        if (gameMode == GameMode.TIME_ATTACK) {
+            timeAttackRemaining = (timeAttackRemaining - dt).coerceAtLeast(0f)
+            if (timeAttackRemaining <= 0f) {
+                isGameOver = true
+                isVictory = true
+                soundManager.playVictorySound()
+                emitHudState()
+                return
+            }
+        }
+
+        // Mode: Battle Royale shrinking safe zone
+        if (gameMode == GameMode.BATTLE_ROYALE) {
+            currentArenaRadius = maxOf(600f, GameConfig.ARENA_RADIUS - gameTimeSeconds * 12.5f)
+            val aliveCount = bots.count { it.isAlive }
+            if (aliveCount == 0 && player.isAlive) {
+                isGameOver = true
+                isVictory = true
+                soundManager.playVictorySound()
+                emitHudState()
+                return
+            }
+        }
+
         if (spawnProtectionTimer > 0f) {
             spawnProtectionTimer = (spawnProtectionTimer - dt).coerceAtLeast(0f)
         }
@@ -289,9 +376,11 @@ class WormsGameEngine(
             updateWorm(bot, dt)
         }
 
-        // Replenish bots
-        while (bots.size < GameConfig.BOT_COUNT_TARGET) {
-            spawnBot()
+        // Replenish bots (only in Open Arena & Time Attack, NOT in Battle Royale)
+        if (gameMode != GameMode.BATTLE_ROYALE) {
+            while (bots.size < GameConfig.BOT_COUNT_TARGET) {
+                spawnBot()
+            }
         }
 
         // 3. Collision with Arena Boundary
@@ -300,21 +389,13 @@ class WormsGameEngine(
             checkBoundaryCollision(bots[i])
         }
 
-        // 4. Head-to-Body Collisions
+        // 4. Worm-to-Worm Collision Check
         checkWormCollisions()
 
-        // 5. Food Magnet & Eating
+        // 5. Food & Potion Interactions
         updateFoodAndPotions(dt)
 
-        // 6. Particle update
-        val pIter = particles.iterator()
-        while (pIter.hasNext()) {
-            val p = pIter.next()
-            p.update(dt)
-            if (p.isDead) pIter.remove()
-        }
-
-        // Replenish food & potions
+        // 6. Food & Potion Replenishment
         while (foods.size < GameConfig.FOOD_COUNT_TARGET) {
             spawnRandomFood()
         }
@@ -322,7 +403,17 @@ class WormsGameEngine(
             spawnRandomPotion()
         }
 
-        // 7. Throttled UI State updates: 10 Hz for HUD, 1 Hz for Leaderboard
+        // 7. Update Particles
+        val particleIterator = particles.iterator()
+        while (particleIterator.hasNext()) {
+            val p = particleIterator.next()
+            p.update(dt)
+            if (p.isDead) {
+                particleIterator.remove()
+            }
+        }
+
+        // 8. Timed updates
         hudUpdateTimer += dt
         if (hudUpdateTimer >= 0.1f) {
             hudUpdateTimer = 0f
@@ -330,7 +421,7 @@ class WormsGameEngine(
         }
 
         leaderboardTimer += dt
-        if (leaderboardTimer >= 1.0f) {
+        if (leaderboardTimer >= 0.5f) {
             leaderboardTimer = 0f
             updateLeaderboard()
         }
@@ -342,6 +433,7 @@ class WormsGameEngine(
             val b = bots[i]
             if (b.isAlive) botPositions.add(b.head)
         }
+        val aliveCount = bots.count { it.isAlive }
         _hudState.value = EngineHudState(
             score = player.mass.toInt(),
             coins = coinsCollectedInSession,
@@ -350,7 +442,12 @@ class WormsGameEngine(
             spawnProtectionRemaining = spawnProtectionTimer,
             activePotions = player.activePotions.toMap(),
             playerPos = player.head,
-            botPositions = botPositions
+            botPositions = botPositions,
+            gameMode = gameMode,
+            timeAttackRemaining = timeAttackRemaining,
+            aliveBotsCount = aliveCount,
+            currentArenaRadius = currentArenaRadius,
+            recentKillEvent = recentKillEvent
         )
     }
 
@@ -378,24 +475,24 @@ class WormsGameEngine(
 
         // Apply player speed level upgrade
         if (worm.isPlayer) {
-            targetSpeed += (userData.speedLevel - 1) * 8f
+            targetSpeed += (userData.speedLevel - 1) * 12f
         }
 
-        worm.speed = targetSpeed
+        worm.speed += (targetSpeed - worm.speed) * (dt * 10f).coerceAtMost(1f)
 
-        // Boosting consumes mass and leaves glowing drops (unless speed potion is on)
-        if (worm.isBoosting && !hasSpeedPotion && worm.mass > 20f) {
-            val burnRate = if (worm.isPlayer) {
-                4f / (1f + (userData.boostLevel - 1) * 0.25f)
-            } else {
-                4f
-            }
-            worm.mass = (worm.mass - burnRate * dt).coerceAtLeast(18f)
+        // Boost mass consumption and trail drop
+        if (worm.isBoosting && worm.mass > 25f) {
+            val boostEfficiency = if (worm.isPlayer) (1.0f - (userData.boostLevel - 1) * 0.12f) else 1.0f
+            val massLoss = 4f * dt * boostEfficiency
+            worm.mass = (worm.mass - massLoss).coerceAtLeast(20f)
 
-            // Spawn boost exhaust particle / drop
-            if (Random.nextFloat() < 0.35f && worm.bodyPoints.isNotEmpty()) {
-                val tailPos = worm.bodyPoints.last()
-                spawnRandomFood(tailPos, FoodType.BOOST_DROP)
+            worm.boostParticleTimer -= dt
+            if (worm.boostParticleTimer <= 0f) {
+                worm.boostParticleTimer = 0.08f
+                val tailPos = worm.bodyPoints.lastOrNull() ?: worm.head
+                if (Random.nextFloat() < 0.35f) {
+                    spawnRandomFood(tailPos, FoodType.APPLE)
+                }
                 particles.add(
                     GameParticle(
                         position = tailPos,
@@ -448,7 +545,7 @@ class WormsGameEngine(
 
             // Danger detection: avoid arena border
             val distToCenterSq = bot.head.distanceSquaredTo(arenaCenter)
-            val borderDangerDist = arenaRadius - 320f
+            val borderDangerDist = currentArenaRadius - 320f
             if (distToCenterSq > borderDangerDist * borderDangerDist) {
                 val toCenter = (arenaCenter - bot.head).angle()
                 bot.targetAngle = toCenter
@@ -503,7 +600,6 @@ class WormsGameEngine(
             // Behavior goal selection
             when (bot.aiPersonality) {
                 BotPersonality.HUNTER -> {
-                    // Only hunt player if player is NOT protected and after early game
                     val canHuntPlayer = player.isAlive && !isPlayerProtected && gameTimeSeconds > 8.0f &&
                             player.mass < bot.mass * 1.3f && bot.head.distanceSquaredTo(player.head) < 450f * 450f
 
@@ -513,7 +609,6 @@ class WormsGameEngine(
                         bot.isBoosting = bot.head.distanceSquaredTo(player.head) < 220f * 220f
                         return
                     } else {
-                        // Hunt another bot
                         var bestBot: Worm? = null
                         var bestDistSq = 450f * 450f
                         for (i in bots.indices) {
@@ -572,7 +667,7 @@ class WormsGameEngine(
                 BotPersonality.WANDERER -> {}
             }
 
-            // Default: find closest tasty food without allocations
+            // Default: find closest food
             var closestFoodPos: Vec2? = null
             var closestDistSq = 350f * 350f
             for (i in foods.indices) {
@@ -597,10 +692,9 @@ class WormsGameEngine(
     private fun checkBoundaryCollision(worm: Worm) {
         if (!worm.isAlive) return
         val distToCenterSq = worm.head.distanceSquaredTo(arenaCenter)
-        val maxDist = arenaRadius - worm.segmentRadius * 0.5f
+        val maxDist = currentArenaRadius - worm.segmentRadius * 0.5f
         if (distToCenterSq >= maxDist * maxDist) {
             if (worm.isPlayer && isPlayerProtected) {
-                // Gently bounce back towards center if under spawn protection
                 val toCenter = (arenaCenter - worm.head).normalized()
                 worm.head = arenaCenter + (worm.head - arenaCenter).normalized() * (maxDist - 20f)
                 worm.angle = toCenter.angle()
@@ -647,7 +741,7 @@ class WormsGameEngine(
             val headA = botA.head
             val radiusA = botA.segmentRadius
 
-            // Check Bot A hitting Player's body (Only if player is NOT protected, ghost pass-through)
+            // Check Bot A hitting Player's body
             if (player.isAlive && !isPlayerProtected) {
                 val radiusP = player.segmentRadius
                 val hitDist = (radiusA + radiusP) * 0.72f
@@ -686,7 +780,6 @@ class WormsGameEngine(
 
     private fun killWorm(victim: Worm, killer: Worm?) {
         if (!victim.isAlive) return
-        // Absolute invulnerability guarantee: player CANNOT die during protection
         if (victim.isPlayer && (isPlayerProtected || gameTimeSeconds < 5.0f)) return
 
         victim.isAlive = false
@@ -696,6 +789,15 @@ class WormsGameEngine(
             killer.mass += 15f
             if (killer.isPlayer) {
                 soundManager.playKillSound()
+                playerKillStreak++
+                val bonusCoins = Random.nextInt(15, 35)
+                coinsCollectedInSession += bonusCoins
+                recentKillEvent = KillEvent(
+                    victimName = victim.name,
+                    streak = playerKillStreak,
+                    coinsEarned = bonusCoins
+                )
+                killEventTimer = 2.8f
             }
         }
 
@@ -711,7 +813,6 @@ class WormsGameEngine(
             }
             spawnRandomFood(pt, foodType)
 
-            // Death explosion particles
             particles.add(
                 GameParticle(
                     position = pt,
@@ -742,13 +843,16 @@ class WormsGameEngine(
         }
 
         val multiplierActive = player.hasPotion(PotionType.MULTIPLIER)
-        val scoreMultiplier = if (multiplierActive) (2.0f + (userData.multiplierLevel - 1) * 0.25f) else 1.0f
+        var scoreMultiplier = if (multiplierActive) (2.0f + (userData.multiplierLevel - 1) * 0.25f) else 1.0f
+        // Bonus 2x score in Time Attack!
+        if (gameMode == GameMode.TIME_ATTACK) {
+            scoreMultiplier *= 2.0f
+        }
 
         val foodIterator = foods.iterator()
         while (foodIterator.hasNext()) {
             val food = foodIterator.next()
 
-            // Magnet effect for player
             if (player.isAlive) {
                 val dist = playerHead.distanceTo(food.position)
                 if (dist < magnetRadius) {
@@ -757,7 +861,6 @@ class WormsGameEngine(
                     food.position = food.position + dir * (pullSpeed * dt)
                 }
 
-                // Eat check for player
                 if (dist < player.segmentRadius + food.radius + 6f) {
                     foodIterator.remove()
                     val massGained = food.mass * scoreMultiplier
@@ -770,7 +873,6 @@ class WormsGameEngine(
 
                     soundManager.playEatSound()
 
-                    // Sparkle particle
                     particles.add(
                         GameParticle(
                             position = food.position,
@@ -784,7 +886,6 @@ class WormsGameEngine(
                 }
             }
 
-            // Eat check for bots
             for (i in bots.indices) {
                 val bot = bots[i]
                 if (!bot.isAlive) continue
@@ -804,7 +905,6 @@ class WormsGameEngine(
             val potion = potionIterator.next()
             potion.pulsePhase += dt * 3f
 
-            // Player pickup
             if (player.isAlive && playerHead.distanceTo(potion.position) < player.segmentRadius + potion.radius + 10f) {
                 potionIterator.remove()
                 val duration = potion.type.defaultDuration
@@ -825,7 +925,6 @@ class WormsGameEngine(
                 continue
             }
 
-            // Bot pickup
             for (i in bots.indices) {
                 val bot = bots[i]
                 if (!bot.isAlive) continue
@@ -837,7 +936,6 @@ class WormsGameEngine(
             }
         }
 
-        // Ease mouth closed
         if (player.mouthOpen > 0f) {
             player.mouthOpen = (player.mouthOpen - dt * 2.5f).coerceAtLeast(0f)
         }

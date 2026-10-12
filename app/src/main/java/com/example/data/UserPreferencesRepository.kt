@@ -13,6 +13,13 @@ enum class ControlMode(val title: String, val description: String) {
     TOUCH_FOLLOW("Sentuh & Ikuti", "Cacing berbelok mengikuti posisi jari di layar")
 }
 
+data class DailyRewardInfo(
+    val day: Int,
+    val coins: Int,
+    val bonusDescription: String,
+    val isSpecial: Boolean = false
+)
+
 data class UserGameData(
     val playerName: String = "Nana Tayantuh",
     val coins: Int = 150,
@@ -30,8 +37,56 @@ data class UserGameData(
     val speedLevel: Int = 1,
     val controlMode: ControlMode = ControlMode.JOYSTICK,
     val soundEnabled: Boolean = true,
-    val vibrationEnabled: Boolean = true
-)
+    val vibrationEnabled: Boolean = true,
+    // 7 Days Daily Login Event
+    val lastClaimedDay: Int = 0, // 0 means haven't claimed day 1 yet
+    val lastClaimTimestamp: Long = 0L,
+    val firstInstallTimestamp: Long = 0L,
+    // Customizable Control Positions
+    val joystickOffsetX: Int = 36, // dp from left edge (default more inset for thumb)
+    val joystickOffsetY: Int = 36, // dp from bottom edge
+    val joystickScale: Float = 1.05f,
+    val boostOffsetX: Int = 36, // dp from right edge
+    val boostOffsetY: Int = 36, // dp from bottom edge
+    val boostScale: Float = 1.05f
+) {
+    companion object {
+        val DAILY_REWARDS = listOf(
+            DailyRewardInfo(1, 200, "Hadiah Hari Pertama!"),
+            DailyRewardInfo(2, 400, "Koin Bertambah!"),
+            DailyRewardInfo(3, 650, "Bonus Ramuan & Koin!"),
+            DailyRewardInfo(4, 900, "Koin Sultan Cacing!"),
+            DailyRewardInfo(5, 1200, "Peti Emas Hadiah!"),
+            DailyRewardInfo(6, 1600, "Hadiah Legendaris!"),
+            DailyRewardInfo(7, 3000, "Jackpot 7 Hari + Skin Emas!", isSpecial = true)
+        )
+        const val ONE_DAY_MILLIS = 24 * 60 * 60 * 1000L
+    }
+
+    val canClaimDailyToday: Boolean
+        get() {
+            if (lastClaimedDay == 0) return true // First login ever, can claim day 1 immediately
+            val elapsed = System.currentTimeMillis() - lastClaimTimestamp
+            return elapsed >= ONE_DAY_MILLIS
+        }
+
+    val nextDailyDay: Int
+        get() {
+            return if (lastClaimedDay >= 7) {
+                // If finished 7 days and 1 day passed, loop back to 1
+                if (canClaimDailyToday) 1 else 7
+            } else {
+                lastClaimedDay + 1
+            }
+        }
+
+    val millisUntilNextClaim: Long
+        get() {
+            if (canClaimDailyToday) return 0L
+            val elapsed = System.currentTimeMillis() - lastClaimTimestamp
+            return (ONE_DAY_MILLIS - elapsed).coerceAtLeast(0L)
+        }
+}
 
 class UserPreferencesRepository(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("worms_zone_prefs", Context.MODE_PRIVATE)
@@ -72,6 +127,23 @@ class UserPreferencesRepository(context: Context) {
         val sound = prefs.getBoolean("sound_enabled", true)
         val vibration = prefs.getBoolean("vibration_enabled", true)
 
+        var firstInstall = prefs.getLong("first_install_time", 0L)
+        if (firstInstall == 0L) {
+            firstInstall = System.currentTimeMillis()
+            prefs.edit().putLong("first_install_time", firstInstall).apply()
+        }
+
+        val lastClaimDay = prefs.getInt("daily_claim_day", 0)
+        val lastClaimTime = prefs.getLong("daily_claim_time", 0L)
+
+        val joyX = prefs.getInt("joy_offset_x", 36)
+        val joyY = prefs.getInt("joy_offset_y", 36)
+        val joyScale = prefs.getFloat("joy_scale", 1.05f)
+
+        val boostX = prefs.getInt("boost_offset_x", 36)
+        val boostY = prefs.getInt("boost_offset_y", 36)
+        val boostScale = prefs.getFloat("boost_scale", 1.05f)
+
         return UserGameData(
             playerName = name,
             coins = coins,
@@ -89,7 +161,16 @@ class UserPreferencesRepository(context: Context) {
             speedLevel = speedLvl,
             controlMode = controlMode,
             soundEnabled = sound,
-            vibrationEnabled = vibration
+            vibrationEnabled = vibration,
+            lastClaimedDay = lastClaimDay,
+            lastClaimTimestamp = lastClaimTime,
+            firstInstallTimestamp = firstInstall,
+            joystickOffsetX = joyX,
+            joystickOffsetY = joyY,
+            joystickScale = joyScale,
+            boostOffsetX = boostX,
+            boostOffsetY = boostY,
+            boostScale = boostScale
         )
     }
 
@@ -122,6 +203,94 @@ class UserPreferencesRepository(context: Context) {
             coins = newCoins,
             longestLength = newLongest
         )
+    }
+
+    fun claimDailyReward(): Pair<Int, Int>? {
+        val current = _userData.value
+        if (!current.canClaimDailyToday) return null
+
+        val targetDay = current.nextDailyDay
+        val rewardInfo = UserGameData.DAILY_REWARDS.getOrNull(targetDay - 1) 
+            ?: UserGameData.DAILY_REWARDS.last()
+        val rewardCoins = rewardInfo.coins
+
+        val now = System.currentTimeMillis()
+        val newCoins = current.coins + rewardCoins
+        var newUnlockedSkins = current.unlockedSkins
+
+        // Special Day 7 reward: Unlock Golden Skin if not unlocked!
+        if (targetDay == 7 && !newUnlockedSkins.contains(SkinId.GOLDEN_EMPEROR)) {
+            newUnlockedSkins = newUnlockedSkins + SkinId.GOLDEN_EMPEROR
+            prefs.edit().putStringSet("unlocked_skins", newUnlockedSkins.map { it.name }.toSet()).apply()
+        }
+
+        prefs.edit()
+            .putInt("daily_claim_day", targetDay)
+            .putLong("daily_claim_time", now)
+            .putInt("coins", newCoins)
+            .apply()
+
+        _userData.value = current.copy(
+            lastClaimedDay = targetDay,
+            lastClaimTimestamp = now,
+            coins = newCoins,
+            unlockedSkins = newUnlockedSkins
+        )
+
+        return Pair(targetDay, rewardCoins)
+    }
+
+    fun spendCoins(amount: Int): Boolean {
+        val current = _userData.value
+        if (current.coins < amount) return false
+        val newCoins = current.coins - amount
+        prefs.edit().putInt("coins", newCoins).apply()
+        _userData.value = current.copy(coins = newCoins)
+        return true
+    }
+
+    fun addCoins(amount: Int) {
+        val current = _userData.value
+        val newCoins = current.coins + amount
+        prefs.edit().putInt("coins", newCoins).apply()
+        _userData.value = current.copy(coins = newCoins)
+    }
+
+    fun updateJoystickSettings(offsetX: Int, offsetY: Int, scale: Float) {
+        val safeX = offsetX.coerceIn(10, 140)
+        val safeY = offsetY.coerceIn(10, 140)
+        val safeScale = scale.coerceIn(0.75f, 1.45f)
+        prefs.edit()
+            .putInt("joy_offset_x", safeX)
+            .putInt("joy_offset_y", safeY)
+            .putFloat("joy_scale", safeScale)
+            .apply()
+        _userData.value = _userData.value.copy(
+            joystickOffsetX = safeX,
+            joystickOffsetY = safeY,
+            joystickScale = safeScale
+        )
+    }
+
+    fun updateBoostSettings(offsetX: Int, offsetY: Int, scale: Float) {
+        val safeX = offsetX.coerceIn(10, 140)
+        val safeY = offsetY.coerceIn(10, 140)
+        val safeScale = scale.coerceIn(0.75f, 1.45f)
+        prefs.edit()
+            .putInt("boost_offset_x", safeX)
+            .putInt("boost_offset_y", safeY)
+            .putFloat("boost_scale", safeScale)
+            .apply()
+        _userData.value = _userData.value.copy(
+            boostOffsetX = safeX,
+            boostOffsetY = safeY,
+            boostScale = safeScale
+        )
+    }
+
+    fun resetControlSettings() {
+        updateJoystickSettings(36, 36, 1.05f)
+        updateBoostSettings(36, 36, 1.05f)
     }
 
     fun equipSkin(skin: SkinId) {
