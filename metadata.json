@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "Nana Tayantuh",
+  "description": "Game cacing arena luar luas open world dengan tema Cyber Funk, mode joystick dinamis & diam, makanan HD, event 7 hari, dan 7 bahasa.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

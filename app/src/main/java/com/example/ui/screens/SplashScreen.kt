@@ -64,13 +64,14 @@ fun SplashScreen(
     val progressAnim = remember { Animatable(0f) }
     var currentTipIndex by remember { mutableStateOf(0) }
 
-    val tips = listOf(
-        "Memuat Arena Luar nan Luas (7600 x 7600 px)...",
-        "Menyiapkan Bot Cacing AI & Makanan HD...",
-        "Menata Donat, Burger, dan Semangka Segar...",
-        "Menyiapkan Event 7 Hari Login & Hadiah Emas...",
-        "Siap Meluncur ke Arena Luar!"
-    )
+    val tips = remember(language) {
+        listOf(
+            StringsHelper.get("tip1", language),
+            StringsHelper.get("tip2", language),
+            StringsHelper.get("tip3", language),
+            StringsHelper.get("tip4", language)
+        )
+    }
 
     val infiniteTransition = rememberInfiniteTransition(label = "splashAnim")
     val wigglePhase by infiniteTransition.animateFloat(
@@ -207,7 +208,7 @@ fun SplashScreen(
                 border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFFD700))
             ) {
                 Text(
-                    text = "ARENA LUAR • WIDE OPEN WORLD",
+                    text = "${StringsHelper.get("outer_arena", language).uppercase()} • WIDE OPEN WORLD",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Black,
                     color = Color(0xFFFFD700),
@@ -230,7 +231,7 @@ fun SplashScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "MEMUAT PERMAINAN...",
+                        text = StringsHelper.get("loading", language),
                         fontSize = 11.sp,
                         color = Color(0xFFA0AEC0),
                         fontWeight = FontWeight.Bold

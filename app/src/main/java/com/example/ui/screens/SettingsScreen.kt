@@ -69,17 +69,19 @@ import com.example.data.StringsHelper
 import com.example.data.UserGameData
 import com.example.model.MapTheme
 
+import com.example.data.JoystickMode
+
 @Composable
 fun SettingsScreen(
     userData: UserGameData,
     onSetControlMode: (ControlMode) -> Unit,
+    onSetJoystickMode: (JoystickMode) -> Unit,
     onToggleSound: (Boolean) -> Unit,
     onToggleVibration: (Boolean) -> Unit,
     onUpdateName: (String) -> Unit,
     onOpenLayoutEditor: () -> Unit,
     onResetControls: () -> Unit,
     onSetLanguage: (AppLanguage) -> Unit,
-    onSetMapTheme: (MapTheme) -> Unit,
     onBack: () -> Unit
 ) {
     BackHandler { onBack() }
@@ -355,7 +357,7 @@ fun SettingsScreen(
                 }
             }
 
-            // 3. TEMA PETA ARENA (Map Themes)
+            // 3. PENGATURAN MODE JOYSTICK (Mode Diam vs Mode Bergerak)
             item {
                 Surface(
                     shape = RoundedCornerShape(20.dp),
@@ -367,23 +369,23 @@ fun SettingsScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Surface(
                                 shape = CircleShape,
-                                color = Color(0x33FFD700),
+                                color = Color(0x334ADE80),
                                 modifier = Modifier.size(36.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
-                                    Icon(Icons.Default.Map, contentDescription = null, tint = Color(0xFFFFD700), modifier = Modifier.size(20.dp))
+                                    Icon(Icons.Default.Tune, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(20.dp))
                                 }
                             }
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
                                 Text(
-                                    text = StringsHelper.get("map_theme", lang),
+                                    text = StringsHelper.get("joystick_settings", lang),
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = Color(0xFFFFD700),
+                                    color = Color(0xFF4ADE80),
                                     fontWeight = FontWeight.Black
                                 )
                                 Text(
-                                    text = "Pilih tema arena luas dengan visual atmosfer dan efek khusus",
+                                    text = StringsHelper.get("joystick_mode_dynamic_desc", lang),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color(0xFFA0AEC0)
                                 )
@@ -392,53 +394,99 @@ fun SettingsScreen(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        // Map Themes Selection Cards
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            MapTheme.entries.forEach { theme ->
-                                val isSelected = userData.mapTheme == theme
-                                Surface(
-                                    onClick = { onSetMapTheme(theme) },
-                                    shape = RoundedCornerShape(14.dp),
-                                    color = if (isSelected) Color(0xFF262E4D) else Color(0xFF1B2138),
-                                    border = androidx.compose.foundation.BorderStroke(
-                                        width = if (isSelected) 2.dp else 1.dp,
-                                        color = if (isSelected) theme.borderColor else Color(0xFF2C3454)
-                                    ),
-                                    modifier = Modifier.fillMaxWidth()
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            // Mode Diam (Static/Fixed)
+                            val isStatic = userData.joystickMode == JoystickMode.STATIC
+                            Surface(
+                                onClick = { onSetJoystickMode(JoystickMode.STATIC) },
+                                shape = RoundedCornerShape(14.dp),
+                                color = if (isStatic) Color(0xFF26354D) else Color(0xFF1B2138),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    width = if (isStatic) 2.dp else 1.dp,
+                                    color = if (isStatic) Color(0xFF4ADE80) else Color(0xFF2C3454)
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text(text = theme.icon, fontSize = 24.sp)
-                                            Spacer(modifier = Modifier.width(12.dp))
-                                            Column {
-                                                Text(
-                                                    text = theme.title,
-                                                    style = MaterialTheme.typography.titleSmall,
-                                                    color = if (isSelected) theme.borderColor else Color.White,
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                                Text(
-                                                    text = theme.description,
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = Color(0xFFA0AEC0),
-                                                    fontSize = 11.sp
-                                                )
+                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                        Text(text = "📍", fontSize = 24.sp)
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Column {
+                                            Text(
+                                                text = StringsHelper.get("joystick_mode_static", lang),
+                                                style = MaterialTheme.typography.titleSmall,
+                                                color = if (isStatic) Color(0xFF4ADE80) else Color.White,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            Text(
+                                                text = StringsHelper.get("joystick_mode_static_desc", lang),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = Color(0xFFA0AEC0),
+                                                fontSize = 11.sp
+                                            )
+                                        }
+                                    }
+                                    if (isStatic) {
+                                        Surface(
+                                            shape = CircleShape,
+                                            color = Color(0xFF4ADE80),
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(Icons.Default.Check, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
                                             }
                                         }
+                                    }
+                                }
+                            }
 
-                                        if (isSelected) {
-                                            Surface(
-                                                shape = CircleShape,
-                                                color = theme.borderColor,
-                                                modifier = Modifier.size(22.dp)
-                                            ) {
-                                                Box(contentAlignment = Alignment.Center) {
-                                                    Icon(Icons.Default.Check, contentDescription = null, tint = Color.Black, modifier = Modifier.size(15.dp))
-                                                }
+                            // Mode Bergerak (Dynamic/Floating)
+                            val isDynamic = userData.joystickMode == JoystickMode.DYNAMIC
+                            Surface(
+                                onClick = { onSetJoystickMode(JoystickMode.DYNAMIC) },
+                                shape = RoundedCornerShape(14.dp),
+                                color = if (isDynamic) Color(0xFF26354D) else Color(0xFF1B2138),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    width = if (isDynamic) 2.dp else 1.dp,
+                                    color = if (isDynamic) Color(0xFF4ADE80) else Color(0xFF2C3454)
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                        Text(text = "👆", fontSize = 24.sp)
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Column {
+                                            Text(
+                                                text = StringsHelper.get("joystick_mode_dynamic", lang),
+                                                style = MaterialTheme.typography.titleSmall,
+                                                color = if (isDynamic) Color(0xFF4ADE80) else Color.White,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            Text(
+                                                text = StringsHelper.get("joystick_mode_dynamic_desc", lang),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = Color(0xFFA0AEC0),
+                                                fontSize = 11.sp
+                                            )
+                                        }
+                                    }
+                                    if (isDynamic) {
+                                        Surface(
+                                            shape = CircleShape,
+                                            color = Color(0xFF4ADE80),
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(Icons.Default.Check, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
                                             }
                                         }
                                     }

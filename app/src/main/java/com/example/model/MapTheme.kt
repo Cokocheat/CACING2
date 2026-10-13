@@ -12,58 +12,66 @@ enum class MapTheme(
     val glowColor: Color,
     val description: String
 ) {
+    CYBER_FUNK(
+        id = "cyber_funk",
+        title = "Cyber Funk",
+        icon = "⚡",
+        bgColor = Color(0xFF070B18),
+        gridColor = Color(0xFF132A4A),
+        borderColor = Color(0xFF00E5FF),
+        glowColor = Color(0xFFE040FB),
+        description = "Gaya futuristik Cyber Funk dengan grid laser neon & warna synthwave"
+    ),
     GREEN_MEADOW(
-        id = "meadow",
-        title = "Padang Rumput",
+        id = "green_meadow",
+        title = "Green Meadow",
         icon = "🌿",
-        bgColor = Color(0xFF142416),
-        gridColor = Color(0xFF223E25),
+        bgColor = Color(0xFF122415),
+        gridColor = Color(0xFF1F4225),
         borderColor = Color(0xFF4CAF50),
         glowColor = Color(0xFF81C784),
-        description = "Padang rumput segar berembun dengan sentuhan alam luas"
-    ),
-    COSMIC_SPACE(
-        id = "space",
-        title = "Galaksi Kosmik",
-        icon = "🌌",
-        bgColor = Color(0xFF0D1122),
-        gridColor = Color(0xFF1B2344),
-        borderColor = Color(0xFF7C4DFF),
-        glowColor = Color(0xFFB388FF),
-        description = "Gugusan bintang dan nebula luar angkasa penuh misteri"
+        description = "Padang rumput hijau segar nan asri dengan nuansa alam terbuka luas"
     ),
     SWEET_CANDY(
-        id = "candy",
-        title = "Negeri Permen",
+        id = "sweet_candy",
+        title = "Sweet Candy",
         icon = "🍭",
-        bgColor = Color(0xFF29142A),
-        gridColor = Color(0xFF48234B),
+        bgColor = Color(0xFF2E1331),
+        gridColor = Color(0xFF55225A),
         borderColor = Color(0xFFFF4081),
         glowColor = Color(0xFFFF80AB),
-        description = "Dunia gula manis warna-warni penuh cemilan lezat"
+        description = "Dunia permen manis gula-gula penuh warna ceria dan cemilan lezat"
     ),
-    CYBER_NEON(
-        id = "cyber",
-        title = "Cyberpunk Neon",
-        icon = "⚡",
-        bgColor = Color(0xFF0F1726),
-        gridColor = Color(0xFF162D4A),
-        borderColor = Color(0xFF00E5FF),
-        glowColor = Color(0xFF18FFFF),
-        description = "Grid berteknologi tinggi dengan garis laser neon futuristik"
+    COSMIC_SPACE(
+        id = "cosmic_space",
+        title = "Cosmic Space",
+        icon = "🌌",
+        bgColor = Color(0xFF080C1D),
+        gridColor = Color(0xFF19234A),
+        borderColor = Color(0xFF7C4DFF),
+        glowColor = Color(0xFFB388FF),
+        description = "Galaksi antariksa luas dengan taburan bintang dan nebula bercahaya"
     ),
     LAVA_VOLCANO(
-        id = "volcano",
-        title = "Kawah Magma Lava",
+        id = "lava_volcano",
+        title = "Lava Volcano",
         icon = "🌋",
-        bgColor = Color(0xFF241010),
-        gridColor = Color(0xFF421C1C),
+        bgColor = Color(0xFF260D0D),
+        gridColor = Color(0xFF4A1818),
         borderColor = Color(0xFFFF5722),
-        glowColor = Color(0xFFFF8A65),
-        description = "Kerak bumi berapi dengan lava pijar menyala hangat"
+        glowColor = Color(0xFFFFAB40),
+        description = "Kawah gunung berapi panas dengan retakan lahar magma membara"
     );
 
     companion object {
-        fun fromId(id: String): MapTheme = entries.find { it.id == id } ?: GREEN_MEADOW
+        fun fromId(id: String): MapTheme {
+            return entries.find { it.id == id || it.id.startsWith(id) || id.startsWith(it.id) }
+                ?: if (id == "cyber") CYBER_FUNK
+                else if (id == "meadow") GREEN_MEADOW
+                else if (id == "candy") SWEET_CANDY
+                else if (id == "space") COSMIC_SPACE
+                else if (id == "volcano") LAVA_VOLCANO
+                else CYBER_FUNK
+        }
     }
 }

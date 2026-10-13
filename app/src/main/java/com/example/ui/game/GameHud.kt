@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -43,6 +44,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.example.data.JoystickMode
+import com.example.data.StringsHelper
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -400,20 +403,33 @@ fun GameHud(
         }
 
         // BOTTOM CONTROLS: Ergonomic & Configurable Joystick (Left), Center Hint, and Boost Button (Right)
-        // 1. Virtual Joystick
+        // 1. Virtual Joystick (Supports Mode Diam & Mode Bergerak)
         if (userData.controlMode == ControlMode.JOYSTICK) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(
-                        start = userData.joystickOffsetX.dp,
-                        bottom = userData.joystickOffsetY.dp
+            val joySize = (126 * userData.joystickScale).dp
+            if (userData.joystickMode == JoystickMode.STATIC) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(
+                            start = userData.joystickOffsetX.dp,
+                            bottom = userData.joystickOffsetY.dp
+                        )
+                ) {
+                    VirtualJoystick(
+                        onMove = onDirectionChange,
+                        modifier = Modifier.size(joySize)
                     )
-            ) {
-                val joySize = (126 * userData.joystickScale).dp
-                VirtualJoystick(
+                }
+            } else {
+                DynamicVirtualJoystick(
                     onMove = onDirectionChange,
-                    modifier = Modifier.size(joySize)
+                    defaultOffsetX = userData.joystickOffsetX.dp,
+                    defaultOffsetY = userData.joystickOffsetY.dp,
+                    joySize = joySize,
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(0.52f)
+                        .align(Alignment.CenterStart)
                 )
             }
         }
@@ -430,7 +446,7 @@ fun GameHud(
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF353D63))
             ) {
                 Text(
-                    text = "👆 Geser jempol atau sentuh layar untuk mengarahkan",
+                    text = StringsHelper.get("tap_to_steer", userData.language),
                     style = MaterialTheme.typography.labelSmall,
                     color = Color(0xFFCBD5E1),
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
@@ -512,7 +528,6 @@ fun VirtualJoystick(
     modifier: Modifier = Modifier
 ) {
     var thumbOffset by remember { mutableStateOf(Offset.Zero) }
-    val maxRadius = 48f
 
     Box(
         modifier = modifier
@@ -525,21 +540,28 @@ fun VirtualJoystick(
                 detectDragGestures(
                     onDragStart = { offset ->
                         val center = Offset(size.width / 2f, size.height / 2f)
+                        val maxRadius = (size.width / 2f) * 0.72f
                         val drag = offset - center
                         val dist = drag.getDistance()
                         val clamped = if (dist > maxRadius) drag * (maxRadius / dist) else drag
                         thumbOffset = clamped
-                        val angle = atan2(clamped.y, clamped.x)
-                        onMove(angle)
+                        if (dist > 6f) {
+                            val angle = atan2(drag.y, drag.x)
+                            onMove(angle)
+                        }
                     },
-                    onDrag = { change, dragAmount ->
+                    onDrag = { change, _ ->
                         change.consume()
-                        val newOffset = thumbOffset + dragAmount
-                        val dist = newOffset.getDistance()
-                        val clamped = if (dist > maxRadius) newOffset * (maxRadius / dist) else newOffset
+                        val center = Offset(size.width / 2f, size.height / 2f)
+                        val maxRadius = (size.width / 2f) * 0.72f
+                        val drag = change.position - center
+                        val dist = drag.getDistance()
+                        val clamped = if (dist > maxRadius) drag * (maxRadius / dist) else drag
                         thumbOffset = clamped
-                        val angle = atan2(clamped.y, clamped.x)
-                        onMove(angle)
+                        if (dist > 6f) {
+                            val angle = atan2(drag.y, drag.x)
+                            onMove(angle)
+                        }
                     },
                     onDragEnd = {
                         thumbOffset = Offset.Zero
@@ -565,6 +587,113 @@ fun VirtualJoystick(
                 .border(2.dp, Color.White.copy(alpha = 0.85f), CircleShape)
                 .shadow(6.dp, CircleShape)
         )
+    }
+}
+
+@Composable
+fun DynamicVirtualJoystick(
+    onMove: (Float) -> Unit,
+    defaultOffsetX: androidx.compose.ui.unit.Dp,
+    defaultOffsetY: androidx.compose.ui.unit.Dp,
+    joySize: androidx.compose.ui.unit.Dp,
+    modifier: Modifier = Modifier
+) {
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    var isDragging by remember { mutableStateOf(false) }
+    var touchCenter by remember { mutableStateOf<Offset?>(null) }
+    var thumbOffset by remember { mutableStateOf(Offset.Zero) }
+
+    val joySizePx = with(density) { joySize.toPx() }
+    val maxRadius = joySizePx * 0.36f
+
+    Box(
+        modifier = modifier
+            .testTag("dynamic_virtual_joystick_zone")
+            .pointerInput(Unit) {
+                detectDragGestures(
+                    onDragStart = { offset ->
+                        isDragging = true
+                        touchCenter = offset
+                        thumbOffset = Offset.Zero
+                    },
+                    onDrag = { change, _ ->
+                        change.consume()
+                        val center = touchCenter ?: change.position
+                        val drag = change.position - center
+                        val dist = drag.getDistance()
+                        val clamped = if (dist > maxRadius) drag * (maxRadius / dist) else drag
+                        thumbOffset = clamped
+                        if (dist > 6f) {
+                            val angle = atan2(drag.y, drag.x)
+                            onMove(angle)
+                        }
+                    },
+                    onDragEnd = {
+                        isDragging = false
+                        touchCenter = null
+                        thumbOffset = Offset.Zero
+                    },
+                    onDragCancel = {
+                        isDragging = false
+                        touchCenter = null
+                        thumbOffset = Offset.Zero
+                    }
+                )
+            }
+    ) {
+        if (isDragging && touchCenter != null) {
+            val center = touchCenter!!
+            // Render floating joystick centered at thumb touch point
+            Box(
+                modifier = Modifier
+                    .offset {
+                        IntOffset(
+                            (center.x - joySizePx / 2f).roundToInt(),
+                            (center.y - joySizePx / 2f).roundToInt()
+                        )
+                    }
+                    .size(joySize)
+                    .clip(CircleShape)
+                    .background(Color(0x88161B2E))
+                    .border(2.5.dp, Color(0xCC4ADE80), CircleShape)
+                    .shadow(12.dp, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                // Inner Knob
+                Box(
+                    modifier = Modifier
+                        .offset { IntOffset(thumbOffset.x.roundToInt(), thumbOffset.y.roundToInt()) }
+                        .size(46.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.radialGradient(
+                                colors = listOf(Color(0xFF4ADE80), Color(0xFF16A34A))
+                            )
+                        )
+                        .border(2.dp, Color.White, CircleShape)
+                        .shadow(6.dp, CircleShape)
+                )
+            }
+        } else {
+            // Idle hint ring at configured anchor position
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = defaultOffsetX, bottom = defaultOffsetY)
+                    .size(joySize)
+                    .clip(CircleShape)
+                    .background(Color(0x33161B2E))
+                    .border(1.5.dp, Color(0x664ADE80), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color(0x444ADE80))
+                )
+            }
+        }
     }
 }
 

@@ -161,7 +161,7 @@ fun MainGameScreen(
                 if (sx >= -viewMargin && sx <= w + viewMargin &&
                     sy >= -viewMargin && sy <= h + viewMargin
                 ) {
-                    WormsRenderer.drawFood(this, food, Offset(sx, sy), zoom)
+                    WormsRenderer.drawFood(this, food, Offset(sx, sy), zoom, userData.mapTheme)
                 }
             }
 

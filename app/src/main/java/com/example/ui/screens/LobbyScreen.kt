@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Checkroom
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.PlayArrow
@@ -52,6 +53,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -80,13 +82,12 @@ fun LobbyScreen(
     onClaimDailyReward: () -> Unit,
     onSetMapTheme: (MapTheme) -> Unit = {}
 ) {
+    val lang = userData.language
     var nameInput by remember(userData.playerName) { mutableStateOf(userData.playerName) }
     var selectedMode by remember { mutableStateOf(GameMode.OPEN_ARENA) }
 
-    // Daily Login Dialog: Automatically shows up when player can claim today!
     var showDailyLoginDialog by remember { mutableStateOf(userData.canClaimDailyToday) }
 
-    // Floating worm wiggling animation for preview
     val infiniteTransition = rememberInfiniteTransition(label = "wormWiggle")
     val wigglePhase by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -99,44 +100,77 @@ fun LobbyScreen(
     )
 
     val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 1.0f,
-        targetValue = 1.04f,
+        initialValue = 0.98f,
+        targetValue = 1.03f,
         animationSpec = infiniteRepeatable(
             animation = tween(900, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "btnPulse"
+        label = "pulse"
     )
+
+    // Dynamic background matching selected arena theme
+    val theme = userData.mapTheme
+    val bgGradient = remember(theme) {
+        Brush.verticalGradient(
+            colors = listOf(
+                theme.bgColor,
+                theme.bgColor.copy(alpha = 0.85f),
+                Color(0xFF090D18)
+            )
+        )
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(Color(0xFF10131F), Color(0xFF181E33), Color(0xFF0D101C))
-                )
-            )
+            .background(bgGradient)
             .testTag("lobby_screen")
     ) {
+        // Subtle ambient theme grid overlay
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val step = 80.dp.toPx()
+            var x = 0f
+            while (x < size.width) {
+                drawLine(
+                    color = theme.gridColor.copy(alpha = 0.35f),
+                    start = Offset(x, 0f),
+                    end = Offset(x, size.height),
+                    strokeWidth = 1f
+                )
+                x += step
+            }
+            var y = 0f
+            while (y < size.height) {
+                drawLine(
+                    color = theme.gridColor.copy(alpha = 0.35f),
+                    start = Offset(0f, y),
+                    end = Offset(size.width, y),
+                    strokeWidth = 1f
+                )
+                y += step
+            }
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 12.dp),
+                .padding(horizontal = 20.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // TOP HEADER BAR: Game Logo "nana tayantuh", "ARENA LUAR", Event 7 Hari, Coins, Settings
+            // TOP HEADER BAR: Game Logo "nana tayantuh", "ARENA LUAR", Active Theme Tag, Event 7 Hari, Coins, Settings
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 4.dp),
+                    .padding(top = 2.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Game title & "ARENA LUAR"
+                // Game title & "ARENA LUAR" & Current Theme Badge
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = "nana tayantuh",
-                        style = MaterialTheme.typography.displaySmall,
+                        style = MaterialTheme.typography.headlineMedium,
                         color = Color(0xFF4ADE80),
                         fontWeight = FontWeight.Black,
                         letterSpacing = 1.sp
@@ -148,7 +182,7 @@ fun LobbyScreen(
                         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFFD600).copy(alpha = 0.5f))
                     ) {
                         Text(
-                            text = "ARENA LUAR",
+                            text = StringsHelper.get("outer_arena", lang).uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             color = Color(0xFFFFD600),
                             fontWeight = FontWeight.Black,
@@ -159,26 +193,22 @@ fun LobbyScreen(
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    // Map Theme Quick Selector
+                    // Theme Badge
                     Surface(
-                        onClick = {
-                            val nextIndex = (userData.mapTheme.ordinal + 1) % MapTheme.entries.size
-                            onSetMapTheme(MapTheme.entries[nextIndex])
-                        },
-                        shape = RoundedCornerShape(10.dp),
+                        shape = RoundedCornerShape(8.dp),
                         color = Color(0xFF1B233D),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, userData.mapTheme.borderColor)
+                        border = androidx.compose.foundation.BorderStroke(1.dp, theme.borderColor)
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = userData.mapTheme.icon, fontSize = 13.sp)
+                            Text(text = theme.icon, fontSize = 12.sp)
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = userData.mapTheme.title,
+                                text = theme.title,
                                 fontSize = 11.sp,
-                                color = userData.mapTheme.borderColor,
+                                color = theme.borderColor,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -209,7 +239,7 @@ fun LobbyScreen(
                             Text(text = "🎁", fontSize = 16.sp)
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = if (userData.canClaimDailyToday) "Event 7 Hari (!)" else "Event 7 Hari",
+                                text = if (userData.canClaimDailyToday) "${StringsHelper.get("daily_event", lang)} (!)" else StringsHelper.get("daily_event", lang),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = if (userData.canClaimDailyToday) Color(0xFFFFD700) else Color.White,
                                 fontWeight = FontWeight.Bold
@@ -251,7 +281,7 @@ fun LobbyScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "Pengaturan",
+                            contentDescription = StringsHelper.get("settings", lang),
                             tint = Color.White,
                             modifier = Modifier.size(20.dp)
                         )
@@ -264,8 +294,8 @@ fun LobbyScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(vertical = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(18.dp),
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // LEFT COLUMN: Avatar Preview & Feature Navigation
@@ -283,7 +313,7 @@ fun LobbyScreen(
                             .weight(1f)
                             .clip(RoundedCornerShape(20.dp))
                             .background(Color(0x66161B2E))
-                            .border(2.dp, Color(0xFF2C3454), RoundedCornerShape(20.dp))
+                            .border(2.dp, theme.borderColor.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
                             .clickable { onOpenWardrobe() },
                         contentAlignment = Alignment.Center
                     ) {
@@ -333,7 +363,7 @@ fun LobbyScreen(
                                 Icon(imageVector = Icons.Default.Checkroom, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(13.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "${userData.equippedSkin.title} (Ganti Skin)",
+                                    text = "${userData.equippedSkin.title} (${StringsHelper.get("change_skin", lang)})",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = Color.White,
                                     fontSize = 11.sp
@@ -342,7 +372,7 @@ fun LobbyScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
                     // BOTTOM ACTION BUTTONS
                     Row(
@@ -351,7 +381,7 @@ fun LobbyScreen(
                     ) {
                         LandscapeNavButton(
                             icon = Icons.Default.Checkroom,
-                            title = "Lemari Skin",
+                            title = StringsHelper.get("wardrobe", lang),
                             color = Color(0xFF00E5FF),
                             testTag = "btn_wardrobe",
                             onClick = onOpenWardrobe,
@@ -360,7 +390,7 @@ fun LobbyScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         LandscapeNavButton(
                             icon = Icons.Default.Upgrade,
-                            title = "Peningkatan",
+                            title = StringsHelper.get("upgrades", lang),
                             color = Color(0xFFFF9100),
                             testTag = "btn_upgrades",
                             onClick = onOpenUpgrades,
@@ -369,7 +399,7 @@ fun LobbyScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         LandscapeNavButton(
                             icon = Icons.Default.EmojiEvents,
-                            title = "Statistik",
+                            title = StringsHelper.get("records", lang),
                             color = Color(0xFFFFD700),
                             testTag = "btn_records",
                             onClick = onOpenRecords,
@@ -378,10 +408,10 @@ fun LobbyScreen(
                     }
                 }
 
-                // RIGHT COLUMN: Name Input, Mode Selector, High Score, Big PLAY button
+                // RIGHT COLUMN: Name Input, Mode Selector, Arena Theme Selector, High Score, Big PLAY button
                 Column(
                     modifier = Modifier
-                        .weight(1.15f)
+                        .weight(1.2f)
                         .fillMaxHeight(),
                     verticalArrangement = Arrangement.SpaceBetween,
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -393,9 +423,9 @@ fun LobbyScreen(
                             nameInput = it
                             onUpdateName(it)
                         },
-                        label = { Text("Nama Cacing Kamu", color = Color(0xFFA0AEC0)) },
+                        label = { Text(StringsHelper.get("player_name", lang), color = Color(0xFFA0AEC0)) },
                         singleLine = true,
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF4ADE80),
                             unfocusedBorderColor = Color(0xFF353D63),
@@ -411,28 +441,29 @@ fun LobbyScreen(
 
                     // GAME MODE SELECTOR (Arena Luar, Time Attack, Battle Royale)
                     Surface(
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(14.dp),
                         color = Color(0xFF161B2E),
                         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C3454)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column(modifier = Modifier.padding(10.dp)) {
+                        Column(modifier = Modifier.padding(8.dp)) {
                             Text(
-                                text = "PILIH MODE PERMAINAN:",
+                                text = StringsHelper.get("choose_mode", lang),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Color(0xFFA0AEC0),
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 10.sp
                             )
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 GameMode.entries.forEach { mode ->
                                     val isSelected = selectedMode == mode
                                     Surface(
                                         onClick = { selectedMode = mode },
-                                        shape = RoundedCornerShape(12.dp),
+                                        shape = RoundedCornerShape(10.dp),
                                         color = if (isSelected) Color(0xFF253350) else Color(0xFF1E243D),
                                         border = androidx.compose.foundation.BorderStroke(
                                             width = if (isSelected) 2.dp else 1.dp,
@@ -441,14 +472,18 @@ fun LobbyScreen(
                                         modifier = Modifier.weight(1f)
                                     ) {
                                         Column(
-                                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+                                            modifier = Modifier.padding(vertical = 6.dp, horizontal = 2.dp),
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
-                                            Text(text = mode.icon, fontSize = 18.sp)
+                                            Text(text = mode.icon, fontSize = 16.sp)
                                             Spacer(modifier = Modifier.height(2.dp))
                                             Text(
-                                                text = mode.title,
-                                                fontSize = 11.sp,
+                                                text = when (mode) {
+                                                    GameMode.OPEN_ARENA -> StringsHelper.get("outer_arena", lang)
+                                                    GameMode.TIME_ATTACK -> StringsHelper.get("time_attack", lang)
+                                                    GameMode.BATTLE_ROYALE -> StringsHelper.get("battle_royale", lang)
+                                                },
+                                                fontSize = 10.sp,
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                                 color = if (isSelected) Color(0xFF4ADE80) else Color.White,
                                                 textAlign = TextAlign.Center
@@ -460,29 +495,83 @@ fun LobbyScreen(
                         }
                     }
 
+                    // ARENA THEME SELECTOR (Cyber Funk, Green Meadow, Sweet Candy, Cosmic Space, Lava Volcano)
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = Color(0xFF161B2E),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, theme.borderColor.copy(alpha = 0.5f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(8.dp)) {
+                            Text(
+                                text = StringsHelper.get("choose_theme", lang),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = theme.borderColor,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 10.sp
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(5.dp)
+                            ) {
+                                MapTheme.entries.forEach { mapThemeOption ->
+                                    val isSelected = userData.mapTheme == mapThemeOption
+                                    Surface(
+                                        onClick = { onSetMapTheme(mapThemeOption) },
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = if (isSelected) Color(0xFF232D48) else Color(0xFF1A1F33),
+                                        border = androidx.compose.foundation.BorderStroke(
+                                            width = if (isSelected) 2.dp else 1.dp,
+                                            color = if (isSelected) mapThemeOption.borderColor else Color(0xFF2C3454)
+                                        ),
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Column(
+                                            modifier = Modifier.padding(vertical = 5.dp, horizontal = 2.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(text = mapThemeOption.icon, fontSize = 15.sp)
+                                            Spacer(modifier = Modifier.height(1.dp))
+                                            Text(
+                                                text = mapThemeOption.title,
+                                                fontSize = 9.sp,
+                                                fontWeight = if (isSelected) FontWeight.Black else FontWeight.Normal,
+                                                color = if (isSelected) mapThemeOption.borderColor else Color(0xFFCBD5E1),
+                                                textAlign = TextAlign.Center,
+                                                maxLines = 1
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     // HIGH SCORE TROPHY BANNER
                     Surface(
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(14.dp),
                         color = Color(0xFF1E243D),
                         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF353D63)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(text = "🏆", fontSize = 18.sp)
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(text = "🏆", fontSize = 16.sp)
+                                Spacer(modifier = Modifier.width(6.dp))
                                 Column {
                                     Text(
-                                        text = "Rekor Terbaik",
+                                        text = StringsHelper.get("high_score", lang),
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = Color(0xFFA0AEC0)
+                                        color = Color(0xFFA0AEC0),
+                                        fontSize = 10.sp
                                     )
                                     Text(
-                                        text = "${userData.highScore} Poin",
+                                        text = "${userData.highScore} ${StringsHelper.get("points", lang)}",
                                         style = MaterialTheme.typography.titleSmall,
                                         color = Color(0xFFFFD700),
                                         fontWeight = FontWeight.Bold
@@ -492,12 +581,13 @@ fun LobbyScreen(
 
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(
-                                    text = "Lawan Dikalahkan",
+                                    text = StringsHelper.get("kills", lang),
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = Color(0xFFA0AEC0)
+                                    color = Color(0xFFA0AEC0),
+                                    fontSize = 10.sp
                                 )
                                 Text(
-                                    text = "${userData.totalKills} Cacing",
+                                    text = "${userData.totalKills} ${StringsHelper.get("worms_count", lang)}",
                                     style = MaterialTheme.typography.titleSmall,
                                     color = Color(0xFFFF5252),
                                     fontWeight = FontWeight.Bold
@@ -511,29 +601,22 @@ fun LobbyScreen(
                         onClick = { onPlayClick(selectedMode) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(54.dp)
+                            .height(50.dp)
                             .scale(pulseScale)
-                            .shadow(16.dp, RoundedCornerShape(18.dp), spotColor = Color(0xFF4ADE80))
+                            .shadow(16.dp, RoundedCornerShape(16.dp), spotColor = Color(0xFF4ADE80))
                             .testTag("play_game_button"),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4ADE80)),
-                        shape = RoundedCornerShape(18.dp)
+                        shape = RoundedCornerShape(16.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = null,
-                                tint = Color.Black,
-                                modifier = Modifier.size(28.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "MULAI MAIN (${selectedMode.title.uppercase()})",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = Color.Black,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 1.sp
-                            )
-                        }
+                        Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, tint = Color.Black, modifier = Modifier.size(26.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = StringsHelper.get("play", lang),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.Black,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.sp
+                        )
                     }
                 }
             }
@@ -556,7 +639,7 @@ fun LobbyScreen(
 
 @Composable
 private fun LandscapeNavButton(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     title: String,
     color: Color,
     testTag: String,
@@ -566,24 +649,26 @@ private fun LandscapeNavButton(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(14.dp),
-        color = Color(0xFF1E243D),
-        border = androidx.compose.foundation.BorderStroke(1.dp, color.copy(alpha = 0.5f)),
-        modifier = modifier.testTag(testTag)
+        color = Color(0xCC161B2E),
+        border = androidx.compose.foundation.BorderStroke(1.5.dp, color.copy(alpha = 0.7f)),
+        shadowElevation = 4.dp,
+        modifier = modifier
+            .height(52.dp)
+            .testTag(testTag)
     ) {
         Row(
-            modifier = Modifier.padding(vertical = 10.dp, horizontal = 8.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
-            Icon(imageVector = icon, contentDescription = title, tint = color, modifier = Modifier.size(18.dp))
+            Icon(imageVector = icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = title,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelMedium,
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                fontSize = 11.sp
+                maxLines = 1
             )
         }
     }

@@ -93,11 +93,72 @@ object WormsRenderer {
         }
     }
 
-    fun drawFood(drawScope: DrawScope, food: FoodItem, screenPos: Offset, zoom: Float) {
+    fun drawFood(
+        drawScope: DrawScope,
+        food: FoodItem,
+        screenPos: Offset,
+        zoom: Float,
+        mapTheme: MapTheme = MapTheme.CYBER_FUNK
+    ) {
         with(drawScope) {
             val r = food.radius * zoom
             val x = screenPos.x
             val y = screenPos.y
+
+            // Theme-specific ambient food aura
+            when (mapTheme) {
+                MapTheme.CYBER_FUNK -> {
+                    drawCircle(
+                        color = Color(0x3300E5FF),
+                        radius = r * 1.35f,
+                        center = screenPos
+                    )
+                    drawCircle(
+                        color = Color(0x6600E5FF),
+                        radius = r * 1.2f,
+                        center = screenPos,
+                        style = Stroke(width = 1.2f * zoom)
+                    )
+                }
+                MapTheme.COSMIC_SPACE -> {
+                    drawCircle(
+                        color = Color(0x337C4DFF),
+                        radius = r * 1.35f,
+                        center = screenPos
+                    )
+                    drawCircle(
+                        color = Color(0xAAFFFFFF),
+                        radius = 1.4f * zoom,
+                        center = Offset(x - r * 0.9f, y - r * 0.8f)
+                    )
+                }
+                MapTheme.SWEET_CANDY -> {
+                    drawCircle(
+                        color = Color(0x33FF4081),
+                        radius = r * 1.3f,
+                        center = screenPos
+                    )
+                }
+                MapTheme.LAVA_VOLCANO -> {
+                    drawCircle(
+                        color = Color(0x44FF5722),
+                        radius = r * 1.35f,
+                        center = screenPos
+                    )
+                    drawCircle(
+                        color = Color(0xFFFF9100),
+                        radius = 1.4f * zoom,
+                        center = Offset(x + r * 0.9f, y - r * 0.8f)
+                    )
+                }
+                MapTheme.GREEN_MEADOW -> {
+                    drawCircle(
+                        color = Color(0x224CAF50),
+                        radius = r * 1.25f,
+                        center = screenPos
+                    )
+                }
+            }
 
             // Ambient ground contact shadow for all foods
             drawOval(

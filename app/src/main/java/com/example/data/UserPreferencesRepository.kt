@@ -14,6 +14,11 @@ enum class ControlMode(val title: String, val description: String) {
     TOUCH_FOLLOW("Sentuh & Ikuti", "Cacing berbelok mengikuti posisi jari di layar")
 }
 
+enum class JoystickMode(val title: String, val description: String) {
+    STATIC("Mode Diam", "Joystick tetap berada di posisi sudut layar yang telah diatur"),
+    DYNAMIC("Mode Bergerak", "Joystick otomatis muncul di mana pun jempolmu menyentuh layar")
+}
+
 data class DailyRewardInfo(
     val day: Int,
     val coins: Int,
@@ -47,12 +52,13 @@ data class UserGameData(
     val joystickOffsetX: Int = 36, // dp from left edge (default more inset for thumb)
     val joystickOffsetY: Int = 36, // dp from bottom edge
     val joystickScale: Float = 1.05f,
+    val joystickMode: JoystickMode = JoystickMode.STATIC,
     val boostOffsetX: Int = 36, // dp from right edge
     val boostOffsetY: Int = 36, // dp from bottom edge
     val boostScale: Float = 1.05f,
     // Language & Map Theme Customization
     val language: AppLanguage = AppLanguage.INDONESIAN,
-    val mapTheme: MapTheme = MapTheme.GREEN_MEADOW
+    val mapTheme: MapTheme = MapTheme.CYBER_FUNK
 ) {
     companion object {
         val DAILY_REWARDS = listOf(
@@ -154,6 +160,9 @@ class UserPreferencesRepository(context: Context) {
         val themeStr = prefs.getString("map_theme", MapTheme.GREEN_MEADOW.id) ?: MapTheme.GREEN_MEADOW.id
         val mapTheme = MapTheme.fromId(themeStr)
 
+        val joyModeStr = prefs.getString("joystick_mode", JoystickMode.STATIC.name) ?: JoystickMode.STATIC.name
+        val joystickMode = try { JoystickMode.valueOf(joyModeStr) } catch (_: Exception) { JoystickMode.STATIC }
+
         return UserGameData(
             playerName = name,
             coins = coins,
@@ -178,6 +187,7 @@ class UserPreferencesRepository(context: Context) {
             joystickOffsetX = joyX,
             joystickOffsetY = joyY,
             joystickScale = joyScale,
+            joystickMode = joystickMode,
             boostOffsetX = boostX,
             boostOffsetY = boostY,
             boostScale = boostScale,
@@ -404,6 +414,11 @@ class UserPreferencesRepository(context: Context) {
     fun setControlMode(mode: ControlMode) {
         prefs.edit().putString("control_mode", mode.name).apply()
         _userData.value = _userData.value.copy(controlMode = mode)
+    }
+
+    fun setJoystickMode(mode: JoystickMode) {
+        prefs.edit().putString("joystick_mode", mode.name).apply()
+        _userData.value = _userData.value.copy(joystickMode = mode)
     }
 
     fun toggleSound(enabled: Boolean) {

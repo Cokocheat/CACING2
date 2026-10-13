@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.example.data.StringsHelper
 import com.example.data.UserGameData
 
 @Composable
@@ -536,16 +537,17 @@ fun DailyLoginDialog(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(text = "🎁", fontSize = 28.sp)
+                        val lang = userData.language
                         Spacer(modifier = Modifier.width(8.dp))
                         Column {
                             Text(
-                                text = "EVENT 7 HARI LOGIN",
+                                text = StringsHelper.get("daily_title", lang),
                                 style = MaterialTheme.typography.titleLarge,
                                 color = Color(0xFFFFD700),
                                 fontWeight = FontWeight.Black
                             )
                             Text(
-                                text = "Login setiap hari dan klaim koin serta skin hadiah gratis!",
+                                text = StringsHelper.get("daily_banner_info", lang),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color(0xFFA0AEC0)
                             )
@@ -563,7 +565,7 @@ fun DailyLoginDialog(
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = "Tutup Event",
+                                contentDescription = StringsHelper.get("close", userData.language),
                                 tint = Color.White,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -576,6 +578,7 @@ fun DailyLoginDialog(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
+                    val lang = userData.language
                     items(UserGameData.DAILY_REWARDS) { reward ->
                         val isClaimed = reward.day <= userData.lastClaimedDay && userData.lastClaimedDay > 0
                         val isCurrentClaimable = reward.day == nextDay && canClaim
@@ -606,7 +609,7 @@ fun DailyLoginDialog(
                             ) {
                                 // Day Header
                                 Text(
-                                    text = "Hari ${reward.day}",
+                                    text = "${StringsHelper.get("day", lang)} ${reward.day}",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (isCurrentClaimable) Color(0xFFFFD700) else Color(0xFFA0AEC0),
                                     fontWeight = FontWeight.Bold
@@ -645,7 +648,7 @@ fun DailyLoginDialog(
                                             ) {
                                                 Icon(Icons.Default.Check, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(11.dp))
                                                 Spacer(modifier = Modifier.width(2.dp))
-                                                Text("Klaim", fontSize = 10.sp, color = Color(0xFF4ADE80), fontWeight = FontWeight.Bold)
+                                                Text(StringsHelper.get("claimed", lang), fontSize = 10.sp, color = Color(0xFF4ADE80), fontWeight = FontWeight.Bold)
                                             }
                                         }
                                     }
@@ -655,7 +658,7 @@ fun DailyLoginDialog(
                                             color = Color(0xFFFFD700)
                                         ) {
                                             Text(
-                                                text = "SIAP!",
+                                                text = StringsHelper.get("claim", lang),
                                                 fontSize = 10.sp,
                                                 color = Color.Black,
                                                 fontWeight = FontWeight.Black,
@@ -665,8 +668,8 @@ fun DailyLoginDialog(
                                     }
                                     isCurrentWaiting -> {
                                         Text(
-                                            text = "Besok",
-                                            fontSize = 10.sp,
+                                            text = "⏳",
+                                            fontSize = 12.sp,
                                             color = Color(0xFFFF9100),
                                             fontWeight = FontWeight.Bold
                                         )
@@ -681,6 +684,7 @@ fun DailyLoginDialog(
                 }
 
                 // Status message & Claim button
+                val lang = userData.language
                 if (canClaim) {
                     val rewardCoins = UserGameData.DAILY_REWARDS.getOrNull(nextDay - 1)?.coins ?: 200
                     Button(
@@ -695,7 +699,7 @@ fun DailyLoginDialog(
                         shape = RoundedCornerShape(16.dp)
                     ) {
                         Text(
-                            text = "KLAIM HADIAH HARI KE-$nextDay (+🪙 $rewardCoins)",
+                            text = "${StringsHelper.get("claim", lang)} (+🪙 $rewardCoins)",
                             style = MaterialTheme.typography.titleSmall,
                             color = Color.Black,
                             fontWeight = FontWeight.Black
@@ -719,7 +723,7 @@ fun DailyLoginDialog(
                             Text("⏳", fontSize = 18.sp)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Sudah diklaim hari ini! Hadiah berikutnya tersedia dalam ${hours}j ${minutes}m",
+                                text = "${StringsHelper.get("claimed_today", lang)} ${hours}h ${minutes}m",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color(0xFFA0AEC0),
                                 textAlign = TextAlign.Center
