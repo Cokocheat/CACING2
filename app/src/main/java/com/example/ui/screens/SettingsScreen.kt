@@ -128,7 +128,7 @@ fun SettingsScreen(
                         fontWeight = FontWeight.Black
                     )
                     Text(
-                        text = "Sesuaikan kontrol, bahasa, tema peta, dan profil pemain",
+                        text = StringsHelper.get("settings_subtitle", lang),
                         style = MaterialTheme.typography.labelSmall,
                         color = Color(0xFFA0AEC0)
                     )

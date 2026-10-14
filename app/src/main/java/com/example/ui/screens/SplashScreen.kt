@@ -54,6 +54,7 @@ import com.example.model.Worm
 import com.example.ui.game.WormsRenderer
 import kotlinx.coroutines.delay
 import kotlin.math.PI
+import kotlin.math.cos
 import kotlin.math.sin
 
 @Composable
@@ -161,19 +162,26 @@ fun SplashScreen(
                     val cx = size.width / 2f
                     val cy = size.height / 2f
 
+                    val headY = cy + sin(wigglePhase) * 18f
+                    val headX = cx + 55f + cos(wigglePhase * 0.5f) * 10f
+                    val vy = cos(wigglePhase) * 18f
+                    val vx = 14f - sin(wigglePhase * 0.5f) * 5f
+                    val headAngle = kotlin.math.atan2(vy, vx)
+
                     val splashWorm = Worm(
                         id = "splash",
                         name = "nana",
                         isPlayer = true,
-                        head = Vec2(cx + 60f, cy),
-                        angle = 0f,
+                        head = Vec2(headX, headY),
+                        angle = headAngle,
                         skin = SkinId.RAINBOW,
-                        mass = 80f
+                        mass = 85f
                     ).apply {
                         bodyPoints.clear()
                         for (i in 0 until 16) {
-                            val wave = sin(wigglePhase + i * 0.45f) * 14f
-                            val px = (cx + 60f) - i * 14f
+                            val segPhase = wigglePhase - i * 0.45f
+                            val wave = sin(segPhase) * 18f
+                            val px = (cx + 55f) - i * 14f + cos(segPhase * 0.5f) * 8f
                             val py = cy + wave
                             bodyPoints.add(Vec2(px, py))
                         }

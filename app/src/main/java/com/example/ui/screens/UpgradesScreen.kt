@@ -13,15 +13,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Adjust
 import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.ElectricBolt
-import androidx.compose.material.icons.filled.FastForward
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.MonetizationOn
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Stars
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -34,10 +33,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.example.data.StringsHelper
 import com.example.data.UserGameData
 
 @Composable
@@ -47,6 +47,7 @@ fun UpgradesScreen(
     onBack: () -> Unit
 ) {
     BackHandler { onBack() }
+    val lang = userData.language
 
     Column(
         modifier = Modifier
@@ -74,12 +75,12 @@ fun UpgradesScreen(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Kembali",
+                            contentDescription = StringsHelper.get("back", lang),
                             tint = Color.White
                         )
                     }
                     Text(
-                        text = "PENINGKATAN RAMUAN",
+                        text = StringsHelper.get("upgrades_title", lang),
                         style = MaterialTheme.typography.titleLarge,
                         color = Color.White,
                         fontWeight = FontWeight.Black
@@ -95,7 +96,12 @@ fun UpgradesScreen(
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "🪙", fontSize = 16.sp)
+                        Icon(
+                            imageVector = Icons.Default.MonetizationOn,
+                            contentDescription = null,
+                            tint = Color(0xFFFFD700),
+                            modifier = Modifier.size(16.dp)
+                        )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "${userData.coins}",
@@ -117,7 +123,7 @@ fun UpgradesScreen(
         ) {
             item {
                 Text(
-                    text = "Tingkatkan kekuatan ramuan dan kemampuan cacing untuk memenangkan arena!",
+                    text = StringsHelper.get("upgrades_subtitle", lang),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color(0xFFA0AEC0)
                 )
@@ -126,52 +132,56 @@ fun UpgradesScreen(
             // 1. Magnet Makanan
             item {
                 UpgradeItemCard(
-                    icon = "🧲",
-                    title = "Radius Magnet Makanan",
-                    description = "Menarik makanan dan koin dari jarak yang lebih jauh",
+                    icon = Icons.Default.Adjust,
+                    title = StringsHelper.get("magnet", lang),
+                    description = StringsHelper.get("magnet_desc", lang),
                     level = userData.magnetLevel,
                     accentColor = Color(0xFF00E5FF),
                     onUpgrade = { cost -> onUpgrade("magnet", cost) },
-                    userCoins = userData.coins
+                    userCoins = userData.coins,
+                    lang = lang
                 )
             }
 
             // 2. Multiplier Poin
             item {
                 UpgradeItemCard(
-                    icon = "🟡",
-                    title = "Efektivitas Poin Ganda",
-                    description = "Memperbanyak perolehan poin dari makanan saat aktif",
+                    icon = Icons.Default.Stars,
+                    title = StringsHelper.get("potion_multiplier", lang),
+                    description = StringsHelper.get("turn_agility_desc", lang),
                     level = userData.multiplierLevel,
                     accentColor = Color(0xFFFFD600),
                     onUpgrade = { cost -> onUpgrade("multiplier", cost) },
-                    userCoins = userData.coins
+                    userCoins = userData.coins,
+                    lang = lang
                 )
             }
 
             // 3. Efisiensi Dorongan
             item {
                 UpgradeItemCard(
-                    icon = "⚡",
-                    title = "Efisiensi Turbo Boost",
-                    description = "Mengurangi hilangnya massa tubuh saat berlari kencang",
+                    icon = Icons.Default.Bolt,
+                    title = StringsHelper.get("boost_efficiency", lang),
+                    description = StringsHelper.get("boost_efficiency_desc", lang),
                     level = userData.boostLevel,
                     accentColor = Color(0xFFFF6D00),
                     onUpgrade = { cost -> onUpgrade("boost", cost) },
-                    userCoins = userData.coins
+                    userCoins = userData.coins,
+                    lang = lang
                 )
             }
 
             // 4. Kelincahan Lari
             item {
                 UpgradeItemCard(
-                    icon = "🏃",
-                    title = "Kelincahan Dasar Cacing",
-                    description = "Meningkatkan kecepatan jalan dasar di arena",
+                    icon = Icons.Default.Speed,
+                    title = StringsHelper.get("speed", lang),
+                    description = StringsHelper.get("speed_desc", lang),
                     level = userData.speedLevel,
                     accentColor = Color(0xFF4ADE80),
                     onUpgrade = { cost -> onUpgrade("speed", cost) },
-                    userCoins = userData.coins
+                    userCoins = userData.coins,
+                    lang = lang
                 )
             }
         }
@@ -180,13 +190,14 @@ fun UpgradesScreen(
 
 @Composable
 private fun UpgradeItemCard(
-    icon: String,
+    icon: ImageVector,
     title: String,
     description: String,
     level: Int,
     accentColor: Color,
     onUpgrade: (Int) -> Unit,
-    userCoins: Int
+    userCoins: Int,
+    lang: com.example.data.AppLanguage
 ) {
     val upgradeCosts = listOf(0, 120, 260, 480, 800)
     val nextCost = if (level < 5) upgradeCosts[level] else 0
@@ -206,7 +217,20 @@ private fun UpgradeItemCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = icon, fontSize = 28.sp)
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = accentColor.copy(alpha = 0.18f),
+                        modifier = Modifier.size(44.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = null,
+                                tint = accentColor,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
@@ -244,7 +268,7 @@ private fun UpgradeItemCard(
                 }
 
                 Text(
-                    text = if (isMax) "MAX LEVEL" else "Lv. $level / 5",
+                    text = if (isMax) StringsHelper.get("max_level", lang) else "Lv. $level / 5",
                     style = MaterialTheme.typography.labelSmall,
                     color = if (isMax) Color(0xFFFFD700) else accentColor,
                     fontWeight = FontWeight.Bold
@@ -262,7 +286,7 @@ private fun UpgradeItemCard(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "TINGKAT MAKSIMAL",
+                        text = StringsHelper.get("max_level_reached", lang),
                         style = MaterialTheme.typography.labelLarge,
                         color = Color(0xFFFFD700),
                         fontWeight = FontWeight.Bold,
@@ -282,8 +306,15 @@ private fun UpgradeItemCard(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.MonetizationOn,
+                            contentDescription = null,
+                            tint = if (canAfford) Color.Black else Color.Gray,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "TINGKATKAN KE LV. ${level + 1} (🪙 $nextCost)",
+                            text = "${StringsHelper.get("upgrade_to_lv", lang)} ${level + 1} ($nextCost)",
                             style = MaterialTheme.typography.labelLarge,
                             color = if (canAfford) Color.Black else Color(0xFFA0AEC0),
                             fontWeight = FontWeight.Black

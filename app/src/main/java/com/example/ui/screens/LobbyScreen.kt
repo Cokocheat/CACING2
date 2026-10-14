@@ -411,28 +411,85 @@ fun LobbyScreen(
                     ) {
                         Canvas(modifier = Modifier.fillMaxSize()) {
                             val cx = size.width * 0.5f
-                            val cy = size.height * 0.52f
+                            val cy = size.height * 0.50f
+                            val t = wigglePhase
+
+                            val stageRadiusX = size.width * 0.38f
+                            val stageRadiusY = size.height * 0.36f
+
+                            // Draw sleek Arena Podium Platform
+                            drawOval(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        Color(0xFF222B4A),
+                                        Color(0xFF14192E),
+                                        Color(0x000F1322)
+                                    ),
+                                    center = Offset(cx, cy),
+                                    radius = stageRadiusX * 1.25f
+                                ),
+                                topLeft = Offset(cx - stageRadiusX * 1.2f, cy - stageRadiusY * 1.2f),
+                                size = androidx.compose.ui.geometry.Size(stageRadiusX * 2.4f, stageRadiusY * 2.4f)
+                            )
+
+                            drawOval(
+                                color = Color(0xFF00E5FF).copy(alpha = 0.25f),
+                                topLeft = Offset(cx - stageRadiusX * 1.05f, cy - stageRadiusY * 1.05f),
+                                size = androidx.compose.ui.geometry.Size(stageRadiusX * 2.1f, stageRadiusY * 2.1f),
+                                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5.dp.toPx())
+                            )
+
+                            // Decorative glowing food pellets in the stage
+                            val pelletPositions = listOf(
+                                Offset(cx - stageRadiusX * 0.65f, cy - stageRadiusY * 0.45f) to Color(0xFFFF5252),
+                                Offset(cx + stageRadiusX * 0.70f, cy + stageRadiusY * 0.35f) to Color(0xFFFFD700),
+                                Offset(cx - stageRadiusX * 0.30f, cy + stageRadiusY * 0.60f) to Color(0xFF4ADE80),
+                                Offset(cx + stageRadiusX * 0.50f, cy - stageRadiusY * 0.55f) to Color(0xFF00E5FF)
+                            )
+                            for ((pos, color) in pelletPositions) {
+                                drawCircle(color = color.copy(alpha = 0.3f), radius = 7.dp.toPx(), center = pos)
+                                drawCircle(color = color, radius = 3.5.dp.toPx(), center = pos)
+                                drawCircle(color = Color.White, radius = 1.5.dp.toPx(), center = pos)
+                            }
+
+                            // Autonomous dynamic slithering path (Figure-8 Lemniscate - never static!)
+                            val headX = cx + cos(t) * (stageRadiusX * 0.82f)
+                            val headY = cy + sin(2f * t) * (stageRadiusY * 0.72f)
+                            val vx = -sin(t) * (stageRadiusX * 0.82f)
+                            val vy = 2f * cos(2f * t) * (stageRadiusY * 0.72f)
+                            val headAngle = kotlin.math.atan2(vy, vx)
 
                             val dummyWorm = Worm(
                                 id = "preview_player",
                                 name = nameInput.ifBlank { "Nana" },
                                 isPlayer = true,
-                                head = Vec2(cx, cy),
+                                head = Vec2(headX, headY),
+                                angle = headAngle,
+                                targetAngle = headAngle,
                                 skin = userData.equippedSkin,
-                                accessory = userData.equippedAccessory
+                                accessory = userData.equippedAccessory,
+                                mass = 85f
                             )
 
-                            // Dynamic slithering wave simulation
+                            // Dynamic slithering wave simulation along path
                             dummyWorm.bodyPoints.clear()
-                            val numSegments = 16
+                            val numSegments = 18
                             for (i in 0 until numSegments) {
-                                val t = i * 0.35f
-                                val wave = sin(wigglePhase + t) * 16f
-                                val sx = cx - (i * 12f) + (cos(wigglePhase) * 10f)
-                                val sy = cy + wave
+                                val segT = t - (i * 0.08f)
+                                var sx = cx + cos(segT) * (stageRadiusX * 0.82f)
+                                var sy = cy + sin(2f * segT) * (stageRadiusY * 0.72f)
+
+                                val segVx = -sin(segT) * (stageRadiusX * 0.82f)
+                                val segVy = 2f * cos(2f * segT) * (stageRadiusY * 0.72f)
+                                val segAngle = kotlin.math.atan2(segVy, segVx)
+
+                                val lateralWave = sin(t * 3.5f - i * 0.5f) * 4.5f
+                                val normAngle = segAngle - (PI / 2).toFloat()
+                                sx += cos(normAngle) * lateralWave
+                                sy += sin(normAngle) * lateralWave
+
                                 dummyWorm.bodyPoints.add(Vec2(sx, sy))
                             }
-                            dummyWorm.targetAngle = (PI * 0.15f).toFloat()
 
                             WormsRenderer.drawWorm(
                                 drawScope = this,

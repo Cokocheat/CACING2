@@ -183,7 +183,29 @@ object StringsHelper {
         "records_title" to "STATISTIK & REKOR TERBAIK",
         "total_games" to "Total Pertandingan",
         "total_kills" to "Total Lawan Dikalahkan",
-        "max_length" to "Panjang Maksimum"
+        "max_length" to "Panjang Maksimum",
+
+        // Additional localized keys
+        "career_stats" to "STATISTIK KARIER",
+        "achievements" to "PENCAPAIAN ARENA",
+        "first_hunter" to "Pemangsa Pertama",
+        "first_hunter_desc" to "Kalahkan setidaknya 1 lawan di arena",
+        "arena_ruler" to "Penguasa Arena",
+        "arena_ruler_desc" to "Capai rekor skor 300 poin atau lebih",
+        "giant_dragon" to "Naga Raksasa",
+        "giant_dragon_desc" to "Tumbuhkan cacing hingga panjang 40 segmen",
+        "veteran" to "Pemain Sejati",
+        "veteran_desc" to "Mainkan 10 pertandingan di arena",
+        "coins_available" to "Saldo Koin Tersedia",
+        "settings_subtitle" to "Sesuaikan kontrol, audio, bahasa, dan profil pemain",
+        "upgrades_subtitle" to "Tingkatkan kekuatan ramuan dan kemampuan cacing untuk memenangkan arena!",
+        "upgrade_to_lv" to "TINGKATKAN KE LV.",
+        "max_level_reached" to "TINGKAT MAKSIMAL",
+        "view_preview" to "LIHAT",
+        "equip_item" to "PAKAI",
+        "equipped_item" to "DIPAKAI",
+        "worm_skins" to "Skin Tubuh Cacing",
+        "face_accessories" to "Aksesoris Wajah"
     )
 
     private val englishStrings = mapOf(
@@ -338,7 +360,29 @@ object StringsHelper {
         "records_title" to "STATISTICS & RECORDS",
         "total_games" to "Total Matches",
         "total_kills" to "Total Opponents Eliminated",
-        "max_length" to "Maximum Length"
+        "max_length" to "Maximum Length",
+
+        // Additional localized keys
+        "career_stats" to "CAREER STATS",
+        "achievements" to "ARENA ACHIEVEMENTS",
+        "first_hunter" to "First Hunter",
+        "first_hunter_desc" to "Defeat at least 1 opponent in the arena",
+        "arena_ruler" to "Arena Ruler",
+        "arena_ruler_desc" to "Reach a high score of 300 points or more",
+        "giant_dragon" to "Giant Dragon",
+        "giant_dragon_desc" to "Grow your worm to 40 segments in length",
+        "veteran" to "True Veteran",
+        "veteran_desc" to "Play 10 matches in the arena",
+        "coins_available" to "Available Coins Balance",
+        "settings_subtitle" to "Customize controls, audio, language, and player profile",
+        "upgrades_subtitle" to "Upgrade potion power and worm abilities to dominate the arena!",
+        "upgrade_to_lv" to "UPGRADE TO LV.",
+        "max_level_reached" to "MAX LEVEL REACHED",
+        "view_preview" to "VIEW",
+        "equip_item" to "EQUIP",
+        "equipped_item" to "EQUIPPED",
+        "worm_skins" to "Worm Body Skins",
+        "face_accessories" to "Face Accessories"
     )
 
     private val koreanStrings = mapOf(
@@ -493,7 +537,29 @@ object StringsHelper {
         "records_title" to "전적 및 최고 기록",
         "total_games" to "총 플레이 판수",
         "total_kills" to "총 처치 수",
-        "max_length" to "최대 길이"
+        "max_length" to "최대 길이",
+
+        // Additional localized keys
+        "career_stats" to "통합 전적",
+        "achievements" to "아레나 업적",
+        "first_hunter" to "첫 사냥꾼",
+        "first_hunter_desc" to "아레나에서 최소 1마리의 상대를 처치하세요",
+        "arena_ruler" to "아레나의 지배자",
+        "arena_ruler_desc" to "최고 기록 300점 이상을 달성하세요",
+        "giant_dragon" to "거대 드래곤",
+        "giant_dragon_desc" to "지렁이를 40마디 이상으로 성장시키세요",
+        "veteran" to "진정한 베테랑",
+        "veteran_desc" to "아레나 게임 10판을 플레이하세요",
+        "coins_available" to "보유 코인 잔액",
+        "settings_subtitle" to "조작 방식, 오디오, 언어 및 플레이어 프로필 설정",
+        "upgrades_subtitle" to "물약 위력과 지렁이 능력을 강화하여 아레나를 지배하세요!",
+        "upgrade_to_lv" to "레벨 강화: LV.",
+        "max_level_reached" to "최고 레벨 달성",
+        "view_preview" to "미리보기",
+        "equip_item" to "장착하기",
+        "equipped_item" to "장착 중",
+        "worm_skins" to "지렁이 몸체 스킨",
+        "face_accessories" to "얼굴 액세서리"
     )
 
     private val turkishStrings = mapOf(
@@ -648,7 +714,29 @@ object StringsHelper {
         "records_title" to "İSTATİSTİKLER VE REKORLAR",
         "total_games" to "Toplam Maç",
         "total_kills" to "Toplam Elenen Rakip",
-        "max_length" to "En Uzun Boyut"
+        "max_length" to "En Uzun Boyut",
+
+        // Additional localized keys
+        "career_stats" to "KARİYER İSTATİSTİKLERİ",
+        "achievements" to "ARENA BAŞARILARI",
+        "first_hunter" to "İlk Avcı",
+        "first_hunter_desc" to "Arenada en az 1 rakibi alt et",
+        "arena_ruler" to "Arena Hükümdarı",
+        "arena_ruler_desc" to "300 veya daha fazla puana ulaş",
+        "giant_dragon" to "Dev Ejderha",
+        "giant_dragon_desc" to "Solucanını 40 segmente büyüt",
+        "veteran" to "Gerçek Kıdemli",
+        "veteran_desc" to "Arenada 10 maç oyna",
+        "coins_available" to "Mevcut Altın Bakiyesi",
+        "settings_subtitle" to "Kontrolleri, sesi, dili ve oyuncu profilini özelleştir",
+        "upgrades_subtitle" to "İksir gücünü ve solucan yeteneklerini yükselt!",
+        "upgrade_to_lv" to "YÜKSELT: SEVİYE",
+        "max_level_reached" to "MAKSİMUM SEVİYE",
+        "view_preview" to "İNCELE",
+        "equip_item" to "KUŞAN",
+        "equipped_item" to "KUŞANILDI",
+        "worm_skins" to "Solucan Gövde Kostümleri",
+        "face_accessories" to "Yüz Aksesuarları"
     )
 
     private val arabicStrings = mapOf(
@@ -803,7 +891,29 @@ object StringsHelper {
         "records_title" to "الإحصائيات والأرقام القياسية",
         "total_games" to "إجمالي المباريات",
         "total_kills" to "إجمالي الخصوم المهزومين",
-        "max_length" to "أقصى طول تم تحقيقه"
+        "max_length" to "أقصى طول تم تحقيقه",
+
+        // Additional localized keys
+        "career_stats" to "إحصائيات المسيرة",
+        "achievements" to "إنجازات الحلبة",
+        "first_hunter" to "الصياد الأول",
+        "first_hunter_desc" to "اهزم خصمًا واحدًا على الأقل في الحلبة",
+        "arena_ruler" to "حاكم الحلبة",
+        "arena_ruler_desc" to "حقق 300 نقطة أو أكثر",
+        "giant_dragon" to "التنين العملاق",
+        "giant_dragon_desc" to "قم بتنمية الدودة حتى 40 عقدة",
+        "veteran" to "المحارب القديم",
+        "veteran_desc" to "العب 10 مباريات في الحلبة",
+        "coins_available" to "رصيد العملات المتاح",
+        "settings_subtitle" to "تخصيص عناصر التحكم والصوت واللغة والملف الشخصي",
+        "upgrades_subtitle" to "قم بترقية الجرعات وقدرات الدودة للهيمنة على الحلبة!",
+        "upgrade_to_lv" to "ترقية إلى مستوى",
+        "max_level_reached" to "الحد الأقصى للمستوى",
+        "view_preview" to "معاينة",
+        "equip_item" to "ارتداء",
+        "equipped_item" to "تم الارتداء",
+        "worm_skins" to "مظاهر جسم الدودة",
+        "face_accessories" to "إكسسوارات الوجه"
     )
 
     private val vietnameseStrings = mapOf(
@@ -958,6 +1068,28 @@ object StringsHelper {
         "records_title" to "KỶ LỤC & THỐNG KÊ",
         "total_games" to "Tổng Trận Đấu",
         "total_kills" to "Tổng Đối Thủ Đã Hạ",
-        "max_length" to "Độ Dài Tối Đa"
+        "max_length" to "Độ Dài Tối Đa",
+
+        // Additional localized keys
+        "career_stats" to "THỐNG KÊ SỰ NGHIỆP",
+        "achievements" to "THÀNH TỰU ĐẤU TRƯỜNG",
+        "first_hunter" to "Thợ Săn Đầu Tiên",
+        "first_hunter_desc" to "Hạ gục ít nhất 1 đối thủ trong đấu trường",
+        "arena_ruler" to "Bá Chủ Đấu Trường",
+        "arena_ruler_desc" to "Đạt số điểm 300 trở lên",
+        "giant_dragon" to "Rồng Khổng Lồ",
+        "giant_dragon_desc" to "Nuôi sâu đạt chiều dài 40 đốt",
+        "veteran" to "Chiến Binh Lão Luyện",
+        "veteran_desc" to "Chơi 10 trận đấu trong đấu trường",
+        "coins_available" to "Số Dư Xu Hiện Có",
+        "settings_subtitle" to "Tùy chỉnh điều khiển, âm thanh, ngôn ngữ và hồ sơ",
+        "upgrades_subtitle" to "Nâng cấp bình thuốc và khả năng của sâu để thống trị đấu trường!",
+        "upgrade_to_lv" to "NÂNG CẤP LÊN CẤP",
+        "max_level_reached" to "CẤP ĐỘ TỐI ĐA",
+        "view_preview" to "XEM TRƯỚC",
+        "equip_item" to "TRANG BỊ",
+        "equipped_item" to "ĐANG TRANG BỊ",
+        "worm_skins" to "Skin Thân Sâu",
+        "face_accessories" to "Phụ Kiện Khuôn Mặt"
     )
 }

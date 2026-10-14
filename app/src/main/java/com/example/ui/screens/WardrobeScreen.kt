@@ -10,7 +10,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +30,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.MilitaryTech
+import androidx.compose.material.icons.filled.MonetizationOn
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Stars
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -55,11 +59,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.AppLanguage
+import com.example.data.StringsHelper
 import com.example.data.UserGameData
 import com.example.model.FaceAccessory
 import com.example.model.SkinId
@@ -68,6 +75,31 @@ import com.example.model.Worm
 import com.example.ui.game.WormsRenderer
 import kotlin.math.PI
 import kotlin.math.sin
+
+private fun getSkinLocalizedTitle(skin: SkinId, lang: AppLanguage): String {
+    val key = when (skin) {
+        SkinId.CLASSIC_GREEN -> "classic_green"
+        SkinId.RAINBOW -> "rainbow_dash"
+        SkinId.BUMBLEBEE -> "neon_glow"
+        SkinId.WATERMELON -> "candy_swirl"
+        SkinId.TIGER -> "tiger_stripes"
+        SkinId.GALAXY -> "cosmic_galaxy"
+        SkinId.CANDY_GUMMY -> "candy_swirl"
+        SkinId.GOLDEN_EMPEROR -> "golden_king"
+    }
+    return StringsHelper.get(key, lang)
+}
+
+private fun getAccessoryLocalizedTitle(acc: FaceAccessory, lang: AppLanguage): String {
+    val key = when (acc) {
+        FaceAccessory.NONE -> "none_acc"
+        FaceAccessory.ROYAL_CROWN -> "crown_acc"
+        FaceAccessory.SUNGLASSES -> "sunglasses_acc"
+        FaceAccessory.PIRATE_PATCH -> "pirate_patch_acc"
+        FaceAccessory.ANIME_SPARKLE -> "anime_sparkle_acc"
+    }
+    return StringsHelper.get(key, lang)
+}
 
 @Composable
 fun WardrobeScreen(
@@ -79,9 +111,9 @@ fun WardrobeScreen(
     onBack: () -> Unit
 ) {
     BackHandler { onBack() }
+    val lang = userData.language
 
     var selectedTab by remember { mutableIntStateOf(0) }
-    // Live preview state allows user to test/view any skin or accessory BEFORE buying
     var previewSkin by remember { mutableStateOf(userData.equippedSkin) }
     var previewAccessory by remember { mutableStateOf(userData.equippedAccessory) }
 
@@ -122,12 +154,12 @@ fun WardrobeScreen(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Kembali",
+                            contentDescription = StringsHelper.get("back", lang),
                             tint = Color.White
                         )
                     }
                     Text(
-                        text = "LEMARI SKIN & AKSERORIS",
+                        text = StringsHelper.get("wardrobe_title", lang),
                         style = MaterialTheme.typography.titleLarge,
                         color = Color.White,
                         fontWeight = FontWeight.Black
@@ -144,7 +176,12 @@ fun WardrobeScreen(
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "🪙", fontSize = 16.sp)
+                        Icon(
+                            imageVector = Icons.Default.MonetizationOn,
+                            contentDescription = null,
+                            tint = Color(0xFFFFD700),
+                            modifier = Modifier.size(16.dp)
+                        )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "${userData.coins}",
@@ -157,75 +194,56 @@ fun WardrobeScreen(
             }
         }
 
-        // INTERACTIVE LIVE WORM PREVIEW (Updates dynamically when clicking any item!)
-        Box(
+        // LIVE PREVIEW PODIUM (STAGE)
+        Surface(
+            color = Color(0xFF141828),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(115.dp)
-                .background(Color(0xFF141829))
-                .border(1.dp, Color(0xFF2C3454)),
-            contentAlignment = Alignment.Center
+                .height(130.dp)
         ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val cx = size.width / 2f
-                val cy = size.height / 2f
-
-                val preview = Worm(
-                    id = "wardrobe_preview",
-                    name = userData.playerName,
-                    isPlayer = true,
-                    head = Vec2(cx + 60f, cy),
-                    skin = previewSkin,
-                    accessory = previewAccessory,
-                    mass = 85f
-                ).apply {
-                    bodyPoints.clear()
-                    for (i in 0 until 18) {
-                        val wave = sin(wigglePhase + i * 0.45f) * 14f
-                        val px = (cx + 60f) - i * 13f
-                        bodyPoints.add(Vec2(px, cy + wave))
-                    }
-                }
-
-                WormsRenderer.drawWorm(
-                    drawScope = this,
-                    worm = preview,
-                    cameraOffset = Offset.Zero,
-                    zoom = 1f
-                )
-            }
-
-            // Preview Info Banner
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 6.dp),
-                shape = RoundedCornerShape(12.dp),
-                color = Color(0xDD0E121E),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF4ADE80).copy(alpha = 0.5f))
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(imageVector = Icons.Default.Visibility, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(13.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Pratinjau: ${previewSkin.title} ${if (previewAccessory != FaceAccessory.NONE) "+ " + previewAccessory.title else ""}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                    if (previewSkin != userData.equippedSkin || previewAccessory != userData.equippedAccessory) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "(Klik item lain untuk mencoba)",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFFFFD700),
-                            fontSize = 10.sp
-                        )
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val cx = size.width / 2f
+                    val cy = size.height / 2f
+
+                    val previewWorm = Worm(
+                        id = "wardrobe_preview",
+                        name = userData.playerName,
+                        isPlayer = true,
+                        head = Vec2(cx + 60f, cy),
+                        angle = 0f,
+                        skin = previewSkin,
+                        accessory = previewAccessory,
+                        mass = 80f
+                    ).apply {
+                        bodyPoints.clear()
+                        for (i in 0 until 18) {
+                            val wave = sin(wigglePhase + i * 0.4f) * 12f
+                            val px = (cx + 60f) - i * 14f
+                            val py = cy + wave
+                            bodyPoints.add(Vec2(px, py))
+                        }
                     }
+
+                    WormsRenderer.drawWorm(
+                        drawScope = this,
+                        worm = previewWorm,
+                        cameraOffset = Offset(0f, 0f),
+                        zoom = 1.0f
+                    )
                 }
+
+                Text(
+                    text = "${getSkinLocalizedTitle(previewSkin, lang)}  •  ${getAccessoryLocalizedTitle(previewAccessory, lang)}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFFA0AEC0),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 6.dp)
+                )
             }
         }
 
@@ -246,7 +264,7 @@ fun WardrobeScreen(
                 onClick = { selectedTab = 0 },
                 text = {
                     Text(
-                        "Skin Tubuh Cacing",
+                        text = StringsHelper.get("worm_skins", lang),
                         fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal,
                         color = if (selectedTab == 0) Color(0xFF4ADE80) else Color(0xFFA0AEC0)
                     )
@@ -257,7 +275,7 @@ fun WardrobeScreen(
                 onClick = { selectedTab = 1 },
                 text = {
                     Text(
-                        "Aksesoris Wajah",
+                        text = StringsHelper.get("face_accessories", lang),
                         fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal,
                         color = if (selectedTab == 1) Color(0xFF4ADE80) else Color(0xFFA0AEC0)
                     )
@@ -301,21 +319,18 @@ fun WardrobeScreen(
                             modifier = Modifier.padding(14.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            // Color orb preview
-                            Row(
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                            // Mini Color Palette Indicators
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier
-                                        .size(24.dp)
+                                        .size(16.dp)
                                         .clip(CircleShape)
                                         .background(skin.headColor)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Box(
                                     modifier = Modifier
-                                        .size(20.dp)
+                                        .size(16.dp)
                                         .clip(CircleShape)
                                         .background(skin.primaryColor)
                                 )
@@ -330,18 +345,11 @@ fun WardrobeScreen(
 
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = skin.title,
+                                text = getSkinLocalizedTitle(skin, lang),
                                 style = MaterialTheme.typography.titleSmall,
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center
-                            )
-                            Text(
-                                text = skin.description,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color(0xFFA0AEC0),
-                                textAlign = TextAlign.Center,
-                                maxLines = 1
                             )
 
                             Spacer(modifier = Modifier.height(10.dp))
@@ -360,7 +368,7 @@ fun WardrobeScreen(
                                         ) {
                                             Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(14.dp))
                                             Spacer(modifier = Modifier.width(4.dp))
-                                            Text("DIPAKAI", style = MaterialTheme.typography.labelSmall, color = Color(0xFF4ADE80), fontWeight = FontWeight.Bold)
+                                            Text(StringsHelper.get("equipped_item", lang), style = MaterialTheme.typography.labelSmall, color = Color(0xFF4ADE80), fontWeight = FontWeight.Bold)
                                         }
                                     }
                                 }
@@ -374,7 +382,7 @@ fun WardrobeScreen(
                                         shape = RoundedCornerShape(10.dp),
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        Text("PAKAI", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                                        Text(StringsHelper.get("equip_item", lang), style = MaterialTheme.typography.labelSmall, color = Color.White)
                                     }
                                 }
                                 else -> {
@@ -388,7 +396,7 @@ fun WardrobeScreen(
                                             modifier = Modifier.weight(1f),
                                             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF00E5FF))
                                         ) {
-                                            Text("LIHAT", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                            Text(StringsHelper.get("view_preview", lang), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                         }
 
                                         Button(
@@ -445,31 +453,43 @@ fun WardrobeScreen(
                             modifier = Modifier.padding(14.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(
-                                text = when (acc) {
-                                    FaceAccessory.ROYAL_CROWN -> "👑"
-                                    FaceAccessory.SUNGLASSES -> "🕶️"
-                                    FaceAccessory.PIRATE_PATCH -> "🏴‍☠️"
-                                    FaceAccessory.ANIME_SPARKLE -> "✨"
-                                    FaceAccessory.NONE -> "🙂"
-                                },
-                                fontSize = 32.sp
-                            )
+                            val accIcon: ImageVector = when (acc) {
+                                FaceAccessory.ROYAL_CROWN -> Icons.Default.MilitaryTech
+                                FaceAccessory.SUNGLASSES -> Icons.Default.Visibility
+                                FaceAccessory.PIRATE_PATCH -> Icons.Default.Shield
+                                FaceAccessory.ANIME_SPARKLE -> Icons.Default.Stars
+                                FaceAccessory.NONE -> Icons.Default.Person
+                            }
+                            val accColor: Color = when (acc) {
+                                FaceAccessory.ROYAL_CROWN -> Color(0xFFFFD700)
+                                FaceAccessory.SUNGLASSES -> Color(0xFF00E5FF)
+                                FaceAccessory.PIRATE_PATCH -> Color(0xFFFF5252)
+                                FaceAccessory.ANIME_SPARKLE -> Color(0xFFFFB300)
+                                FaceAccessory.NONE -> Color(0xFF4ADE80)
+                            }
+
+                            Surface(
+                                shape = CircleShape,
+                                color = accColor.copy(alpha = 0.15f),
+                                modifier = Modifier.size(44.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = accIcon,
+                                        contentDescription = null,
+                                        tint = accColor,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
 
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = acc.title,
+                                text = getAccessoryLocalizedTitle(acc, lang),
                                 style = MaterialTheme.typography.titleSmall,
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center
-                            )
-                            Text(
-                                text = acc.description,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color(0xFFA0AEC0),
-                                textAlign = TextAlign.Center,
-                                maxLines = 1
                             )
 
                             Spacer(modifier = Modifier.height(10.dp))
@@ -487,7 +507,7 @@ fun WardrobeScreen(
                                         ) {
                                             Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(14.dp))
                                             Spacer(modifier = Modifier.width(4.dp))
-                                            Text("DIPAKAI", style = MaterialTheme.typography.labelSmall, color = Color(0xFF4ADE80), fontWeight = FontWeight.Bold)
+                                            Text(StringsHelper.get("equipped_item", lang), style = MaterialTheme.typography.labelSmall, color = Color(0xFF4ADE80), fontWeight = FontWeight.Bold)
                                         }
                                     }
                                 }
@@ -501,7 +521,7 @@ fun WardrobeScreen(
                                         shape = RoundedCornerShape(10.dp),
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        Text("PAKAI", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                                        Text(StringsHelper.get("equip_item", lang), style = MaterialTheme.typography.labelSmall, color = Color.White)
                                     }
                                 }
                                 else -> {
@@ -515,7 +535,7 @@ fun WardrobeScreen(
                                             modifier = Modifier.weight(1f),
                                             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF00E5FF))
                                         ) {
-                                            Text("LIHAT", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                            Text(StringsHelper.get("view_preview", lang), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                         }
 
                                         Button(

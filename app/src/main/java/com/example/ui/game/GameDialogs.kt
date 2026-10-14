@@ -67,10 +67,53 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.animation.core.animateDp
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.window.DialogProperties
 import com.example.data.AppLanguage
 import com.example.data.StringsHelper
 import com.example.data.UserGameData
+
+@Composable
+fun NeonCompactToggle(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    activeColor: Color = Color(0xFF4ADE80),
+    inactiveColor: Color = Color(0xFF242A45)
+) {
+    val transition = androidx.compose.animation.core.updateTransition(targetState = checked, label = "toggleTrans")
+    val thumbOffset by transition.animateDp(
+        transitionSpec = { tween(durationMillis = 180) },
+        label = "thumbOffset"
+    ) { isChecked ->
+        if (isChecked) 18.dp else 2.dp
+    }
+
+    Box(
+        modifier = Modifier
+            .size(width = 40.dp, height = 24.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (checked) activeColor.copy(alpha = 0.35f) else inactiveColor)
+            .border(
+                width = 1.5.dp,
+                color = if (checked) activeColor else Color(0xFF4A5578),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clickable { onCheckedChange(!checked) }
+            .padding(vertical = 2.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Box(
+            modifier = Modifier
+                .padding(start = thumbOffset)
+                .size(18.dp)
+                .clip(CircleShape)
+                .background(if (checked) activeColor else Color(0xFF94A3B8))
+        )
+    }
+}
 
 @Composable
 fun PauseDialog(
@@ -112,22 +155,26 @@ fun PauseDialog(
                     fontWeight = FontWeight.Black
                 )
 
-                // Sound & Vibration Row
+                // Sound & Vibration Row with sleek NeonCompactToggle (never clipped or cut off!)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Surface(
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(14.dp),
                         color = Color(0xFF202740),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF353D63)),
                         modifier = Modifier.weight(1f)
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                modifier = Modifier.weight(1f, fill = false),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Icon(
                                     imageVector = if (soundEnabled) Icons.Default.VolumeUp else Icons.Default.VolumeMute,
                                     contentDescription = null,
@@ -135,23 +182,37 @@ fun PauseDialog(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text(StringsHelper.get("sound", lang), style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                                Text(
+                                    text = StringsHelper.get("sound", lang),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
                             }
-                            Switch(checked = soundEnabled, onCheckedChange = onToggleSound)
+                            NeonCompactToggle(
+                                checked = soundEnabled,
+                                onCheckedChange = onToggleSound,
+                                activeColor = Color(0xFF4ADE80)
+                            )
                         }
                     }
 
                     Surface(
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(14.dp),
                         color = Color(0xFF202740),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF353D63)),
                         modifier = Modifier.weight(1f)
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                modifier = Modifier.weight(1f, fill = false),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Vibration,
                                     contentDescription = null,
@@ -159,59 +220,94 @@ fun PauseDialog(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text(StringsHelper.get("vibration", lang), style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                                Text(
+                                    text = StringsHelper.get("vibration", lang),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
                             }
-                            Switch(checked = vibrationEnabled, onCheckedChange = onToggleVibration)
+                            NeonCompactToggle(
+                                checked = vibrationEnabled,
+                                onCheckedChange = onToggleVibration,
+                                activeColor = Color(0xFFFF9100)
+                            )
                         }
                     }
                 }
 
-                // Action buttons Row
+                // Primary Hero Action: Resume / Lanjutkan (Full Width, never wraps, perfectly centered and balanced!)
+                Button(
+                    onClick = onResume,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .testTag("resume_button"),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4ADE80)),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        tint = Color.Black,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = StringsHelper.get("resume", lang).uppercase(),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.Black,
+                        fontWeight = FontWeight.Black,
+                        maxLines = 1,
+                        softWrap = false
+                    )
+                }
+
+                // Secondary Actions Row: Restart & Back to Lobby
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Button(
-                        onClick = onResume,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp)
-                            .testTag("resume_button"),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4ADE80)),
-                        shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, tint = Color.Black, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(StringsHelper.get("resume", lang).uppercase(), style = MaterialTheme.typography.labelLarge, color = Color.Black, fontWeight = FontWeight.Black)
-                    }
-
                     OutlinedButton(
                         onClick = onRestart,
                         modifier = Modifier
                             .weight(1f)
-                            .height(48.dp)
+                            .height(44.dp)
                             .testTag("restart_button"),
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(12.dp),
                         border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFF9100))
                     ) {
-                        Icon(imageVector = Icons.Default.Refresh, contentDescription = null, tint = Color(0xFFFF9100), modifier = Modifier.size(20.dp))
+                        Icon(imageVector = Icons.Default.Refresh, contentDescription = null, tint = Color(0xFFFF9100), modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(StringsHelper.get("restart", lang).uppercase(), style = MaterialTheme.typography.labelLarge, color = Color(0xFFFF9100), fontWeight = FontWeight.Bold)
+                        Text(
+                            text = StringsHelper.get("restart", lang),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color(0xFFFF9100),
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1
+                        )
                     }
-                }
 
-                FilledTonalButton(
-                    onClick = onQuitToLobby,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(44.dp)
-                        .testTag("quit_lobby_button"),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF2C3454))
-                ) {
-                    Icon(imageVector = Icons.Default.Home, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(StringsHelper.get("back_to_menu", lang).uppercase(), style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                    FilledTonalButton(
+                        onClick = onQuitToLobby,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
+                            .testTag("quit_lobby_button"),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF2C3454))
+                    ) {
+                        Icon(imageVector = Icons.Default.Home, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = StringsHelper.get("back_to_menu", lang),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1
+                        )
+                    }
                 }
             }
         }
