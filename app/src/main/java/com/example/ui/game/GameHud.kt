@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material3.Icon
@@ -44,6 +45,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.MilitaryTech
+import androidx.compose.material.icons.filled.MonetizationOn
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Stars
+import androidx.compose.material.icons.filled.Timer
 import com.example.data.JoystickMode
 import com.example.data.StringsHelper
 import androidx.compose.ui.Alignment
@@ -68,6 +76,7 @@ import com.example.engine.KillEvent
 import com.example.engine.LeaderboardEntry
 import com.example.model.GameConfig
 import com.example.model.GameMode
+import com.example.model.PotionType
 import com.example.model.Vec2
 import kotlin.math.atan2
 import kotlin.math.roundToInt
@@ -82,6 +91,7 @@ fun GameHud(
     onBoostChange: (Boolean) -> Unit,
     onPauseClick: () -> Unit
 ) {
+    val lang = userData.language
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -112,17 +122,17 @@ fun GameHud(
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "🍩", fontSize = 16.sp)
+                            Icon(imageVector = Icons.Default.Stars, contentDescription = null, tint = Color(0xFFFFD700), modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Column {
                                 Text(
-                                    text = "SKOR: ${hudState.score}",
+                                    text = "${StringsHelper.get("score", lang).uppercase()}: ${hudState.score}",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = "Panjang: ${(12 + sqrt(hudState.score.toFloat()) * 1.8f).toInt()}",
+                                    text = "${StringsHelper.get("worm_length", lang)}: ${(12 + sqrt(hudState.score.toFloat()) * 1.8f).toInt()}",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = Color(0xFF4ADE80)
                                 )
@@ -140,7 +150,7 @@ fun GameHud(
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "🪙", fontSize = 13.sp)
+                            Icon(imageVector = Icons.Default.MonetizationOn, contentDescription = null, tint = Color(0xFFFFD700), modifier = Modifier.size(15.dp))
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "+${hudState.coins}",
@@ -160,7 +170,7 @@ fun GameHud(
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "⚔️", fontSize = 13.sp)
+                            Icon(imageVector = Icons.Default.LocalFireDepartment, contentDescription = null, tint = Color(0xFFFF5252), modifier = Modifier.size(15.dp))
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "${hudState.kills}",
@@ -182,10 +192,10 @@ fun GameHud(
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(text = "🌍", fontSize = 13.sp)
+                                    Icon(imageVector = Icons.Default.Public, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(15.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
-                                        text = "Arena Luar",
+                                        text = StringsHelper.get("outer_arena", lang),
                                         style = MaterialTheme.typography.labelMedium,
                                         color = Color(0xFF4ADE80),
                                         fontWeight = FontWeight.Bold
@@ -206,7 +216,7 @@ fun GameHud(
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(text = "⏱️", fontSize = 13.sp)
+                                    Icon(imageVector = Icons.Default.Timer, contentDescription = null, tint = Color(0xFFFFD700), modifier = Modifier.size(15.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
                                         text = formattedTime,
@@ -227,10 +237,10 @@ fun GameHud(
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(text = "👑", fontSize = 13.sp)
+                                    Icon(imageVector = Icons.Default.MilitaryTech, contentDescription = null, tint = Color(0xFFFFD600), modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
-                                        text = "Sisa: ${hudState.aliveBotsCount + 1}",
+                                        text = "${StringsHelper.get("worms_count", lang)}: ${hudState.aliveBotsCount + 1}",
                                         style = MaterialTheme.typography.labelMedium,
                                         color = Color(0xFFFFD600),
                                         fontWeight = FontWeight.Bold
@@ -252,10 +262,10 @@ fun GameHud(
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(text = "🛡️", fontSize = 14.sp)
+                                Icon(imageVector = Icons.Default.Shield, contentDescription = null, tint = Color(0xFF00E5FF), modifier = Modifier.size(15.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "KEBAL: ${(hudState.spawnProtectionRemaining + 0.9f).toInt()}s",
+                                    text = "SHIELD: ${(hudState.spawnProtectionRemaining + 0.9f).toInt()}s",
                                     style = MaterialTheme.typography.labelMedium,
                                     color = Color(0xFF00E5FF),
                                     fontWeight = FontWeight.Bold
@@ -287,8 +297,15 @@ fun GameHud(
                                             .background(type.color)
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
+                                    val potionName = when (type) {
+                                        PotionType.SPEED_BOOST -> StringsHelper.get("potion_speed", lang)
+                                        PotionType.MULTIPLIER -> StringsHelper.get("potion_multiplier", lang)
+                                        PotionType.MAGNET -> StringsHelper.get("potion_magnet", lang)
+                                        PotionType.RADAR -> StringsHelper.get("potion_radar", lang)
+                                        PotionType.ZOOM -> StringsHelper.get("potion_zoom", lang)
+                                    }
                                     Text(
-                                        text = "${type.title} (${remaining.toInt()}s)",
+                                        text = "$potionName (${remaining.toInt()}s)",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = Color.White,
                                         fontWeight = FontWeight.Bold
@@ -485,24 +502,42 @@ fun KillBanner(killEvent: KillEvent, playerName: String = "Kamu") {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(text = "⚔️", fontSize = 16.sp)
+            Icon(imageVector = Icons.Default.LocalFireDepartment, contentDescription = null, tint = Color(0xFFFF5252), modifier = Modifier.size(18.dp))
             Text(
-                text = "$playerName  ➜  ${killEvent.victimName}",
+                text = playerName,
                 style = MaterialTheme.typography.titleSmall,
                 color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = Color(0xFFFFD700),
+                modifier = Modifier.size(13.dp)
+            )
+            Text(
+                text = killEvent.victimName,
+                style = MaterialTheme.typography.titleSmall,
+                color = Color(0xFFFF80AB),
                 fontWeight = FontWeight.Bold
             )
             Surface(
                 shape = RoundedCornerShape(8.dp),
                 color = Color(0x33FFD700)
             ) {
-                Text(
-                    text = "+${killEvent.coinsEarned} 🪙",
-                    fontSize = 12.sp,
-                    color = Color(0xFFFFD700),
-                    fontWeight = FontWeight.Black,
-                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                )
+                Row(
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(imageVector = Icons.Default.MonetizationOn, contentDescription = null, tint = Color(0xFFFFD700), modifier = Modifier.size(13.dp))
+                    Spacer(modifier = Modifier.width(3.dp))
+                    Text(
+                        text = "+${killEvent.coinsEarned}",
+                        fontSize = 12.sp,
+                        color = Color(0xFFFFD700),
+                        fontWeight = FontWeight.Black
+                    )
+                }
             }
             if (killEvent.streak > 1) {
                 Surface(

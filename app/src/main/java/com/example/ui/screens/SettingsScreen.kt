@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.OpenWith
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PinDrop
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.Tune
@@ -276,7 +277,7 @@ fun SettingsScreen(
                                     fontWeight = FontWeight.Black
                                 )
                                 Text(
-                                    text = "Pilih bahasa tampilan dalam permainan",
+                                    text = StringsHelper.get("select_language_desc", lang),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color(0xFFA0AEC0)
                                 )
@@ -285,16 +286,16 @@ fun SettingsScreen(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        // Languages Grid / Flow
+                        // Languages Grid (6 languages: 3 per row)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            AppLanguage.entries.take(4).forEach { appLang ->
+                            AppLanguage.entries.take(3).forEach { appLang ->
                                 val isSelected = userData.language == appLang
                                 Surface(
                                     onClick = { onSetLanguage(appLang) },
-                                    shape = RoundedCornerShape(12.dp),
+                                    shape = RoundedCornerShape(14.dp),
                                     color = if (isSelected) Color(0xFF00E5FF) else Color(0xFF222944),
                                     border = androidx.compose.foundation.BorderStroke(
                                         1.dp,
@@ -306,11 +307,23 @@ fun SettingsScreen(
                                         modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
-                                        Text(text = appLang.flagEmoji, fontSize = 20.sp)
-                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Surface(
+                                            shape = RoundedCornerShape(6.dp),
+                                            color = if (isSelected) Color.Black.copy(alpha = 0.25f) else Color(0xFF141A30),
+                                            border = androidx.compose.foundation.BorderStroke(1.dp, if (isSelected) Color.Black.copy(alpha = 0.35f) else Color(0xFF00E5FF).copy(alpha = 0.5f))
+                                        ) {
+                                            Text(
+                                                text = appLang.badgeCode,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Black,
+                                                color = if (isSelected) Color.Black else Color(0xFF00E5FF),
+                                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(5.dp))
                                         Text(
                                             text = appLang.displayName,
-                                            fontSize = 11.sp,
+                                            fontSize = 12.sp,
                                             fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold,
                                             color = if (isSelected) Color.Black else Color.White
                                         )
@@ -325,11 +338,11 @@ fun SettingsScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            AppLanguage.entries.drop(4).forEach { appLang ->
+                            AppLanguage.entries.drop(3).forEach { appLang ->
                                 val isSelected = userData.language == appLang
                                 Surface(
                                     onClick = { onSetLanguage(appLang) },
-                                    shape = RoundedCornerShape(12.dp),
+                                    shape = RoundedCornerShape(14.dp),
                                     color = if (isSelected) Color(0xFF00E5FF) else Color(0xFF222944),
                                     border = androidx.compose.foundation.BorderStroke(
                                         1.dp,
@@ -341,11 +354,23 @@ fun SettingsScreen(
                                         modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
-                                        Text(text = appLang.flagEmoji, fontSize = 20.sp)
-                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Surface(
+                                            shape = RoundedCornerShape(6.dp),
+                                            color = if (isSelected) Color.Black.copy(alpha = 0.25f) else Color(0xFF141A30),
+                                            border = androidx.compose.foundation.BorderStroke(1.dp, if (isSelected) Color.Black.copy(alpha = 0.35f) else Color(0xFF00E5FF).copy(alpha = 0.5f))
+                                        ) {
+                                            Text(
+                                                text = appLang.badgeCode,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Black,
+                                                color = if (isSelected) Color.Black else Color(0xFF00E5FF),
+                                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(5.dp))
                                         Text(
                                             text = appLang.displayName,
-                                            fontSize = 11.sp,
+                                            fontSize = 12.sp,
                                             fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold,
                                             color = if (isSelected) Color.Black else Color.White
                                         )
@@ -413,7 +438,12 @@ fun SettingsScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                        Text(text = "📍", fontSize = 24.sp)
+                                        Icon(
+                                            imageVector = Icons.Default.PinDrop,
+                                            contentDescription = null,
+                                            tint = if (isStatic) Color(0xFF4ADE80) else Color(0xFFA0AEC0),
+                                            modifier = Modifier.size(24.dp)
+                                        )
                                         Spacer(modifier = Modifier.width(12.dp))
                                         Column {
                                             Text(
@@ -444,7 +474,7 @@ fun SettingsScreen(
                                 }
                             }
 
-                            // Mode Bergerak (Dynamic/Floating)
+                            // Mode Bergerak (Dynamic/Floating - NO EMOJI)
                             val isDynamic = userData.joystickMode == JoystickMode.DYNAMIC
                             Surface(
                                 onClick = { onSetJoystickMode(JoystickMode.DYNAMIC) },
@@ -462,7 +492,12 @@ fun SettingsScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                        Text(text = "👆", fontSize = 24.sp)
+                                        Icon(
+                                            imageVector = Icons.Default.TouchApp,
+                                            contentDescription = null,
+                                            tint = if (isDynamic) Color(0xFF4ADE80) else Color(0xFFA0AEC0),
+                                            modifier = Modifier.size(24.dp)
+                                        )
                                         Spacer(modifier = Modifier.width(12.dp))
                                         Column {
                                             Text(
@@ -519,15 +554,10 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
                                 Text(
-                                    text = "MODE KENDALI CACING",
+                                    text = StringsHelper.get("control_mode", lang),
                                     style = MaterialTheme.typography.titleMedium,
                                     color = Color(0xFF4ADE80),
                                     fontWeight = FontWeight.Black
-                                )
-                                Text(
-                                    text = "Metode navigasi cacing di layar ponsel",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color(0xFFA0AEC0)
                                 )
                             }
                         }
@@ -541,7 +571,7 @@ fun SettingsScreen(
                             FilterChip(
                                 selected = userData.controlMode == ControlMode.JOYSTICK,
                                 onClick = { onSetControlMode(ControlMode.JOYSTICK) },
-                                label = { Text("Joystick Virtual") },
+                                label = { Text(StringsHelper.get("virtual_joystick", lang)) },
                                 leadingIcon = {
                                     Icon(Icons.Default.Gamepad, contentDescription = null, modifier = Modifier.size(18.dp))
                                 },
@@ -557,7 +587,7 @@ fun SettingsScreen(
                             FilterChip(
                                 selected = userData.controlMode == ControlMode.TOUCH_FOLLOW,
                                 onClick = { onSetControlMode(ControlMode.TOUCH_FOLLOW) },
-                                label = { Text("Sentuh & Ikuti") },
+                                label = { Text(StringsHelper.get("touch_follow", lang)) },
                                 leadingIcon = {
                                     Icon(Icons.Default.TouchApp, contentDescription = null, modifier = Modifier.size(18.dp))
                                 },
@@ -573,7 +603,7 @@ fun SettingsScreen(
 
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = userData.controlMode.description,
+                            text = StringsHelper.get(if (userData.controlMode == ControlMode.JOYSTICK) "virtual_joystick_desc" else "touch_follow_desc", lang),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color(0xFFA0AEC0)
                         )
@@ -686,7 +716,7 @@ fun SettingsScreen(
                                 nameInput = it
                                 onUpdateName(it)
                             },
-                            label = { Text("Nama Panggilan Cacing") },
+                            label = { Text(StringsHelper.get("player_nickname", lang)) },
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = Color(0xFF4ADE80),
@@ -716,13 +746,13 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.width(14.dp))
                         Column {
                             Text(
-                                text = "nana tayantuh - Arena Luar Open World Edition",
+                                text = StringsHelper.get("version_title", lang),
                                 style = MaterialTheme.typography.titleSmall,
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Versi 1.2.0 • Radius Arena Luar 3800px (Area 7600x7600) • 5 Tema Peta Eksklusif • Event 7 Hari • 7 Pilihan Bahasa",
+                                text = StringsHelper.get("version_info", lang),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color(0xFFA0AEC0)
                             )

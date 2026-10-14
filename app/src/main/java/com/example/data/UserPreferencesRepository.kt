@@ -9,20 +9,19 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-enum class ControlMode(val title: String, val description: String) {
-    JOYSTICK("Joystick Virtual", "Kemudikan cacing menggunakan joystick virtual"),
-    TOUCH_FOLLOW("Sentuh & Ikuti", "Cacing berbelok mengikuti posisi jari di layar")
+enum class ControlMode {
+    JOYSTICK,
+    TOUCH_FOLLOW
 }
 
-enum class JoystickMode(val title: String, val description: String) {
-    STATIC("Mode Diam", "Joystick tetap berada di posisi sudut layar yang telah diatur"),
-    DYNAMIC("Mode Bergerak", "Joystick otomatis muncul di mana pun jempolmu menyentuh layar")
+enum class JoystickMode {
+    STATIC,
+    DYNAMIC
 }
 
 data class DailyRewardInfo(
     val day: Int,
     val coins: Int,
-    val bonusDescription: String,
     val isSpecial: Boolean = false
 )
 
@@ -62,13 +61,13 @@ data class UserGameData(
 ) {
     companion object {
         val DAILY_REWARDS = listOf(
-            DailyRewardInfo(1, 200, "Hadiah Hari Pertama!"),
-            DailyRewardInfo(2, 400, "Koin Bertambah!"),
-            DailyRewardInfo(3, 650, "Bonus Ramuan & Koin!"),
-            DailyRewardInfo(4, 900, "Koin Sultan Cacing!"),
-            DailyRewardInfo(5, 1200, "Peti Emas Hadiah!"),
-            DailyRewardInfo(6, 1600, "Hadiah Legendaris!"),
-            DailyRewardInfo(7, 3000, "Jackpot 7 Hari + Skin Emas!", isSpecial = true)
+            DailyRewardInfo(1, 200),
+            DailyRewardInfo(2, 400),
+            DailyRewardInfo(3, 650),
+            DailyRewardInfo(4, 900),
+            DailyRewardInfo(5, 1200),
+            DailyRewardInfo(6, 1600),
+            DailyRewardInfo(7, 3000, isSpecial = true)
         )
         const val ONE_DAY_MILLIS = 24 * 60 * 60 * 1000L
     }

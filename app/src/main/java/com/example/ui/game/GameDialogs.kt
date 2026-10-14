@@ -7,7 +7,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,13 +25,22 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.MilitaryTech
+import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.SentimentVeryDissatisfied
+import androidx.compose.material.icons.filled.Stars
+import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VolumeMute
 import androidx.compose.material.icons.filled.VolumeUp
@@ -40,7 +48,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -53,6 +60,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -60,6 +68,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.example.data.AppLanguage
 import com.example.data.StringsHelper
 import com.example.data.UserGameData
 
@@ -67,6 +76,7 @@ import com.example.data.UserGameData
 fun PauseDialog(
     soundEnabled: Boolean,
     vibrationEnabled: Boolean,
+    lang: AppLanguage = AppLanguage.INDONESIAN,
     onResume: () -> Unit,
     onRestart: () -> Unit,
     onToggleSound: (Boolean) -> Unit,
@@ -96,7 +106,7 @@ fun PauseDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "GAME DIJEDA",
+                    text = StringsHelper.get("pause_title", lang),
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color.White,
                     fontWeight = FontWeight.Black
@@ -125,7 +135,7 @@ fun PauseDialog(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Suara", style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                                Text(StringsHelper.get("sound", lang), style = MaterialTheme.typography.bodyMedium, color = Color.White)
                             }
                             Switch(checked = soundEnabled, onCheckedChange = onToggleSound)
                         }
@@ -149,7 +159,7 @@ fun PauseDialog(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Getar", style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                                Text(StringsHelper.get("vibration", lang), style = MaterialTheme.typography.bodyMedium, color = Color.White)
                             }
                             Switch(checked = vibrationEnabled, onCheckedChange = onToggleVibration)
                         }
@@ -172,7 +182,7 @@ fun PauseDialog(
                     ) {
                         Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, tint = Color.Black, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("LANJUTKAN", style = MaterialTheme.typography.labelLarge, color = Color.Black, fontWeight = FontWeight.Black)
+                        Text(StringsHelper.get("resume", lang).uppercase(), style = MaterialTheme.typography.labelLarge, color = Color.Black, fontWeight = FontWeight.Black)
                     }
 
                     OutlinedButton(
@@ -186,7 +196,7 @@ fun PauseDialog(
                     ) {
                         Icon(imageVector = Icons.Default.Refresh, contentDescription = null, tint = Color(0xFFFF9100), modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("ULANG", style = MaterialTheme.typography.labelLarge, color = Color(0xFFFF9100), fontWeight = FontWeight.Bold)
+                        Text(StringsHelper.get("restart", lang).uppercase(), style = MaterialTheme.typography.labelLarge, color = Color(0xFFFF9100), fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -201,7 +211,7 @@ fun PauseDialog(
                 ) {
                     Icon(imageVector = Icons.Default.Home, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("KEMBALI KE MENU", style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                    Text(StringsHelper.get("back_to_menu", lang).uppercase(), style = MaterialTheme.typography.bodyMedium, color = Color.White)
                 }
             }
         }
@@ -213,6 +223,7 @@ fun ReviveDialog(
     reviveCost: Int,
     playerCoins: Int,
     wormLength: Int,
+    lang: AppLanguage = AppLanguage.INDONESIAN,
     onRevive: () -> Unit,
     onGiveUp: () -> Unit
 ) {
@@ -251,12 +262,17 @@ fun ReviveDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // Header
+                // Header (NO EMOJI)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "❤️‍🩹", fontSize = 28.sp)
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = null,
+                        tint = Color(0xFFFF5252),
+                        modifier = Modifier.size(28.dp)
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "LANJUTKAN CACING?",
+                        text = StringsHelper.get("revive_title", lang),
                         style = MaterialTheme.typography.headlineSmall,
                         color = Color(0xFFFF9100),
                         fontWeight = FontWeight.Black
@@ -264,7 +280,7 @@ fun ReviveDialog(
                 }
 
                 Text(
-                    text = "Cacingmu tumbang! Bangkitkan kembali dengan perlindungan kebal 6 detik!",
+                    text = StringsHelper.get("revive_desc", lang),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color(0xFFCBD5E1),
                     textAlign = TextAlign.Center
@@ -283,17 +299,23 @@ fun ReviveDialog(
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Panjang Cacing:", style = MaterialTheme.typography.bodySmall, color = Color(0xFFA0AEC0))
-                            Text("$wormLength Segmen", style = MaterialTheme.typography.titleSmall, color = Color(0xFF4ADE80), fontWeight = FontWeight.Bold)
+                            Text(StringsHelper.get("worm_length", lang) + ":", style = MaterialTheme.typography.bodySmall, color = Color(0xFFA0AEC0))
+                            Text("$wormLength ${StringsHelper.get("segments", lang)}", style = MaterialTheme.typography.titleSmall, color = Color(0xFF4ADE80), fontWeight = FontWeight.Bold)
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Koin Kamu:", style = MaterialTheme.typography.bodySmall, color = Color(0xFFA0AEC0))
-                            Text("🪙 $playerCoins Koin", style = MaterialTheme.typography.titleSmall, color = Color(0xFFFFD700), fontWeight = FontWeight.Bold)
+                            Text(StringsHelper.get("your_coins", lang) + ":", style = MaterialTheme.typography.bodySmall, color = Color(0xFFA0AEC0))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.MonetizationOn, contentDescription = null, tint = Color(0xFFFFD700), modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("$playerCoins", style = MaterialTheme.typography.titleSmall, color = Color(0xFFFFD700), fontWeight = FontWeight.Bold)
+                            }
                         }
                         androidx.compose.material3.HorizontalDivider(color = Color(0xFF353D63), thickness = 1.dp)
                         Row(
@@ -301,20 +323,24 @@ fun ReviveDialog(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Biaya Lanjutkan:", style = MaterialTheme.typography.bodyMedium, color = Color.White, fontWeight = FontWeight.Bold)
-                            Text(
-                                text = "🪙 $reviveCost Koin",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = if (canAfford) Color(0xFFFF9100) else Color(0xFFFF5252),
-                                fontWeight = FontWeight.Black
-                            )
+                            Text(StringsHelper.get("revive_cost", lang) + ":", style = MaterialTheme.typography.bodyMedium, color = Color.White, fontWeight = FontWeight.Bold)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.MonetizationOn, contentDescription = null, tint = if (canAfford) Color(0xFFFF9100) else Color(0xFFFF5252), modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "$reviveCost",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = if (canAfford) Color(0xFFFF9100) else Color(0xFFFF5252),
+                                    fontWeight = FontWeight.Black
+                                )
+                            }
                         }
                     }
                 }
 
                 if (!canAfford) {
                     Text(
-                        text = "⚠️ Koin kamu kurang ${reviveCost - playerCoins} untuk melanjutkan.",
+                        text = StringsHelper.get("not_enough_coins", lang),
                         style = MaterialTheme.typography.labelSmall,
                         color = Color(0xFFFF5252),
                         fontWeight = FontWeight.Bold
@@ -343,7 +369,7 @@ fun ReviveDialog(
                         Icon(imageVector = Icons.Default.Favorite, contentDescription = null, tint = if (canAfford) Color.Black else Color.Gray)
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "HIDUPKAN LAGI (🪙 $reviveCost)",
+                            text = "${StringsHelper.get("revive_btn", lang)} ($reviveCost)",
                             style = MaterialTheme.typography.labelLarge,
                             color = if (canAfford) Color.Black else Color.Gray,
                             fontWeight = FontWeight.Black
@@ -359,7 +385,7 @@ fun ReviveDialog(
                         shape = RoundedCornerShape(14.dp),
                         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF353D63))
                     ) {
-                        Text("Selesai & Lihat Skor", style = MaterialTheme.typography.bodyMedium, color = Color(0xFFA0AEC0))
+                        Text(StringsHelper.get("give_up", lang), style = MaterialTheme.typography.bodyMedium, color = Color(0xFFA0AEC0))
                     }
                 }
             }
@@ -375,6 +401,7 @@ fun GameOverDialog(
     length: Int,
     coinsEarned: Int,
     isVictory: Boolean = false,
+    lang: AppLanguage = AppLanguage.INDONESIAN,
     onPlayAgain: () -> Unit,
     onBackToLobby: () -> Unit
 ) {
@@ -400,15 +427,20 @@ fun GameOverDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Header Loss or Victory Banner
+                // Header Loss or Victory Banner (NO EMOJI)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text(text = if (isVictory) "🏆" else "💥", fontSize = 28.sp)
+                    Icon(
+                        imageVector = if (isVictory) Icons.Default.EmojiEvents else Icons.Default.SentimentVeryDissatisfied,
+                        contentDescription = null,
+                        tint = if (isVictory) Color(0xFFFFD700) else Color(0xFFFF3366),
+                        modifier = Modifier.size(28.dp)
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (isVictory) "JUARA ARENA!" else "KAMU KALAH!",
+                        text = if (isVictory) StringsHelper.get("arena_winner", lang) else StringsHelper.get("game_over", lang),
                         style = MaterialTheme.typography.headlineMedium,
                         color = if (isVictory) Color(0xFFFFD700) else Color(0xFFFF3366),
                         fontWeight = FontWeight.Black
@@ -416,7 +448,7 @@ fun GameOverDialog(
                 }
 
                 Text(
-                    text = if (isVictory) "Hebat! Kamu bertahan dan mendominasi arena!" else if (score >= highScore && score > 0) "🎉 REKOR SKOR BARU DI ARENA! 🎉" else "Coba lagi dan jadilah cacing terpanjang!",
+                    text = StringsHelper.get("good_job", lang),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (score >= highScore && score > 0 || isVictory) Color(0xFFFFD700) else Color(0xFFA0AEC0),
                     textAlign = TextAlign.Center
@@ -437,11 +469,11 @@ fun GameOverDialog(
                             modifier = Modifier.padding(12.dp),
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            StatRow(title = "Skor Akhir", value = "$score", icon = "🍩", highlight = true)
-                            StatRow(title = "Rekor Terbaik", value = "$highScore", icon = "🏆", highlight = false)
-                            StatRow(title = "Lawan Dikalahkan", value = "$kills", icon = "⚔️", highlight = false)
-                            StatRow(title = "Panjang Akhir", value = "$length", icon = "🐍", highlight = false)
-                            StatRow(title = "Koin Diperoleh", value = "+$coinsEarned", icon = "🪙", highlight = true, valueColor = Color(0xFFFFD700))
+                            StatRow(title = StringsHelper.get("final_score", lang), value = "$score", icon = Icons.Default.Stars, highlight = true, lang = lang)
+                            StatRow(title = StringsHelper.get("high_score", lang), value = "$highScore", icon = Icons.Default.EmojiEvents, highlight = false, lang = lang)
+                            StatRow(title = StringsHelper.get("enemies_slain", lang), value = "$kills", icon = Icons.Default.LocalFireDepartment, highlight = false, lang = lang)
+                            StatRow(title = StringsHelper.get("final_length", lang), value = "$length ${StringsHelper.get("segments", lang)}", icon = Icons.Default.Timeline, highlight = false, lang = lang)
+                            StatRow(title = StringsHelper.get("coins_earned", lang), value = "+$coinsEarned", icon = Icons.Default.MonetizationOn, highlight = true, valueColor = Color(0xFFFFD700), lang = lang)
                         }
                     }
 
@@ -464,7 +496,7 @@ fun GameOverDialog(
                         ) {
                             Icon(imageVector = Icons.Default.Refresh, contentDescription = null, tint = Color.Black)
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("MAIN LAGI", style = MaterialTheme.typography.labelLarge, color = Color.Black, fontWeight = FontWeight.Black)
+                            Text(StringsHelper.get("play_again", lang), style = MaterialTheme.typography.labelLarge, color = Color.Black, fontWeight = FontWeight.Black)
                         }
 
                         FilledTonalButton(
@@ -478,7 +510,7 @@ fun GameOverDialog(
                         ) {
                             Icon(imageVector = Icons.Default.Home, contentDescription = null, tint = Color.White)
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("MENU UTAMA", style = MaterialTheme.typography.labelMedium, color = Color.White)
+                            Text(StringsHelper.get("back_to_menu", lang), style = MaterialTheme.typography.labelMedium, color = Color.White)
                         }
                     }
                 }
@@ -490,6 +522,7 @@ fun GameOverDialog(
 @Composable
 fun DailyLoginDialog(
     userData: UserGameData,
+    lang: AppLanguage = userData.language,
     onClaimReward: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -529,15 +562,19 @@ fun DailyLoginDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // Header Bar
+                // Header Bar (NO EMOJI)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "🎁", fontSize = 28.sp)
-                        val lang = userData.language
+                        Icon(
+                            imageVector = Icons.Default.CardGiftcard,
+                            contentDescription = null,
+                            tint = Color(0xFFFFD700),
+                            modifier = Modifier.size(28.dp)
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
                         Column {
                             Text(
@@ -565,7 +602,7 @@ fun DailyLoginDialog(
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = StringsHelper.get("close", userData.language),
+                                contentDescription = StringsHelper.get("close", lang),
                                 tint = Color.White,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -578,12 +615,10 @@ fun DailyLoginDialog(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    val lang = userData.language
                     items(UserGameData.DAILY_REWARDS) { reward ->
                         val isClaimed = reward.day <= userData.lastClaimedDay && userData.lastClaimedDay > 0
                         val isCurrentClaimable = reward.day == nextDay && canClaim
                         val isCurrentWaiting = reward.day == nextDay && !canClaim
-                        val isLocked = reward.day > nextDay
 
                         Surface(
                             shape = RoundedCornerShape(16.dp),
@@ -617,10 +652,12 @@ fun DailyLoginDialog(
 
                                 Spacer(modifier = Modifier.height(6.dp))
 
-                                // Reward Icon
-                                Text(
-                                    text = if (reward.isSpecial) "👑" else "🪙",
-                                    fontSize = 28.sp
+                                // Reward Icon (NO EMOJI)
+                                Icon(
+                                    imageVector = if (reward.isSpecial) Icons.Default.MilitaryTech else Icons.Default.MonetizationOn,
+                                    contentDescription = null,
+                                    tint = Color(0xFFFFD700),
+                                    modifier = Modifier.size(26.dp)
                                 )
 
                                 Spacer(modifier = Modifier.height(4.dp))
@@ -667,12 +704,7 @@ fun DailyLoginDialog(
                                         }
                                     }
                                     isCurrentWaiting -> {
-                                        Text(
-                                            text = "⏳",
-                                            fontSize = 12.sp,
-                                            color = Color(0xFFFF9100),
-                                            fontWeight = FontWeight.Bold
-                                        )
+                                        Icon(Icons.Default.HourglassTop, contentDescription = null, tint = Color(0xFFFF9100), modifier = Modifier.size(14.dp))
                                     }
                                     else -> {
                                         Icon(Icons.Default.Lock, contentDescription = null, tint = Color(0xFF556080), modifier = Modifier.size(14.dp))
@@ -684,7 +716,6 @@ fun DailyLoginDialog(
                 }
 
                 // Status message & Claim button
-                val lang = userData.language
                 if (canClaim) {
                     val rewardCoins = UserGameData.DAILY_REWARDS.getOrNull(nextDay - 1)?.coins ?: 200
                     Button(
@@ -699,7 +730,7 @@ fun DailyLoginDialog(
                         shape = RoundedCornerShape(16.dp)
                     ) {
                         Text(
-                            text = "${StringsHelper.get("claim", lang)} (+🪙 $rewardCoins)",
+                            text = "${StringsHelper.get("claim", lang)} (+ $rewardCoins ${StringsHelper.get("coins", lang)})",
                             style = MaterialTheme.typography.titleSmall,
                             color = Color.Black,
                             fontWeight = FontWeight.Black
@@ -720,7 +751,7 @@ fun DailyLoginDialog(
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("⏳", fontSize = 18.sp)
+                            Icon(Icons.Default.HourglassTop, contentDescription = null, tint = Color(0xFFFF9100), modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "${StringsHelper.get("claimed_today", lang)} ${hours}h ${minutes}m",
@@ -744,7 +775,7 @@ fun DailyLoginDialog(
                 ) {
                     Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Tutup", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(StringsHelper.get("close", lang), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 }
             }
         }
@@ -755,9 +786,10 @@ fun DailyLoginDialog(
 private fun StatRow(
     title: String,
     value: String,
-    icon: String,
+    icon: ImageVector,
     highlight: Boolean,
-    valueColor: Color = if (highlight) Color(0xFF4ADE80) else Color.White
+    valueColor: Color = if (highlight) Color(0xFF4ADE80) else Color.White,
+    lang: AppLanguage = AppLanguage.INDONESIAN
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -765,7 +797,7 @@ private fun StatRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(text = icon, fontSize = 14.sp)
+            Icon(imageVector = icon, contentDescription = null, tint = if (highlight) Color(0xFFFFD700) else Color(0xFFA0AEC0), modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(6.dp))
             Text(text = title, style = MaterialTheme.typography.bodySmall, color = Color(0xFFA0AEC0))
         }

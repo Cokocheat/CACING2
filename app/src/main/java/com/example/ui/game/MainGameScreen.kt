@@ -226,6 +226,7 @@ fun MainGameScreen(
             PauseDialog(
                 soundEnabled = userData.soundEnabled,
                 vibrationEnabled = userData.vibrationEnabled,
+                lang = userData.language,
                 onResume = {
                     isPaused = false
                     engine.isPaused = false
@@ -248,6 +249,7 @@ fun MainGameScreen(
                 reviveCost = currentReviveCost,
                 playerCoins = userData.coins,
                 wormLength = engine.player.bodyPoints.size,
+                lang = userData.language,
                 onRevive = {
                     if (userPrefs.spendCoins(currentReviveCost)) {
                         showReviveDialog = false
@@ -276,6 +278,7 @@ fun MainGameScreen(
                 length = engine.player.bodyPoints.size,
                 coinsEarned = engine.coinsCollectedInSession,
                 isVictory = engine.isVictory,
+                lang = userData.language,
                 onPlayAgain = {
                     showGameOver = false
                     showReviveDialog = false

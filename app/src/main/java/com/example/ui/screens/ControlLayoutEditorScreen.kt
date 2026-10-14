@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.OpenWith
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -176,7 +177,9 @@ fun ControlLayoutEditorScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
-                            Text("🎮 Ukuran:", fontSize = 11.sp, color = Color(0xFF4ADE80), fontWeight = FontWeight.Bold)
+                            Icon(imageVector = Icons.Default.SportsEsports, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text("${StringsHelper.get("size", lang)}:", fontSize = 11.sp, color = Color(0xFF4ADE80), fontWeight = FontWeight.Bold)
                             IconButton(
                                 onClick = { joyScale = (joyScale - 0.1f).coerceIn(0.75f, 1.5f) },
                                 modifier = Modifier.size(24.dp)
@@ -203,7 +206,9 @@ fun ControlLayoutEditorScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
-                            Text("⚡ Boost:", fontSize = 11.sp, color = Color(0xFFFF9100), fontWeight = FontWeight.Bold)
+                            Icon(imageVector = Icons.Default.Bolt, contentDescription = null, tint = Color(0xFFFF9100), modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text("TURBO:", fontSize = 11.sp, color = Color(0xFFFF9100), fontWeight = FontWeight.Bold)
                             IconButton(
                                 onClick = { boostScale = (boostScale - 0.1f).coerceIn(0.75f, 1.5f) },
                                 modifier = Modifier.size(24.dp)
@@ -328,13 +333,19 @@ fun ControlLayoutEditorScreen(
                 color = Color(0xEE161B2E),
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF4ADE80))
             ) {
-                Text(
-                    text = "🎮 JOYSTICK (Geser Saya!)",
-                    fontSize = 10.sp,
-                    color = Color(0xFF4ADE80),
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                )
+                Row(
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(imageVector = Icons.Default.SportsEsports, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(13.dp))
+                    Spacer(modifier = Modifier.width(3.dp))
+                    Text(
+                        text = "JOYSTICK (${StringsHelper.get("drag_me", lang)})",
+                        fontSize = 10.sp,
+                        color = Color(0xFF4ADE80),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
 
@@ -407,13 +418,19 @@ fun ControlLayoutEditorScreen(
                 color = Color(0xEE161B2E),
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFF9100))
             ) {
-                Text(
-                    text = "⚡ TOMBOL BOOST (Geser Saya!)",
-                    fontSize = 10.sp,
-                    color = Color(0xFFFF9100),
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                )
+                Row(
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(imageVector = Icons.Default.Bolt, contentDescription = null, tint = Color(0xFFFF9100), modifier = Modifier.size(13.dp))
+                    Spacer(modifier = Modifier.width(3.dp))
+                    Text(
+                        text = "BOOST (${StringsHelper.get("drag_me", lang)})",
+                        fontSize = 10.sp,
+                        color = Color(0xFFFF9100),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
 
@@ -431,7 +448,7 @@ fun ControlLayoutEditorScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "🎯 Sentuh & Geser Bebas dengan Jari",
+                    text = StringsHelper.get("touch_and_drag", lang),
                     style = MaterialTheme.typography.titleSmall,
                     color = Color.White,
                     fontWeight = FontWeight.Bold
