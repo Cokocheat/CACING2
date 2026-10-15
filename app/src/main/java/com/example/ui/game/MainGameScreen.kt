@@ -34,7 +34,9 @@ fun MainGameScreen(
     onBackToLobby: () -> Unit
 ) {
     val userData by userPrefs.userData.collectAsState()
-    val engine = remember(gameMode) { WormsGameEngine(soundManager, userData, gameMode) }
+    val engine = remember(gameMode, userData.gameDifficulty) {
+        WormsGameEngine(soundManager, userData, gameMode, userData.gameDifficulty)
+    }
 
     val hudState by engine.hudState.collectAsState()
     val leaderboard by engine.leaderboard.collectAsState()

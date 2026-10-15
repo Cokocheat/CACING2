@@ -3,6 +3,7 @@ package com.example.data
 import android.content.Context
 import android.content.SharedPreferences
 import com.example.model.FaceAccessory
+import com.example.model.GameDifficulty
 import com.example.model.MapTheme
 import com.example.model.SkinId
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,9 +56,10 @@ data class UserGameData(
     val boostOffsetX: Int = 36, // dp from right edge
     val boostOffsetY: Int = 36, // dp from bottom edge
     val boostScale: Float = 1.05f,
-    // Language & Map Theme Customization
+    // Language & Map Theme & Enemy Difficulty Customization
     val language: AppLanguage = AppLanguage.INDONESIAN,
-    val mapTheme: MapTheme = MapTheme.CYBER_FUNK
+    val mapTheme: MapTheme = MapTheme.CYBER_FUNK,
+    val gameDifficulty: GameDifficulty = GameDifficulty.NORMAL
 ) {
     companion object {
         val DAILY_REWARDS = listOf(
@@ -159,6 +161,9 @@ class UserPreferencesRepository(context: Context) {
         val themeStr = prefs.getString("map_theme", MapTheme.CYBER_FUNK.id) ?: MapTheme.CYBER_FUNK.id
         val mapTheme = MapTheme.fromId(themeStr)
 
+        val diffStr = prefs.getString("game_difficulty", GameDifficulty.NORMAL.id) ?: GameDifficulty.NORMAL.id
+        val gameDifficulty = GameDifficulty.fromId(diffStr)
+
         val joyModeStr = prefs.getString("joystick_mode", JoystickMode.STATIC.name) ?: JoystickMode.STATIC.name
         val joystickMode = try { JoystickMode.valueOf(joyModeStr) } catch (_: Exception) { JoystickMode.STATIC }
 
@@ -191,7 +196,8 @@ class UserPreferencesRepository(context: Context) {
             boostOffsetY = boostY,
             boostScale = boostScale,
             language = language,
-            mapTheme = mapTheme
+            mapTheme = mapTheme,
+            gameDifficulty = gameDifficulty
         )
     }
 
@@ -438,5 +444,10 @@ class UserPreferencesRepository(context: Context) {
     fun setMapTheme(theme: MapTheme) {
         prefs.edit().putString("map_theme", theme.id).apply()
         _userData.value = _userData.value.copy(mapTheme = theme)
+    }
+
+    fun setGameDifficulty(diff: GameDifficulty) {
+        prefs.edit().putString("game_difficulty", diff.id).apply()
+        _userData.value = _userData.value.copy(gameDifficulty = diff)
     }
 }

@@ -7,6 +7,7 @@ import com.example.model.FaceAccessory
 import com.example.model.FoodItem
 import com.example.model.FoodType
 import com.example.model.GameConfig
+import com.example.model.GameDifficulty
 import com.example.model.GameMode
 import com.example.model.GameParticle
 import com.example.model.PotionItem
@@ -48,6 +49,7 @@ data class EngineHudState(
     val playerPos: Vec2 = Vec2.Zero,
     val botPositions: List<Vec2> = emptyList(),
     val gameMode: GameMode = GameMode.OPEN_ARENA,
+    val difficulty: GameDifficulty = GameDifficulty.NORMAL,
     val timeAttackRemaining: Float = 180f,
     val aliveBotsCount: Int = 0,
     val currentArenaRadius: Float = GameConfig.ARENA_RADIUS,
@@ -57,7 +59,8 @@ data class EngineHudState(
 class WormsGameEngine(
     private val soundManager: GameSoundManager,
     private val userData: UserGameData,
-    var gameMode: GameMode = GameMode.OPEN_ARENA
+    var gameMode: GameMode = GameMode.OPEN_ARENA,
+    var difficulty: GameDifficulty = userData.gameDifficulty
 ) {
     private val idGen = AtomicLong(1)
 
@@ -444,6 +447,7 @@ class WormsGameEngine(
             playerPos = player.head,
             botPositions = botPositions,
             gameMode = gameMode,
+            difficulty = difficulty,
             timeAttackRemaining = timeAttackRemaining,
             aliveBotsCount = aliveCount,
             currentArenaRadius = currentArenaRadius,
@@ -505,8 +509,9 @@ class WormsGameEngine(
             }
         }
 
-        // Steer smoothly towards target angle
-        val maxTurn = GameConfig.TURN_SPEED * dt
+        // Steer smoothly towards target angle with turn speed influenced by difficulty
+        val turnFactor = if (worm.isPlayer) 1.0f else difficulty.turnSpeedFactor
+        val maxTurn = GameConfig.TURN_SPEED * turnFactor * dt
         worm.steerTowards(worm.targetAngle, maxTurn)
 
         // Move head
@@ -541,15 +546,17 @@ class WormsGameEngine(
     private fun updateAiDecision(bot: Worm, dt: Float) {
         bot.aiDecisionCooldown -= dt
         if (bot.aiDecisionCooldown <= 0f) {
-            bot.aiDecisionCooldown = Random.nextFloat() * 0.4f + 0.2f
+            // Decision reaction cooldown based on difficulty
+            val cdSpan = (difficulty.decisionCooldownMax - difficulty.decisionCooldownMin).coerceAtLeast(0.04f)
+            bot.aiDecisionCooldown = difficulty.decisionCooldownMin + Random.nextFloat() * cdSpan
 
             // Danger detection: avoid arena border
             val distToCenterSq = bot.head.distanceSquaredTo(arenaCenter)
-            val borderDangerDist = currentArenaRadius - 320f
+            val borderDangerDist = currentArenaRadius - (if (difficulty == GameDifficulty.HARD) 360f else 280f)
             if (distToCenterSq > borderDangerDist * borderDangerDist) {
                 val toCenter = (arenaCenter - bot.head).angle()
                 bot.targetAngle = toCenter
-                bot.isBoosting = false
+                bot.isBoosting = difficulty == GameDifficulty.HARD
                 return
             }
 
@@ -562,27 +569,27 @@ class WormsGameEngine(
 
             // Danger detection: avoid nearby worm bodies
             var avoidAngle: Float? = null
-            val lookAhead = bot.head + Vec2.fromAngle(bot.angle, 120f)
-            val avoidDist = bot.segmentRadius + 45f
+            val lookDist = difficulty.lookAheadDist
+            val lookAhead = bot.head + Vec2.fromAngle(bot.angle, lookDist)
+            val avoidDist = bot.segmentRadius + (if (difficulty == GameDifficulty.HARD) 55f else 38f)
             val avoidDistSq = avoidDist * avoidDist
+
+            // Multi-ray lookahead for Hard difficulty to avoid getting trapped
+            val checkPoints = if (difficulty == GameDifficulty.HARD) {
+                listOf(
+                    lookAhead,
+                    bot.head + Vec2.fromAngle(bot.angle - 0.45f, lookDist * 0.85f),
+                    bot.head + Vec2.fromAngle(bot.angle + 0.45f, lookDist * 0.85f)
+                )
+            } else {
+                listOf(lookAhead)
+            }
 
             // Check against player body
             if (player.isAlive && player.id != bot.id) {
-                for (seg in player.bodyPoints) {
-                    if (lookAhead.distanceSquaredTo(seg) < avoidDistSq) {
-                        avoidAngle = (bot.head - seg).angle()
-                        break
-                    }
-                }
-            }
-
-            // Check against other bots
-            if (avoidAngle == null) {
-                for (i in bots.indices) {
-                    val other = bots[i]
-                    if (other.id == bot.id || !other.isAlive) continue
-                    for (seg in other.bodyPoints) {
-                        if (lookAhead.distanceSquaredTo(seg) < avoidDistSq) {
+                for (pt in checkPoints) {
+                    for (seg in player.bodyPoints) {
+                        if (pt.distanceSquaredTo(seg) < avoidDistSq) {
                             avoidAngle = (bot.head - seg).angle()
                             break
                         }
@@ -591,22 +598,55 @@ class WormsGameEngine(
                 }
             }
 
+            // Check against other bots
+            if (avoidAngle == null) {
+                for (i in bots.indices) {
+                    val other = bots[i]
+                    if (other.id == bot.id || !other.isAlive) continue
+                    for (pt in checkPoints) {
+                        for (seg in other.bodyPoints) {
+                            if (pt.distanceSquaredTo(seg) < avoidDistSq) {
+                                avoidAngle = (bot.head - seg).angle()
+                                break
+                            }
+                        }
+                        if (avoidAngle != null) break
+                    }
+                    if (avoidAngle != null) break
+                }
+            }
+
             if (avoidAngle != null) {
                 bot.targetAngle = avoidAngle
-                bot.isBoosting = true
+                bot.isBoosting = difficulty != GameDifficulty.EASY // Easy bots don't emergency boost away
                 return
             }
 
             // Behavior goal selection
             when (bot.aiPersonality) {
                 BotPersonality.HUNTER -> {
-                    val canHuntPlayer = player.isAlive && !isPlayerProtected && gameTimeSeconds > 8.0f &&
-                            player.mass < bot.mass * 1.3f && bot.head.distanceSquaredTo(player.head) < 450f * 450f
+                    val minGameTime = if (difficulty == GameDifficulty.HARD) 3.0f else 8.0f
+                    val massThreshold = if (difficulty == GameDifficulty.HARD) 1.1f else (if (difficulty == GameDifficulty.NORMAL) 1.3f else 1.8f)
+                    val huntDistSq = if (difficulty == GameDifficulty.HARD) 550f * 550f else 400f * 400f
+                    val canHuntPlayer = player.isAlive && !isPlayerProtected && gameTimeSeconds > minGameTime &&
+                            player.mass < bot.mass * massThreshold && bot.head.distanceSquaredTo(player.head) < huntDistSq
 
                     if (canHuntPlayer) {
-                        val intercept = player.head + Vec2.fromAngle(player.angle, 80f)
+                        // Encirclement tactic for Hard mode when bot has superior mass
+                        if (difficulty == GameDifficulty.HARD && bot.mass > player.mass * 1.3f && bot.head.distanceSquaredTo(player.head) < 320f * 320f) {
+                            val toPlayer = player.head - bot.head
+                            val tangent = Vec2(-toPlayer.y, toPlayer.x).normalized()
+                            val coilTarget = player.head + tangent * (player.segmentRadius * 3.5f)
+                            bot.targetAngle = (coilTarget - bot.head).angle()
+                            bot.isBoosting = true
+                            return
+                        }
+
+                        // Predictive intercept cutting off player path
+                        val leadDist = difficulty.huntLeadingDist
+                        val intercept = player.head + Vec2.fromAngle(player.angle, leadDist)
                         bot.targetAngle = (intercept - bot.head).angle()
-                        bot.isBoosting = bot.head.distanceSquaredTo(player.head) < 220f * 220f
+                        bot.isBoosting = (difficulty != GameDifficulty.EASY) && bot.head.distanceSquaredTo(player.head) < 240f * 240f
                         return
                     } else {
                         var bestBot: Worm? = null
@@ -622,9 +662,9 @@ class WormsGameEngine(
                             }
                         }
                         if (bestBot != null) {
-                            val intercept = bestBot.head + Vec2.fromAngle(bestBot.angle, 70f)
+                            val intercept = bestBot.head + Vec2.fromAngle(bestBot.angle, difficulty.huntLeadingDist * 0.8f)
                             bot.targetAngle = (intercept - bot.head).angle()
-                            bot.isBoosting = bestDistSq < 200f * 200f
+                            bot.isBoosting = (difficulty != GameDifficulty.EASY) && bestDistSq < 200f * 200f
                             return
                         }
                     }
@@ -644,7 +684,7 @@ class WormsGameEngine(
                     }
                     if (feastPos != null) {
                         bot.targetAngle = (feastPos - bot.head).angle()
-                        bot.isBoosting = true
+                        bot.isBoosting = difficulty != GameDifficulty.EASY
                         return
                     }
                 }

@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -117,66 +118,138 @@ fun SplashScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                Brush.radialGradient(
+                Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF1B284D),
-                        Color(0xFF10172E),
-                        Color(0xFF080C18)
+                        Color(0xFFFBBF24), // Bright golden amber yellow
+                        Color(0xFFF59E0B), // Warm honey yellow
+                        Color(0xFFD97706)  // Deep golden motif
                     )
                 )
             )
             .testTag("splash_screen"),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(24.dp)
-        ) {
-            // Animated Worm Mascot Showcase
-            Box(
-                modifier = Modifier
-                    .size(240.dp, 90.dp)
-                    .scale(pulseScale),
-                contentAlignment = Alignment.Center
-            ) {
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    val cx = size.width / 2f
-                    val cy = size.height / 2f
+        // Yellow Geometric Motif Canvas (Grid, Diamonds, Honeycomb Rings)
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val w = size.width
+            val h = size.height
 
-                    val headY = cy + sin(wigglePhase) * 18f
-                    val headX = cx + 55f + cos(wigglePhase * 0.5f) * 10f
-                    val vy = cos(wigglePhase) * 18f
-                    val vx = 14f - sin(wigglePhase * 0.5f) * 5f
-                    val headAngle = kotlin.math.atan2(vy, vx)
+            // 1. Soft radial sunlight glow
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color(0x50FFFBEB),
+                        Color(0x20FEF3C7),
+                        Color.Transparent
+                    ),
+                    center = Offset(w * 0.5f, h * 0.5f),
+                    radius = w * 0.6f
+                ),
+                radius = w * 0.6f,
+                center = Offset(w * 0.5f, h * 0.5f)
+            )
 
-                    val splashWorm = Worm(
-                        id = "splash",
-                        name = "nana",
-                        isPlayer = true,
-                        head = Vec2(headX, headY),
-                        angle = headAngle,
-                        skin = SkinId.RAINBOW,
-                        mass = 85f
-                    ).apply {
-                        bodyPoints.clear()
-                        for (i in 0 until 16) {
-                            val segPhase = wigglePhase - i * 0.45f
-                            val wave = sin(segPhase) * 18f
-                            val px = (cx + 55f) - i * 14f + cos(segPhase * 0.5f) * 8f
-                            val py = cy + wave
-                            bodyPoints.add(Vec2(px, py))
-                        }
-                    }
-
-                    WormsRenderer.drawWorm(
-                        drawScope = this,
-                        worm = splashWorm,
-                        cameraOffset = Offset.Zero,
-                        zoom = 1.05f
-                    )
-                }
+            // 2. Geometric motif grid pattern in warm amber tone
+            val step = 48.dp.toPx()
+            var x = 0f
+            while (x < w) {
+                drawLine(
+                    color = Color(0x2278350F),
+                    start = Offset(x, 0f),
+                    end = Offset(x, h),
+                    strokeWidth = 1f
+                )
+                x += step
             }
+            var y = 0f
+            while (y < h) {
+                drawLine(
+                    color = Color(0x2278350F),
+                    start = Offset(0f, y),
+                    end = Offset(w, y),
+                    strokeWidth = 1f
+                )
+                y += step
+            }
+
+            // 3. Motif diamond markers and circles at grid intersections
+            var ix = 0f
+            while (ix < w + step) {
+                var iy = 0f
+                while (iy < h + step) {
+                    drawCircle(
+                        color = Color(0x3092400E),
+                        radius = 2.5.dp.toPx(),
+                        center = Offset(ix, iy)
+                    )
+                    drawCircle(
+                        color = Color(0x60FFFBEB),
+                        radius = 1.2.dp.toPx(),
+                        center = Offset(ix, iy)
+                    )
+                    iy += step
+                }
+                ix += step
+            }
+        }
+
+        // Center Content Card (Frosted dark slate for striking contrast against the yellow background)
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = Color(0xEE0F172A),
+            border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFFBBF24)),
+            modifier = Modifier
+                .padding(24.dp)
+                .widthIn(max = 440.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(horizontal = 28.dp, vertical = 24.dp)
+            ) {
+                // Animated Worm Mascot Showcase (Continuous, seamless, no flicker)
+                Box(
+                    modifier = Modifier
+                        .size(240.dp, 90.dp)
+                        .scale(pulseScale),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val cx = size.width / 2f
+                        val cy = size.height / 2f
+
+                        val headY = cy + sin(wigglePhase) * 16f
+                        val headX = cx + 55f
+                        val vy = cos(wigglePhase) * 16f
+                        val vx = 16f
+                        val headAngle = kotlin.math.atan2(vy, vx)
+
+                        val splashWorm = Worm(
+                            id = "splash",
+                            name = "nana",
+                            isPlayer = true,
+                            head = Vec2(headX, headY),
+                            angle = headAngle,
+                            skin = SkinId.RAINBOW,
+                            mass = 85f
+                        ).apply {
+                            bodyPoints.clear()
+                            for (i in 0 until 16) {
+                                val segPhase = wigglePhase - i * 0.38f
+                                val px = (cx + 55f) - i * 14f
+                                val py = cy + sin(segPhase) * 16f
+                                bodyPoints.add(Vec2(px, py))
+                            }
+                        }
+
+                        WormsRenderer.drawWorm(
+                            drawScope = this,
+                            worm = splashWorm,
+                            cameraOffset = Offset.Zero,
+                            zoom = 1.05f
+                        )
+                    }
+                }
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -283,4 +356,5 @@ fun SplashScreen(
             }
         }
     }
+}
 }

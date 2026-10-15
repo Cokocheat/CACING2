@@ -81,7 +81,8 @@ fun MainScreen() {
                         onOpenSettings = { currentScreen = AppScreen.SETTINGS },
                         onUpdateName = { userPrefs.updatePlayerName(it) },
                         onClaimDailyReward = { userPrefs.claimDailyReward() },
-                        onSetMapTheme = { userPrefs.setMapTheme(it) }
+                        onSetMapTheme = { userPrefs.setMapTheme(it) },
+                        onSetGameDifficulty = { userPrefs.setGameDifficulty(it) }
                     )
                 }
                 AppScreen.GAMEPLAY -> {
