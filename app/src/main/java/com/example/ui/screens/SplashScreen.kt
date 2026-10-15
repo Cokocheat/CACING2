@@ -96,19 +96,20 @@ fun SplashScreen(
     )
 
     LaunchedEffect(Unit) {
-        // Smooth progressive loading bar
         progressAnim.animateTo(
             targetValue = 1f,
-            animationSpec = tween(durationMillis = 2200, easing = FastOutSlowInEasing)
+            animationSpec = tween(durationMillis = 2200, easing = LinearEasing)
         )
-        delay(200)
+        delay(250)
         onLoadingComplete()
     }
 
-    LaunchedEffect(Unit) {
-        while (progressAnim.value < 1f) {
-            delay(450)
-            currentTipIndex = (currentTipIndex + 1) % tips.size
+    LaunchedEffect(tips.size) {
+        var idx = 0
+        while (true) {
+            delay(800)
+            idx = (idx + 1) % tips.size
+            currentTipIndex = idx
         }
     }
 
@@ -118,34 +119,15 @@ fun SplashScreen(
             .background(
                 Brush.radialGradient(
                     colors = listOf(
-                        Color(0xFF1E284A),
-                        Color(0xFF12172C),
-                        Color(0xFF090C16)
+                        Color(0xFF1B284D),
+                        Color(0xFF10172E),
+                        Color(0xFF080C18)
                     )
                 )
             )
             .testTag("splash_screen"),
         contentAlignment = Alignment.Center
     ) {
-        // Decorative glowing particles background
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val step = 60.dp.toPx()
-            var x = 0f
-            while (x < size.width) {
-                var y = 0f
-                while (y < size.height) {
-                    val dotAlpha = (sin((x + y + wigglePhase * 50f) * 0.01f) * 0.15f + 0.15f)
-                    drawCircle(
-                        color = Color(0xFF4ADE80).copy(alpha = dotAlpha),
-                        radius = 1.5.dp.toPx(),
-                        center = Offset(x, y)
-                    )
-                    y += step
-                }
-                x += step
-            }
-        }
-
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -204,8 +186,7 @@ fun SplashScreen(
                 style = MaterialTheme.typography.displayMedium,
                 color = Color(0xFF4ADE80),
                 fontWeight = FontWeight.Black,
-                letterSpacing = 2.sp,
-                modifier = Modifier.shadow(16.dp, spotColor = Color(0xFF4ADE80))
+                letterSpacing = 2.sp
             )
 
             Spacer(modifier = Modifier.height(6.dp))
@@ -284,14 +265,21 @@ fun SplashScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Animated Tip Message
-                Text(
-                    text = tips[currentTipIndex],
-                    fontSize = 12.sp,
-                    color = Color(0xFFCBD5E1),
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Medium
-                )
+                // Animated Tip Message (Fixed height prevents any layout jump)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(36.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = tips[currentTipIndex],
+                        fontSize = 12.sp,
+                        color = Color(0xFFCBD5E1),
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }

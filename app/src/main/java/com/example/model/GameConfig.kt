@@ -14,9 +14,9 @@ object GameConfig {
     const val ARENA_HEIGHT = 7600f
 
     const val INITIAL_MASS = 25f
-    const val BASE_SPEED = 180f
-    const val BOOST_SPEED = 340f
-    const val TURN_SPEED = 4.8f // radians per second
+    const val BASE_SPEED = 230f
+    const val BOOST_SPEED = 420f
+    const val TURN_SPEED = 5.2f // radians per second
 
     const val BASE_SEGMENT_RADIUS = 16f
     const val SEGMENT_SPACING = 14f

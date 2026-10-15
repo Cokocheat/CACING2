@@ -116,7 +116,7 @@ fun LobbyScreen(
         initialValue = 0f,
         targetValue = 2 * PI.toFloat(),
         animationSpec = infiniteRepeatable(
-            animation = tween(2400, easing = LinearEasing),
+            animation = tween(22000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "slitherWiggle"
@@ -208,56 +208,6 @@ fun LobbyScreen(
                     center = Offset(ox, oy)
                 )
             }
-
-            // 4. Center 3D Illuminated Podium Platform for the Worm
-            val stageCenter = Offset(w * 0.32f, h * 0.52f)
-            val stageRadiusX = 140.dp.toPx()
-            val stageRadiusY = 55.dp.toPx()
-
-            // Stage ground drop shadow
-            drawOval(
-                color = Color(0x55000000),
-                topLeft = Offset(stageCenter.x - stageRadiusX - 10f, stageCenter.y - stageRadiusY + 12f),
-                size = Size((stageRadiusX + 10f) * 2f, (stageRadiusY + 8f) * 2f)
-            )
-
-            // Stage outer glow ring
-            drawOval(
-                brush = Brush.radialGradient(
-                    colors = listOf(Color(0x4000E5FF), Color(0x204ADE80), Color.Transparent),
-                    center = stageCenter,
-                    radius = stageRadiusX * 1.2f
-                ),
-                topLeft = Offset(stageCenter.x - stageRadiusX * 1.15f, stageCenter.y - stageRadiusY * 1.25f),
-                size = Size(stageRadiusX * 2.3f, stageRadiusY * 2.5f)
-            )
-
-            // Stage base metallic disc
-            drawOval(
-                brush = Brush.linearGradient(
-                    colors = listOf(Color(0xFF1E3A63), Color(0xFF13233F), Color(0xFF0F1A30)),
-                    start = Offset(stageCenter.x - stageRadiusX, stageCenter.y - stageRadiusY),
-                    end = Offset(stageCenter.x + stageRadiusX, stageCenter.y + stageRadiusY)
-                ),
-                topLeft = Offset(stageCenter.x - stageRadiusX, stageCenter.y - stageRadiusY),
-                size = Size(stageRadiusX * 2f, stageRadiusY * 2f)
-            )
-
-            // Stage neon perimeter border
-            drawOval(
-                brush = Brush.sweepGradient(
-                    colors = listOf(
-                        Color(0xFF00E5FF),
-                        Color(0xFF4ADE80),
-                        Color(0xFF38BDF8),
-                        Color(0xFF00E5FF)
-                    ),
-                    center = stageCenter
-                ),
-                topLeft = Offset(stageCenter.x - stageRadiusX, stageCenter.y - stageRadiusY),
-                size = Size(stageRadiusX * 2f, stageRadiusY * 2f),
-                style = Stroke(width = 3.5f)
-            )
         }
 
         // Foreground UI Elements
@@ -414,49 +364,33 @@ fun LobbyScreen(
                             val cy = size.height * 0.50f
                             val t = wigglePhase
 
-                            val stageRadiusX = size.width * 0.38f
-                            val stageRadiusY = size.height * 0.36f
+                            val marginX = 28.dp.toPx()
+                            val marginY = 22.dp.toPx()
+                            val halfW = (size.width / 2f) - marginX
+                            val halfH = (size.height / 2f) - marginY
 
-                            // Draw sleek Arena Podium Platform
-                            drawOval(
-                                brush = Brush.radialGradient(
-                                    colors = listOf(
-                                        Color(0xFF222B4A),
-                                        Color(0xFF14192E),
-                                        Color(0x000F1322)
-                                    ),
-                                    center = Offset(cx, cy),
-                                    radius = stageRadiusX * 1.25f
-                                ),
-                                topLeft = Offset(cx - stageRadiusX * 1.2f, cy - stageRadiusY * 1.2f),
-                                size = androidx.compose.ui.geometry.Size(stageRadiusX * 2.4f, stageRadiusY * 2.4f)
+                            // Decorative scattered bright food orbs across screen sides and corners
+                            val foodPellets = listOf(
+                                Offset(cx - halfW * 0.88f, cy - halfH * 0.80f) to Color(0xFFFF5252),
+                                Offset(cx + halfW * 0.85f, cy - halfH * 0.75f) to Color(0xFFFFD700),
+                                Offset(cx - halfW * 0.80f, cy + halfH * 0.82f) to Color(0xFF00E5FF),
+                                Offset(cx + halfW * 0.88f, cy + halfH * 0.78f) to Color(0xFF4ADE80),
+                                Offset(cx - halfW * 0.40f, cy - halfH * 0.85f) to Color(0xFFFF4081),
+                                Offset(cx + halfW * 0.45f, cy + halfH * 0.85f) to Color(0xFFFFB300),
+                                Offset(cx - halfW * 0.92f, cy) to Color(0xFFE040FB),
+                                Offset(cx + halfW * 0.92f, cy) to Color(0xFF00E5FF)
                             )
-
-                            drawOval(
-                                color = Color(0xFF00E5FF).copy(alpha = 0.25f),
-                                topLeft = Offset(cx - stageRadiusX * 1.05f, cy - stageRadiusY * 1.05f),
-                                size = androidx.compose.ui.geometry.Size(stageRadiusX * 2.1f, stageRadiusY * 2.1f),
-                                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5.dp.toPx())
-                            )
-
-                            // Decorative glowing food pellets in the stage
-                            val pelletPositions = listOf(
-                                Offset(cx - stageRadiusX * 0.65f, cy - stageRadiusY * 0.45f) to Color(0xFFFF5252),
-                                Offset(cx + stageRadiusX * 0.70f, cy + stageRadiusY * 0.35f) to Color(0xFFFFD700),
-                                Offset(cx - stageRadiusX * 0.30f, cy + stageRadiusY * 0.60f) to Color(0xFF4ADE80),
-                                Offset(cx + stageRadiusX * 0.50f, cy - stageRadiusY * 0.55f) to Color(0xFF00E5FF)
-                            )
-                            for ((pos, color) in pelletPositions) {
-                                drawCircle(color = color.copy(alpha = 0.3f), radius = 7.dp.toPx(), center = pos)
-                                drawCircle(color = color, radius = 3.5.dp.toPx(), center = pos)
-                                drawCircle(color = Color.White, radius = 1.5.dp.toPx(), center = pos)
+                            for ((pos, color) in foodPellets) {
+                                drawCircle(color = color.copy(alpha = 0.35f), radius = 6.dp.toPx(), center = pos)
+                                drawCircle(color = color, radius = 3.dp.toPx(), center = pos)
+                                drawCircle(color = Color.White, radius = 1.2.dp.toPx(), center = pos)
                             }
 
-                            // Autonomous dynamic slithering path (Figure-8 Lemniscate - never static!)
-                            val headX = cx + cos(t) * (stageRadiusX * 0.82f)
-                            val headY = cy + sin(2f * t) * (stageRadiusY * 0.72f)
-                            val vx = -sin(t) * (stageRadiusX * 0.82f)
-                            val vy = 2f * cos(2f * t) * (stageRadiusY * 0.72f)
+                            // Dynamic wandering path reaching every side and corner of the screen randomly (non-circular)
+                            val headX = cx + sin(t) * (halfW * 0.90f) + sin(2.7f * t + 1.2f) * (halfW * 0.32f) - cos(0.8f * t) * (halfW * 0.22f)
+                            val headY = cy + cos(1.4f * t) * (halfH * 0.88f) + sin(3.3f * t + 0.6f) * (halfH * 0.30f) + cos(2.1f * t) * (halfH * 0.18f)
+                            val vx = cos(t) * (halfW * 0.90f) + 2.7f * cos(2.7f * t + 1.2f) * (halfW * 0.32f) + 0.8f * sin(0.8f * t) * (halfW * 0.22f)
+                            val vy = -1.4f * sin(1.4f * t) * (halfH * 0.88f) + 3.3f * cos(3.3f * t + 0.6f) * (halfH * 0.30f) - 2.1f * sin(2.1f * t) * (halfH * 0.18f)
                             val headAngle = kotlin.math.atan2(vy, vx)
 
                             val dummyWorm = Worm(
@@ -471,19 +405,19 @@ fun LobbyScreen(
                                 mass = 85f
                             )
 
-                            // Dynamic slithering wave simulation along path
+                            // Dynamic body slithering wave along the free roaming path
                             dummyWorm.bodyPoints.clear()
                             val numSegments = 18
                             for (i in 0 until numSegments) {
-                                val segT = t - (i * 0.08f)
-                                var sx = cx + cos(segT) * (stageRadiusX * 0.82f)
-                                var sy = cy + sin(2f * segT) * (stageRadiusY * 0.72f)
+                                val segT = t - (i * 0.038f)
+                                var sx = cx + sin(segT) * (halfW * 0.90f) + sin(2.7f * segT + 1.2f) * (halfW * 0.32f) - cos(0.8f * segT) * (halfW * 0.22f)
+                                var sy = cy + cos(1.4f * segT) * (halfH * 0.88f) + sin(3.3f * segT + 0.6f) * (halfH * 0.30f) + cos(2.1f * segT) * (halfH * 0.18f)
 
-                                val segVx = -sin(segT) * (stageRadiusX * 0.82f)
-                                val segVy = 2f * cos(2f * segT) * (stageRadiusY * 0.72f)
+                                val segVx = cos(segT) * (halfW * 0.90f) + 2.7f * cos(2.7f * segT + 1.2f) * (halfW * 0.32f) + 0.8f * sin(0.8f * segT) * (halfW * 0.22f)
+                                val segVy = -1.4f * sin(1.4f * segT) * (halfH * 0.88f) + 3.3f * cos(3.3f * segT + 0.6f) * (halfH * 0.30f) - 2.1f * sin(2.1f * segT) * (halfH * 0.18f)
                                 val segAngle = kotlin.math.atan2(segVy, segVx)
 
-                                val lateralWave = sin(t * 3.5f - i * 0.5f) * 4.5f
+                                val lateralWave = sin(t * 3.5f - i * 0.32f) * 2.8f
                                 val normAngle = segAngle - (PI / 2).toFloat()
                                 sx += cos(normAngle) * lateralWave
                                 sy += sin(normAngle) * lateralWave

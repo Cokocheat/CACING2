@@ -35,25 +35,28 @@ object WormsRenderer {
         zoom: Float,
         arenaCenter: Vec2,
         arenaRadius: Float,
-        mapTheme: MapTheme = MapTheme.GREEN_MEADOW
+        mapTheme: MapTheme = MapTheme.CYBER_FUNK
     ) {
         with(drawScope) {
             // Draw background fill
             drawRect(color = mapTheme.bgColor)
 
-            // Draw grid lines
-            val gridSize = 100f * zoom
+            // Draw bright patterned grid lines & motifs
+            val gridSize = 90f * zoom
             val startX = (cameraOffset.x % gridSize)
             val startY = (cameraOffset.y % gridSize)
 
             val gridColor = mapTheme.gridColor
+            val motifColor = mapTheme.borderColor
+            val glowColor = mapTheme.glowColor
+
             var x = startX
             while (x < size.width) {
                 drawLine(
                     color = gridColor,
                     start = Offset(x, 0f),
                     end = Offset(x, size.height),
-                    strokeWidth = 1.2f
+                    strokeWidth = 1.4f
                 )
                 x += gridSize
             }
@@ -63,9 +66,55 @@ object WormsRenderer {
                     color = gridColor,
                     start = Offset(0f, y),
                     end = Offset(size.width, y),
-                    strokeWidth = 1.2f
+                    strokeWidth = 1.4f
                 )
                 y += gridSize
+            }
+
+            // Draw Bright Motifs: Intersection Crosshairs & Center Cell Diamonds
+            var px = startX
+            while (px < size.width + gridSize) {
+                var py = startY
+                while (py < size.height + gridSize) {
+                    // Bright glowing intersection crosshair motif
+                    val crossSize = 5f * zoom
+                    drawLine(
+                        color = motifColor.copy(alpha = 0.65f),
+                        start = Offset(px - crossSize, py),
+                        end = Offset(px + crossSize, py),
+                        strokeWidth = 1.5f * zoom
+                    )
+                    drawLine(
+                        color = motifColor.copy(alpha = 0.65f),
+                        start = Offset(px, py - crossSize),
+                        end = Offset(px, py + crossSize),
+                        strokeWidth = 1.5f * zoom
+                    )
+                    drawCircle(
+                        color = motifColor,
+                        radius = 1.8f * zoom,
+                        center = Offset(px, py)
+                    )
+
+                    // Cell Center Diamond Motif
+                    val cellCx = px + gridSize * 0.5f
+                    val cellCy = py + gridSize * 0.5f
+                    if (cellCx < size.width + 20f && cellCy < size.height + 20f) {
+                        drawCircle(
+                            color = glowColor.copy(alpha = 0.16f),
+                            radius = 4f * zoom,
+                            center = Offset(cellCx, cellCy)
+                        )
+                        drawCircle(
+                            color = motifColor.copy(alpha = 0.35f),
+                            radius = 1.6f * zoom,
+                            center = Offset(cellCx, cellCy)
+                        )
+                    }
+
+                    py += gridSize
+                }
+                px += gridSize
             }
 
             // Draw Arena Boundary Danger Zone
@@ -77,7 +126,7 @@ object WormsRenderer {
 
             // Danger outer glow
             drawCircle(
-                color = mapTheme.glowColor.copy(alpha = 0.25f),
+                color = mapTheme.glowColor.copy(alpha = 0.30f),
                 radius = radiusOnScreen + 18f * zoom,
                 center = centerOnScreen,
                 style = Stroke(width = 28f * zoom)
@@ -151,11 +200,17 @@ object WormsRenderer {
                         center = Offset(x + r * 0.9f, y - r * 0.8f)
                     )
                 }
-                MapTheme.GREEN_MEADOW -> {
+                MapTheme.RAINBOW_CARNIVAL -> {
                     drawCircle(
-                        color = Color(0x224CAF50),
-                        radius = r * 1.25f,
+                        color = Color(0x33FFD700),
+                        radius = r * 1.35f,
                         center = screenPos
+                    )
+                    drawCircle(
+                        color = Color(0x55FF4081),
+                        radius = r * 1.2f,
+                        center = screenPos,
+                        style = Stroke(width = 1.2f * zoom)
                     )
                 }
             }

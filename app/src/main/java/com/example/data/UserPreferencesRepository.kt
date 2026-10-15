@@ -156,7 +156,7 @@ class UserPreferencesRepository(context: Context) {
         val langStr = prefs.getString("app_language", AppLanguage.INDONESIAN.code) ?: AppLanguage.INDONESIAN.code
         val language = AppLanguage.fromCode(langStr)
 
-        val themeStr = prefs.getString("map_theme", MapTheme.GREEN_MEADOW.id) ?: MapTheme.GREEN_MEADOW.id
+        val themeStr = prefs.getString("map_theme", MapTheme.CYBER_FUNK.id) ?: MapTheme.CYBER_FUNK.id
         val mapTheme = MapTheme.fromId(themeStr)
 
         val joyModeStr = prefs.getString("joystick_mode", JoystickMode.STATIC.name) ?: JoystickMode.STATIC.name

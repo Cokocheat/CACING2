@@ -107,8 +107,8 @@ class WormsGameEngine(
         private set
     val isPlayerProtected: Boolean get() = spawnProtectionTimer > 0f
 
-    // Smooth camera zoom
-    var cameraZoom: Float = 1.0f
+    // Smooth camera zoom (zoomed closer for clear visibility)
+    var cameraZoom: Float = 1.30f
         private set
 
     private var hudUpdateTimer = 0f
@@ -356,9 +356,9 @@ class WormsGameEngine(
             spawnProtectionTimer = (spawnProtectionTimer - dt).coerceAtLeast(0f)
         }
 
-        // Smooth camera zoom
+        // Smooth camera zoom (brought closer to worm so it is not too far away)
         val hasZoomPotion = player.hasPotion(PotionType.ZOOM)
-        val targetZoom = if (hasZoomPotion) 0.68f else (1.0f - (player.bodyPoints.size / 300f) * 0.25f).coerceIn(0.72f, 1.05f)
+        val targetZoom = if (hasZoomPotion) 0.90f else (1.30f - (player.bodyPoints.size / 360f) * 0.35f).coerceIn(0.95f, 1.35f)
         cameraZoom += (targetZoom - cameraZoom) * (dt * 3.5f).coerceAtMost(1f)
 
         // 1. Update player
