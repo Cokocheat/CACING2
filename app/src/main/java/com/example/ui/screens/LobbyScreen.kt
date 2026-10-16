@@ -143,7 +143,7 @@ fun LobbyScreen(
             head = Vec2(350f, 400f),
             angle = 0.3f,
             targetAngle = 0.3f,
-            speed = 175f,
+            speed = 250f, // Faster, lively cruising speed
             skin = userData.equippedSkin,
             accessory = userData.equippedAccessory,
             mass = 85f
@@ -162,7 +162,7 @@ fun LobbyScreen(
                 val dt = ((now - lastTime) / 1_000_000_000f).coerceIn(0.005f, 0.033f)
                 lastTime = now
 
-                wanderNoise += dt * 3.5f
+                wanderNoise += dt * 5.0f
 
                 // Screen margin bounce (so it moves forward across the screen and bounces naturally without spinning in circles)
                 val margin = 75f
@@ -184,11 +184,11 @@ fun LobbyScreen(
                 }
 
                 // Gentle natural sinusoidal slither around the straight cruise heading (walks forward normally, no looping/spinning!)
-                val slitherOffset = sin(wanderNoise) * 0.12f
+                val slitherOffset = sin(wanderNoise) * 0.15f
                 lobbyWorm.targetAngle = cruiseHeading + slitherOffset
 
                 // Smooth steering towards target angle
-                val maxTurn = GameConfig.TURN_SPEED * 1.5f * dt
+                val maxTurn = GameConfig.TURN_SPEED * 2.2f * dt
                 lobbyWorm.steerTowards(lobbyWorm.targetAngle, maxTurn)
 
                 // Move head forward at steady cruising pace
@@ -291,28 +291,38 @@ fun LobbyScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Game title & "ARENA LUAR"
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "nana tayantuh",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = Color(0xFF4ADE80),
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.sp
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = Color(0xFF1A2A48),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF00E5FF).copy(alpha = 0.6f))
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(0xDD0F172A),
+                    border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFF4ADE80)),
+                    shadowElevation = 6.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = StringsHelper.get("outer_arena", lang).uppercase(),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFF00E5FF),
+                            text = "nana tayantuh",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = Color(0xFF4ADE80),
                             fontWeight = FontWeight.Black,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                             letterSpacing = 1.sp
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = Color(0xFF1E293B),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF00E5FF))
+                        ) {
+                            Text(
+                                text = StringsHelper.get("outer_arena", lang).uppercase(),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color(0xFF00E5FF),
+                                fontWeight = FontWeight.Black,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                letterSpacing = 1.sp
+                            )
+                        }
                     }
                 }
 

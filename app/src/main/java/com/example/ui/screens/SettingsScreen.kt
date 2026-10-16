@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -26,8 +28,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Gamepad
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.OpenWith
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PinDrop
 import androidx.compose.material.icons.filled.Refresh
@@ -58,7 +60,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -66,11 +67,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.AppLanguage
 import com.example.data.ControlMode
+import com.example.data.JoystickMode
 import com.example.data.StringsHelper
 import com.example.data.UserGameData
 import com.example.model.MapTheme
-
-import com.example.data.JoystickMode
 
 @Composable
 fun SettingsScreen(
@@ -83,6 +83,7 @@ fun SettingsScreen(
     onOpenLayoutEditor: () -> Unit,
     onResetControls: () -> Unit,
     onSetLanguage: (AppLanguage) -> Unit,
+    onSetMapTheme: (MapTheme) -> Unit = {},
     onBack: () -> Unit
 ) {
     BackHandler { onBack() }
@@ -93,674 +94,600 @@ fun SettingsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F1322))
+            .background(Color(0xFF0F172A))
             .testTag("settings_screen")
     ) {
         // TOP APP BAR
         Surface(
-            color = Color(0xFF161B2E),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C3454)),
+            color = Color(0xFF1E293B),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF334155)),
             shadowElevation = 8.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 10.dp, bottom = 10.dp, start = 12.dp, end = 16.dp),
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(
+                Surface(
                     onClick = onBack,
-                    modifier = Modifier.testTag("settings_back_button")
+                    shape = CircleShape,
+                    color = Color(0xFF0F172A),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF475569)),
+                    modifier = Modifier.size(40.dp).testTag("settings_back_button")
                 ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = StringsHelper.get("cancel", lang),
-                        tint = Color.White
-                    )
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = StringsHelper.get("cancel", lang),
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+
+                Spacer(modifier = Modifier.width(14.dp))
+
                 Column {
                     Text(
                         text = StringsHelper.get("settings", lang).uppercase(),
                         style = MaterialTheme.typography.titleLarge,
                         color = Color.White,
-                        fontWeight = FontWeight.Black
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.sp
                     )
                     Text(
                         text = StringsHelper.get("settings_subtitle", lang),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFFA0AEC0)
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF94A3B8)
                     )
                 }
             }
         }
 
-        // SINGLE VERTICAL SCROLLING COLUMN (No 2 columns / no 2 rows grid!)
+        // SCROLLABLE NEAT SETTINGS CONTENT
         LazyColumn(
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier
                 .fillMaxSize()
                 .widthIn(max = 760.dp)
                 .align(Alignment.CenterHorizontally)
         ) {
-            // 1. TATA LETAK KONTROL (Direct Visual Drag & Drop Layout Editor)
+            // 1. PROFIL PEMAIN
             item {
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = Color(0xFF171D33),
-                    border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFF4ADE80)),
-                    modifier = Modifier.fillMaxWidth()
+                SettingsCard(
+                    title = StringsHelper.get("player_name", lang),
+                    icon = Icons.Default.Person,
+                    accentColor = Color(0xFFFFD700)
                 ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Surface(
-                                    shape = CircleShape,
-                                    color = Color(0x334ADE80),
-                                    modifier = Modifier.size(36.dp)
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Icon(Icons.Default.Tune, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(20.dp))
-                                    }
-                                }
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Column {
-                                    Text(
-                                        text = StringsHelper.get("edit_layout", lang),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = Color(0xFF4ADE80),
-                                        fontWeight = FontWeight.Black
-                                    )
-                                    Text(
-                                        text = "Atur langsung tombol joystick & boost dengan menyentuh layar",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = Color(0xFFA0AEC0)
-                                    )
-                                }
-                            }
-
-                            OutlinedButton(
-                                onClick = onResetControls,
-                                shape = RoundedCornerShape(10.dp),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFF9100))
-                            ) {
-                                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(StringsHelper.get("reset_layout", lang), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        // Big Button to open Direct Drag & Drop Editor
-                        Button(
-                            onClick = onOpenLayoutEditor,
-                            shape = RoundedCornerShape(14.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4ADE80)),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp)
-                                .shadow(8.dp, RoundedCornerShape(14.dp), spotColor = Color(0xFF4ADE80))
-                        ) {
-                            Icon(Icons.Default.OpenWith, contentDescription = null, tint = Color.Black, modifier = Modifier.size(20.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "BUKA EDITOR TATA LETAK TOMBOL (GESER LANGSUNG)",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = Color.Black,
-                                fontWeight = FontWeight.Black
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        // Current Position Stats Pill
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = Color(0xFF101424),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF283252)),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Posisi Joystick: ${userData.joystickOffsetX}dp kiri, ${userData.joystickOffsetY}dp bawah (${(userData.joystickScale * 100).toInt()}%)",
-                                    fontSize = 11.sp,
-                                    color = Color(0xFF81C784)
-                                )
-                                Text(
-                                    text = "Tombol Boost: ${userData.boostOffsetX}dp kanan, ${userData.boostOffsetY}dp bawah (${(userData.boostScale * 100).toInt()}%)",
-                                    fontSize = 11.sp,
-                                    color = Color(0xFFFFB74D)
-                                )
-                            }
-                        }
-                    }
+                    OutlinedTextField(
+                        value = nameInput,
+                        onValueChange = {
+                            nameInput = it
+                            onUpdateName(it)
+                        },
+                        label = { Text(StringsHelper.get("player_nickname", lang)) },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFFFD700),
+                            unfocusedBorderColor = Color(0xFF334155),
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedLabelColor = Color(0xFFFFD700),
+                            unfocusedLabelColor = Color(0xFF94A3B8)
+                        ),
+                        modifier = Modifier.fillMaxWidth().testTag("player_name_input")
+                    )
                 }
             }
 
-            // 2. PENGATURAN BAHASA (Indonesia, English, Korean, Turkish, Arabic, Vietnamese, Taiwan)
+            // 2. AUDIO & EFEK GETARAN
             item {
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = Color(0xFF171D33),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF353D63)),
-                    modifier = Modifier.fillMaxWidth()
+                SettingsCard(
+                    title = "AUDIO & GETARAN",
+                    icon = Icons.Default.VolumeUp,
+                    accentColor = Color(0xFFFF9100)
                 ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
+                    // Suara
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = CircleShape,
+                                color = Color(0x33FF9100),
+                                modifier = Modifier.size(34.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Default.VolumeUp, contentDescription = null, tint = Color(0xFFFF9100), modifier = Modifier.size(18.dp))
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(StringsHelper.get("sound", lang), fontWeight = FontWeight.Bold, color = Color.White, fontSize = 15.sp)
+                                Text("Efek suara makan, lari & mati", fontSize = 12.sp, color = Color(0xFF94A3B8))
+                            }
+                        }
+                        Switch(
+                            checked = userData.soundEnabled,
+                            onCheckedChange = onToggleSound,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color(0xFF4ADE80),
+                                checkedTrackColor = Color(0x664ADE80),
+                                uncheckedThumbColor = Color(0xFF94A3B8),
+                                uncheckedTrackColor = Color(0xFF334155)
+                            ),
+                            modifier = Modifier.testTag("sound_switch")
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Getaran
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Surface(
                                 shape = CircleShape,
                                 color = Color(0x3300E5FF),
-                                modifier = Modifier.size(36.dp)
+                                modifier = Modifier.size(34.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
-                                    Icon(Icons.Default.Language, contentDescription = null, tint = Color(0xFF00E5FF), modifier = Modifier.size(20.dp))
+                                    Icon(Icons.Default.Vibration, contentDescription = null, tint = Color(0xFF00E5FF), modifier = Modifier.size(18.dp))
                                 }
                             }
-                            Spacer(modifier = Modifier.width(10.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
                             Column {
-                                Text(
-                                    text = StringsHelper.get("language", lang),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = Color(0xFF00E5FF),
-                                    fontWeight = FontWeight.Black
-                                )
-                                Text(
-                                    text = StringsHelper.get("select_language_desc", lang),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color(0xFFA0AEC0)
-                                )
+                                Text(StringsHelper.get("vibration", lang), fontWeight = FontWeight.Bold, color = Color.White, fontSize = 15.sp)
+                                Text("Sensasi getar haptik saat tabrakan", fontSize = 12.sp, color = Color(0xFF94A3B8))
                             }
                         }
+                        Switch(
+                            checked = userData.vibrationEnabled,
+                            onCheckedChange = onToggleVibration,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color(0xFF00E5FF),
+                                checkedTrackColor = Color(0x6600E5FF),
+                                uncheckedThumbColor = Color(0xFF94A3B8),
+                                uncheckedTrackColor = Color(0xFF334155)
+                            ),
+                            modifier = Modifier.testTag("vibration_switch")
+                        )
+                    }
+                }
+            }
 
-                        Spacer(modifier = Modifier.height(14.dp))
+            // 3. KONTROL & TATA LETAK
+            item {
+                SettingsCard(
+                    title = "KONTROL & TATA LETAK",
+                    icon = Icons.Default.Gamepad,
+                    accentColor = Color(0xFF4ADE80)
+                ) {
+                    // Mode Kendali: Joystick vs Touch Follow
+                    Text("PILIHAN MODE KENDALI", fontSize = 12.sp, fontWeight = FontWeight.Black, color = Color(0xFF94A3B8), letterSpacing = 1.sp)
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                        // Languages Grid (6 languages: 3 per row)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            AppLanguage.entries.take(3).forEach { appLang ->
-                                val isSelected = userData.language == appLang
-                                Surface(
-                                    onClick = { onSetLanguage(appLang) },
-                                    shape = RoundedCornerShape(14.dp),
-                                    color = if (isSelected) Color(0xFF00E5FF) else Color(0xFF222944),
-                                    border = androidx.compose.foundation.BorderStroke(
-                                        1.dp,
-                                        if (isSelected) Color(0xFF00E5FF) else Color(0xFF353D63)
-                                    ),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Column(
-                                        modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Surface(
-                                            shape = RoundedCornerShape(6.dp),
-                                            color = if (isSelected) Color.Black.copy(alpha = 0.25f) else Color(0xFF141A30),
-                                            border = androidx.compose.foundation.BorderStroke(1.dp, if (isSelected) Color.Black.copy(alpha = 0.35f) else Color(0xFF00E5FF).copy(alpha = 0.5f))
-                                        ) {
-                                            Text(
-                                                text = appLang.badgeCode,
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.Black,
-                                                color = if (isSelected) Color.Black else Color(0xFF00E5FF),
-                                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
-                                            )
-                                        }
-                                        Spacer(modifier = Modifier.height(5.dp))
-                                        Text(
-                                            text = appLang.displayName,
-                                            fontSize = 12.sp,
-                                            fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold,
-                                            color = if (isSelected) Color.Black else Color.White
-                                        )
-                                    }
-                                }
-                            }
-                        }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        val isJoy = userData.controlMode == ControlMode.JOYSTICK
+                        SelectableCard(
+                            title = StringsHelper.get("virtual_joystick", lang),
+                            subtitle = "Analog virtual",
+                            icon = Icons.Default.Gamepad,
+                            selected = isJoy,
+                            onClick = { onSetControlMode(ControlMode.JOYSTICK) },
+                            modifier = Modifier.weight(1f)
+                        )
 
+                        val isTouch = userData.controlMode == ControlMode.TOUCH_FOLLOW
+                        SelectableCard(
+                            title = StringsHelper.get("touch_follow", lang),
+                            subtitle = "Ikuti jari",
+                            icon = Icons.Default.TouchApp,
+                            selected = isTouch,
+                            onClick = { onSetControlMode(ControlMode.TOUCH_FOLLOW) },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Mode Joystick (Hanya relevan jika Joystick aktif)
+                    if (userData.controlMode == ControlMode.JOYSTICK) {
+                        Text("GAYA JOYSTICK", fontSize = 12.sp, fontWeight = FontWeight.Black, color = Color(0xFF94A3B8), letterSpacing = 1.sp)
                         Spacer(modifier = Modifier.height(8.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            AppLanguage.entries.drop(3).forEach { appLang ->
-                                val isSelected = userData.language == appLang
-                                Surface(
-                                    onClick = { onSetLanguage(appLang) },
-                                    shape = RoundedCornerShape(14.dp),
-                                    color = if (isSelected) Color(0xFF00E5FF) else Color(0xFF222944),
-                                    border = androidx.compose.foundation.BorderStroke(
-                                        1.dp,
-                                        if (isSelected) Color(0xFF00E5FF) else Color(0xFF353D63)
-                                    ),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Column(
-                                        modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Surface(
-                                            shape = RoundedCornerShape(6.dp),
-                                            color = if (isSelected) Color.Black.copy(alpha = 0.25f) else Color(0xFF141A30),
-                                            border = androidx.compose.foundation.BorderStroke(1.dp, if (isSelected) Color.Black.copy(alpha = 0.35f) else Color(0xFF00E5FF).copy(alpha = 0.5f))
-                                        ) {
-                                            Text(
-                                                text = appLang.badgeCode,
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.Black,
-                                                color = if (isSelected) Color.Black else Color(0xFF00E5FF),
-                                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
-                                            )
-                                        }
-                                        Spacer(modifier = Modifier.height(5.dp))
-                                        Text(
-                                            text = appLang.displayName,
-                                            fontSize = 12.sp,
-                                            fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold,
-                                            color = if (isSelected) Color.Black else Color.White
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 3. PENGATURAN MODE JOYSTICK (Mode Diam vs Mode Bergerak)
-            item {
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = Color(0xFF171D33),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF353D63)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                shape = CircleShape,
-                                color = Color(0x334ADE80),
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(Icons.Default.Tune, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(20.dp))
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text(
-                                    text = StringsHelper.get("joystick_settings", lang),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = Color(0xFF4ADE80),
-                                    fontWeight = FontWeight.Black
-                                )
-                                Text(
-                                    text = StringsHelper.get("joystick_mode_dynamic_desc", lang),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color(0xFFA0AEC0)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            // Mode Diam (Static/Fixed)
-                            val isStatic = userData.joystickMode == JoystickMode.STATIC
-                            Surface(
-                                onClick = { onSetJoystickMode(JoystickMode.STATIC) },
-                                shape = RoundedCornerShape(14.dp),
-                                color = if (isStatic) Color(0xFF26354D) else Color(0xFF1B2138),
-                                border = androidx.compose.foundation.BorderStroke(
-                                    width = if (isStatic) 2.dp else 1.dp,
-                                    color = if (isStatic) Color(0xFF4ADE80) else Color(0xFF2C3454)
-                                ),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(14.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                        Icon(
-                                            imageVector = Icons.Default.PinDrop,
-                                            contentDescription = null,
-                                            tint = if (isStatic) Color(0xFF4ADE80) else Color(0xFFA0AEC0),
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(12.dp))
-                                        Column {
-                                            Text(
-                                                text = StringsHelper.get("joystick_mode_static", lang),
-                                                style = MaterialTheme.typography.titleSmall,
-                                                color = if (isStatic) Color(0xFF4ADE80) else Color.White,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                            Text(
-                                                text = StringsHelper.get("joystick_mode_static_desc", lang),
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = Color(0xFFA0AEC0),
-                                                fontSize = 11.sp
-                                            )
-                                        }
-                                    }
-                                    if (isStatic) {
-                                        Surface(
-                                            shape = CircleShape,
-                                            color = Color(0xFF4ADE80),
-                                            modifier = Modifier.size(24.dp)
-                                        ) {
-                                            Box(contentAlignment = Alignment.Center) {
-                                                Icon(Icons.Default.Check, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            // Mode Bergerak (Dynamic/Floating - NO EMOJI)
-                            val isDynamic = userData.joystickMode == JoystickMode.DYNAMIC
-                            Surface(
-                                onClick = { onSetJoystickMode(JoystickMode.DYNAMIC) },
-                                shape = RoundedCornerShape(14.dp),
-                                color = if (isDynamic) Color(0xFF26354D) else Color(0xFF1B2138),
-                                border = androidx.compose.foundation.BorderStroke(
-                                    width = if (isDynamic) 2.dp else 1.dp,
-                                    color = if (isDynamic) Color(0xFF4ADE80) else Color(0xFF2C3454)
-                                ),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(14.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                        Icon(
-                                            imageVector = Icons.Default.TouchApp,
-                                            contentDescription = null,
-                                            tint = if (isDynamic) Color(0xFF4ADE80) else Color(0xFFA0AEC0),
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(12.dp))
-                                        Column {
-                                            Text(
-                                                text = StringsHelper.get("joystick_mode_dynamic", lang),
-                                                style = MaterialTheme.typography.titleSmall,
-                                                color = if (isDynamic) Color(0xFF4ADE80) else Color.White,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                            Text(
-                                                text = StringsHelper.get("joystick_mode_dynamic_desc", lang),
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = Color(0xFFA0AEC0),
-                                                fontSize = 11.sp
-                                            )
-                                        }
-                                    }
-                                    if (isDynamic) {
-                                        Surface(
-                                            shape = CircleShape,
-                                            color = Color(0xFF4ADE80),
-                                            modifier = Modifier.size(24.dp)
-                                        ) {
-                                            Box(contentAlignment = Alignment.Center) {
-                                                Icon(Icons.Default.Check, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 4. MODE KENDALI (Joystick vs Touch Follow)
-            item {
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = Color(0xFF171D33),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF353D63)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                shape = CircleShape,
-                                color = Color(0x334ADE80),
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(Icons.Default.Gamepad, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(20.dp))
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text(
-                                    text = StringsHelper.get("control_mode", lang),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = Color(0xFF4ADE80),
-                                    fontWeight = FontWeight.Black
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(14.dp))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            FilterChip(
-                                selected = userData.controlMode == ControlMode.JOYSTICK,
-                                onClick = { onSetControlMode(ControlMode.JOYSTICK) },
-                                label = { Text(StringsHelper.get("virtual_joystick", lang)) },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Gamepad, contentDescription = null, modifier = Modifier.size(18.dp))
-                                },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = Color(0xFF4ADE80),
-                                    selectedLabelColor = Color.Black,
-                                    containerColor = Color(0xFF242A45),
-                                    labelColor = Color.White
-                                ),
+                            val isStatic = userData.joystickMode == JoystickMode.STATIC
+                            SelectableCard(
+                                title = StringsHelper.get("joystick_mode_static", lang),
+                                subtitle = "Tetap di pojok",
+                                icon = Icons.Default.PinDrop,
+                                selected = isStatic,
+                                onClick = { onSetJoystickMode(JoystickMode.STATIC) },
                                 modifier = Modifier.weight(1f)
                             )
 
-                            FilterChip(
-                                selected = userData.controlMode == ControlMode.TOUCH_FOLLOW,
-                                onClick = { onSetControlMode(ControlMode.TOUCH_FOLLOW) },
-                                label = { Text(StringsHelper.get("touch_follow", lang)) },
-                                leadingIcon = {
-                                    Icon(Icons.Default.TouchApp, contentDescription = null, modifier = Modifier.size(18.dp))
-                                },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = Color(0xFF4ADE80),
-                                    selectedLabelColor = Color.Black,
-                                    containerColor = Color(0xFF242A45),
-                                    labelColor = Color.White
-                                ),
+                            val isDynamic = userData.joystickMode == JoystickMode.DYNAMIC
+                            SelectableCard(
+                                title = StringsHelper.get("joystick_mode_dynamic", lang),
+                                subtitle = "Mengikuti sentuhan",
+                                icon = Icons.Default.Tune,
+                                selected = isDynamic,
+                                onClick = { onSetJoystickMode(JoystickMode.DYNAMIC) },
                                 modifier = Modifier.weight(1f)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = StringsHelper.get(if (userData.controlMode == ControlMode.JOYSTICK) "virtual_joystick_desc" else "touch_follow_desc", lang),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFFA0AEC0)
-                        )
-                    }
-                }
-            }
-
-            // 5. AUDIO & HAPTICS
-            item {
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = Color(0xFF171D33),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF353D63)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                shape = CircleShape,
-                                color = Color(0x33FF9100),
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(Icons.Default.VolumeUp, contentDescription = null, tint = Color(0xFFFF9100), modifier = Modifier.size(20.dp))
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                text = "AUDIO & EFEK GETARAN",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = Color(0xFFFF9100),
-                                fontWeight = FontWeight.Black
                             )
                         }
 
                         Spacer(modifier = Modifier.height(14.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.VolumeUp, contentDescription = null, tint = Color.White)
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Text(StringsHelper.get("sound", lang), style = MaterialTheme.typography.bodyLarge, color = Color.White)
-                            }
-                            Switch(
-                                checked = userData.soundEnabled,
-                                onCheckedChange = onToggleSound,
-                                colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF4ADE80), checkedTrackColor = Color(0x664ADE80))
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Vibration, contentDescription = null, tint = Color.White)
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Text(StringsHelper.get("vibration", lang), style = MaterialTheme.typography.bodyLarge, color = Color.White)
-                            }
-                            Switch(
-                                checked = userData.vibrationEnabled,
-                                onCheckedChange = onToggleVibration,
-                                colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFFFF9100), checkedTrackColor = Color(0x66FF9100))
-                            )
-                        }
                     }
-                }
-            }
 
-            // 6. PROFIL PEMAIN (Name)
-            item {
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = Color(0xFF171D33),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF353D63)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                shape = CircleShape,
-                                color = Color(0x33FFD700),
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFFFFD700), modifier = Modifier.size(20.dp))
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                text = StringsHelper.get("player_name", lang),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = Color(0xFFFFD700),
-                                fontWeight = FontWeight.Black
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        OutlinedTextField(
-                            value = nameInput,
-                            onValueChange = {
-                                nameInput = it
-                                onUpdateName(it)
-                            },
-                            label = { Text(StringsHelper.get("player_nickname", lang)) },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFF4ADE80),
-                                unfocusedBorderColor = Color(0xFF353D63),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
-                            ),
-                            modifier = Modifier.fillMaxWidth()
+                    // Button Buka Editor Tata Letak (Drag & Drop)
+                    Button(
+                        onClick = onOpenLayoutEditor,
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4ADE80)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .shadow(6.dp, RoundedCornerShape(14.dp), spotColor = Color(0xFF4ADE80))
+                            .testTag("open_layout_editor_button")
+                    ) {
+                        Icon(Icons.Default.OpenWith, contentDescription = null, tint = Color.Black, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "SESUAIKAN TATA LETAK TOMBOL (DRAG & DROP)",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Color.Black,
+                            fontWeight = FontWeight.Black
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Posisi: Joy (${userData.joystickOffsetX}dp, ${userData.joystickOffsetY}dp) • Boost (${userData.boostOffsetX}dp, ${userData.boostOffsetY}dp)",
+                            fontSize = 11.sp,
+                            color = Color(0xFF94A3B8)
+                        )
+
+                        OutlinedButton(
+                            onClick = onResetControls,
+                            shape = RoundedCornerShape(10.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFF9100)),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFF9100).copy(alpha = 0.5f))
+                        ) {
+                            Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(13.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(StringsHelper.get("reset_layout", lang), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
             }
 
-            // 7. TENTANG GAME & ARENA LUAR INFO
+            // 4. TEMA LATAR BELAKANG ARENA (CERAH & BERMOTIF)
+            item {
+                SettingsCard(
+                    title = "LATAR BELAKANG ARENA CERAH",
+                    icon = Icons.Default.Palette,
+                    accentColor = Color(0xFF00E5FF)
+                ) {
+                    Text(
+                        text = "Pilih tema warna dan motif cerah untuk arena permainan dan menu utama",
+                        fontSize = 12.sp,
+                        color = Color(0xFF94A3B8)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(MapTheme.entries) { theme ->
+                            val isSelected = userData.mapTheme == theme
+                            Surface(
+                                onClick = { onSetMapTheme(theme) },
+                                shape = RoundedCornerShape(14.dp),
+                                color = if (isSelected) Color(0xFF1E293B) else Color(0xFF0F172A),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    width = if (isSelected) 2.dp else 1.dp,
+                                    color = if (isSelected) Color(0xFF00E5FF) else Color(0xFF334155)
+                                ),
+                                modifier = Modifier.width(135.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(10.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    // Theme color swatch circle with border
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(CircleShape)
+                                            .background(theme.bgColor)
+                                            .border(2.dp, theme.borderColor, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(theme.icon, fontSize = 16.sp)
+                                    }
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Text(
+                                        text = theme.title,
+                                        fontSize = 11.sp,
+                                        fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold,
+                                        color = if (isSelected) Color(0xFF00E5FF) else Color.White,
+                                        maxLines = 1
+                                    )
+
+                                    if (isSelected) {
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Surface(
+                                            shape = RoundedCornerShape(4.dp),
+                                            color = Color(0x3300E5FF)
+                                        ) {
+                                            Text(
+                                                text = "AKTIF",
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.Black,
+                                                color = Color(0xFF00E5FF),
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 5. PILIHAN BAHASA
+            item {
+                SettingsCard(
+                    title = StringsHelper.get("language", lang),
+                    icon = Icons.Default.Language,
+                    accentColor = Color(0xFF38BDF8)
+                ) {
+                    Text(
+                        text = StringsHelper.get("select_language_desc", lang),
+                        fontSize = 12.sp,
+                        color = Color(0xFF94A3B8)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        AppLanguage.entries.take(3).forEach { appLang ->
+                            LanguagePill(
+                                lang = appLang,
+                                isSelected = userData.language == appLang,
+                                onClick = { onSetLanguage(appLang) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        AppLanguage.entries.drop(3).forEach { appLang ->
+                            LanguagePill(
+                                lang = appLang,
+                                isSelected = userData.language == appLang,
+                                onClick = { onSetLanguage(appLang) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 6. TENTANG GAME & INFO VERSI
             item {
                 Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = Color(0xFF171D33),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C3454)),
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color(0xFF1E293B),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF334155)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
-                        modifier = Modifier.padding(18.dp),
+                        modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Info, contentDescription = null, tint = Color(0xFFA0AEC0))
-                        Spacer(modifier = Modifier.width(14.dp))
+                        Surface(
+                            shape = CircleShape,
+                            color = Color(0x2238BDF8),
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.Info, contentDescription = null, tint = Color(0xFF38BDF8), modifier = Modifier.size(20.dp))
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = StringsHelper.get("version_title", lang),
+                                text = "Nana Tayantuh • Worms Zone IO Edition",
                                 style = MaterialTheme.typography.titleSmall,
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = StringsHelper.get("version_info", lang),
+                                text = "Versi 1.3.0 • Dibuat dengan Kotlin Jetpack Compose",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFA0AEC0)
+                                color = Color(0xFF94A3B8)
                             )
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
             }
+        }
+    }
+}
+
+@Composable
+private fun SettingsCard(
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    accentColor: Color,
+    content: @Composable () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(18.dp),
+        color = Color(0xFF1E293B),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF334155)),
+        shadowElevation = 4.dp,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    shape = CircleShape,
+                    color = accentColor.copy(alpha = 0.2f),
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(icon, contentDescription = null, tint = accentColor, modifier = Modifier.size(18.dp))
+                    }
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = title.uppercase(),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = accentColor,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 0.5.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            content()
+        }
+    }
+}
+
+@Composable
+private fun SelectableCard(
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(14.dp),
+        color = if (selected) Color(0xFF0F172A) else Color(0xFF141F33),
+        border = androidx.compose.foundation.BorderStroke(
+            width = if (selected) 2.dp else 1.dp,
+            color = if (selected) Color(0xFF4ADE80) else Color(0xFF334155)
+        ),
+        modifier = modifier
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (selected) Color(0xFF4ADE80) else Color(0xFF94A3B8),
+                modifier = Modifier.size(22.dp)
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (selected) Color(0xFF4ADE80) else Color.White
+                )
+                Text(
+                    text = subtitle,
+                    fontSize = 11.sp,
+                    color = Color(0xFF94A3B8)
+                )
+            }
+            if (selected) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    tint = Color(0xFF4ADE80),
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LanguagePill(
+    lang: AppLanguage,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        color = if (isSelected) Color(0xFF0284C7) else Color(0xFF0F172A),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (isSelected) Color(0xFF38BDF8) else Color(0xFF334155)
+        ),
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Surface(
+                shape = RoundedCornerShape(4.dp),
+                color = if (isSelected) Color.White.copy(alpha = 0.25f) else Color(0xFF1E293B)
+            ) {
+                Text(
+                    text = lang.badgeCode,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Black,
+                    color = if (isSelected) Color.White else Color(0xFF38BDF8),
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = lang.displayName,
+                fontSize = 12.sp,
+                fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold,
+                color = Color.White
+            )
         }
     }
 }

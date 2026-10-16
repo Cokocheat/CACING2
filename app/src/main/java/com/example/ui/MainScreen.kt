@@ -127,6 +127,7 @@ fun MainScreen() {
                         onResetControls = { userPrefs.resetControlSettings() },
                         onSetLanguage = { userPrefs.setLanguage(it) },
                         onSetJoystickMode = { userPrefs.setJoystickMode(it) },
+                        onSetMapTheme = { userPrefs.setMapTheme(it) },
                         onBack = { currentScreen = AppScreen.LOBBY }
                     )
                 }

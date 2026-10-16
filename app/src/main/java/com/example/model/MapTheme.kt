@@ -14,58 +14,58 @@ enum class MapTheme(
 ) {
     CYBER_FUNK(
         id = "cyber_funk",
-        title = "Cyber Neon",
-        icon = "⚡",
-        bgColor = Color(0xFF0C162E),
-        gridColor = Color(0xFF1E386B),
-        borderColor = Color(0xFF00E5FF),
-        glowColor = Color(0xFFE040FB),
-        description = "Gaya futuristik Cyber Neon dengan warna cerah bermotif laser & synthwave"
+        title = "Kuning Cerah (Sunny Arena)",
+        icon = "☀️",
+        bgColor = Color(0xFFFDE047), // Bright sunny golden yellow arena (like icon & splash)
+        gridColor = Color(0x35B45309), // Warm amber motif grid
+        borderColor = Color(0xFFE11D48), // Vibrant crimson danger boundary
+        glowColor = Color(0xFFF97316), // Warm golden sunshine glow
+        description = "Arena kuning cerah ceria penuh motif geometris berenergi tinggi"
     ),
     RAINBOW_CARNIVAL(
-        id = "green_meadow",
-        title = "Rainbow Carnival",
+        id = "rainbow_carnival",
+        title = "Langit Pelangi (Sky Carnival)",
         icon = "🎪",
-        bgColor = Color(0xFF161F38),
-        gridColor = Color(0xFF2C4175),
-        borderColor = Color(0xFFFFD700),
-        glowColor = Color(0xFFFF4081),
-        description = "Karnaval pelangi cerah ceria penuh motif warna-warni berenergi"
+        bgColor = Color(0xFFBAE6FD), // Bright vibrant sky cyan
+        gridColor = Color(0x350369A1), // Deep sky cyan grid
+        borderColor = Color(0xFF8B5CF6), // Neon purple boundary
+        glowColor = Color(0xFF06B6D4), // Cyan energetic glow
+        description = "Karnaval langit pelangi cerah penuh warna ceria dan motif pesta"
     ),
     SWEET_CANDY(
         id = "sweet_candy",
-        title = "Sweet Candy",
+        title = "Permen Manis (Sweet Candy)",
         icon = "🍭",
-        bgColor = Color(0xFF2B1333),
-        gridColor = Color(0xFF5D2469),
-        borderColor = Color(0xFFFF4081),
-        glowColor = Color(0xFFFF80AB),
-        description = "Dunia permen manis gula-gula penuh warna ceria dan motif lezat"
+        bgColor = Color(0xFFFCE7F3), // Bright sweet strawberry cream pink
+        gridColor = Color(0x35BE185D), // Berry grid lines
+        borderColor = Color(0xFFEC4899), // Deep pink danger border
+        glowColor = Color(0xFFA855F7), // Sweet sugar glow
+        description = "Dunia permen manis gula-gula cerah penuh warna ceria"
     ),
     COSMIC_SPACE(
-        id = "cosmic_space",
-        title = "Cosmic Space",
-        icon = "🌌",
-        bgColor = Color(0xFF0C1029),
-        gridColor = Color(0xFF24336B),
-        borderColor = Color(0xFF7C4DFF),
-        glowColor = Color(0xFF00E5FF),
-        description = "Galaksi antariksa luas dengan taburan bintang cerah dan nebula bercahaya"
+        id = "green_meadow",
+        title = "Padang Rumput (Green Meadow)",
+        icon = "🌱",
+        bgColor = Color(0xFF86EFAC), // Bright lush emerald pasture
+        gridColor = Color(0x35047857), // Forest green lawn grid
+        borderColor = Color(0xFFFFD700), // Golden border
+        glowColor = Color(0xFF10B981), // Fresh emerald glow
+        description = "Padang rumput hijau cerah berseri penuh kesegaran"
     ),
     LAVA_VOLCANO(
         id = "lava_volcano",
-        title = "Lava Volcano",
+        title = "Koral Magma (Coral Sunburst)",
         icon = "🌋",
-        bgColor = Color(0xFF290E0E),
-        gridColor = Color(0xFF571C1C),
-        borderColor = Color(0xFFFF5722),
-        glowColor = Color(0xFFFFAB40),
-        description = "Kawah api menyala dengan motif retakan lahar magma terang membara"
+        bgColor = Color(0xFFFED7AA), // Bright warm coral peach sunburst
+        gridColor = Color(0x35EA580C), // Warm coral grid lines
+        borderColor = Color(0xFFDC2626), // Deep crimson danger border
+        glowColor = Color(0xFFF59E0B), // Warm flame glow
+        description = "Arena koral hangat terang dengan motif cerah berenergi"
     );
 
     companion object {
         fun fromId(id: String): MapTheme {
-            if (id == "green_meadow" || id == "meadow") return CYBER_FUNK
+            if (id == "green_meadow" || id == "meadow") return COSMIC_SPACE
             return entries.find { it.id == id || it.id.startsWith(id) || id.startsWith(it.id) }
                 ?: CYBER_FUNK
         }

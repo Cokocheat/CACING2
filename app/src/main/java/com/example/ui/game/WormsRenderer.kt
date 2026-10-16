@@ -38,8 +38,28 @@ object WormsRenderer {
         mapTheme: MapTheme = MapTheme.CYBER_FUNK
     ) {
         with(drawScope) {
-            // Draw background fill
+            // Draw bright background fill
             drawRect(color = mapTheme.bgColor)
+
+            // Luminous ambient bloom from arena center for cheerful depth
+            val centerOnScreen = Offset(
+                (arenaCenter.x) * zoom + cameraOffset.x,
+                (arenaCenter.y) * zoom + cameraOffset.y
+            )
+            val radiusOnScreen = arenaRadius * zoom
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = 0.28f),
+                        mapTheme.glowColor.copy(alpha = 0.10f),
+                        Color.Transparent
+                    ),
+                    center = centerOnScreen,
+                    radius = radiusOnScreen.coerceAtLeast(400f)
+                ),
+                radius = radiusOnScreen.coerceAtLeast(400f),
+                center = centerOnScreen
+            )
 
             // Draw bright patterned grid lines & motifs
             val gridSize = 90f * zoom
@@ -118,11 +138,7 @@ object WormsRenderer {
             }
 
             // Draw Arena Boundary Danger Zone
-            val centerOnScreen = Offset(
-                (arenaCenter.x) * zoom + cameraOffset.x,
-                (arenaCenter.y) * zoom + cameraOffset.y
-            )
-            val radiusOnScreen = arenaRadius * zoom
+            // (Using centerOnScreen and radiusOnScreen declared above)
 
             // Danger outer glow
             drawCircle(
