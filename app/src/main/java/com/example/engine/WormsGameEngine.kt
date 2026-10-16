@@ -1,5 +1,6 @@
 package com.example.engine
 
+import androidx.compose.ui.graphics.Color
 import com.example.audio.GameSoundManager
 import com.example.data.UserGameData
 import com.example.model.BotPersonality
@@ -257,6 +258,19 @@ class WormsGameEngine(
                 type = type,
                 mass = type.massValue,
                 radius = type.baseRadius
+            )
+        )
+    }
+
+    private fun spawnDeadWormFood(exactPos: Vec2, customType: FoodType) {
+        foods.add(
+            FoodItem(
+                id = idGen.incrementAndGet(),
+                position = exactPos,
+                type = customType,
+                mass = customType.massValue,
+                radius = customType.baseRadius,
+                isDeathDrop = true
             )
         )
     }
@@ -841,25 +855,30 @@ class WormsGameEngine(
             }
         }
 
-        // Burst into a feast of food drops along former body points
-        val step = maxOf(1, victim.bodyPoints.size / 45)
+        // Drop food feast precisely along former body points without scattering (gak buyar)
+        val step = maxOf(1, victim.bodyPoints.size / 40)
+        // Also spawn at head position
+        spawnDeadWormFood(victim.head, FoodType.DEATH_FEAST)
+
         for (i in victim.bodyPoints.indices step step) {
             val pt = victim.bodyPoints[i]
             val foodType = when {
-                Random.nextFloat() < 0.15f -> FoodType.GOLDEN_COIN
-                Random.nextFloat() < 0.35f -> FoodType.DEATH_FEAST
-                Random.nextFloat() < 0.60f -> FoodType.BURGER
+                i % 3 == 0 -> FoodType.DEATH_FEAST
+                Random.nextFloat() < 0.25f -> FoodType.GOLDEN_COIN
+                Random.nextFloat() < 0.55f -> FoodType.BURGER
                 else -> FoodType.DONUT
             }
-            spawnRandomFood(pt, foodType)
+            // Spawn EXACTLY on the segment point so the dead worm's shape is preserved (gak buyar)
+            spawnDeadWormFood(pt, foodType)
 
+            // Radiant shimmering light particles floating softly up from the food drops
             particles.add(
                 GameParticle(
                     position = pt,
-                    velocity = Vec2(Random.nextFloat() * 120f - 60f, Random.nextFloat() * 120f - 60f),
-                    color = victim.skin.headColor,
-                    initialSize = 14f,
-                    maxLifetime = 0.7f
+                    velocity = Vec2(Random.nextFloat() * 20f - 10f, -Random.nextFloat() * 45f - 15f),
+                    color = Color(0xFFFFF59D), // Warm glowing sunlight / sparkle
+                    initialSize = 10f,
+                    maxLifetime = 0.9f
                 )
             )
         }

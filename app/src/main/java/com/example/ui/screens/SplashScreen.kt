@@ -64,16 +64,7 @@ fun SplashScreen(
     onLoadingComplete: () -> Unit
 ) {
     val progressAnim = remember { Animatable(0f) }
-    var currentTipIndex by remember { mutableStateOf(0) }
-
-    val tips = remember(language) {
-        listOf(
-            StringsHelper.get("tip1", language),
-            StringsHelper.get("tip2", language),
-            StringsHelper.get("tip3", language),
-            StringsHelper.get("tip4", language)
-        )
-    }
+    var dotCount by remember { mutableStateOf(1) }
 
     val infiniteTransition = rememberInfiniteTransition(label = "splashAnim")
     val wigglePhase by infiniteTransition.animateFloat(
@@ -105,12 +96,10 @@ fun SplashScreen(
         onLoadingComplete()
     }
 
-    LaunchedEffect(tips.size) {
-        var idx = 0
+    LaunchedEffect(Unit) {
         while (true) {
-            delay(800)
-            idx = (idx + 1) % tips.size
-            currentTipIndex = idx
+            delay(350)
+            dotCount = (dotCount % 3) + 1
         }
     }
 
@@ -138,14 +127,14 @@ fun SplashScreen(
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(
-                        Color(0x50FFFBEB),
-                        Color(0x20FEF3C7),
+                        Color(0x60FFFBEB),
+                        Color(0x25FEF3C7),
                         Color.Transparent
                     ),
                     center = Offset(w * 0.5f, h * 0.5f),
-                    radius = w * 0.6f
+                    radius = w * 0.65f
                 ),
-                radius = w * 0.6f,
+                radius = w * 0.65f,
                 center = Offset(w * 0.5f, h * 0.5f)
             )
 
@@ -154,7 +143,7 @@ fun SplashScreen(
             var x = 0f
             while (x < w) {
                 drawLine(
-                    color = Color(0x2278350F),
+                    color = Color(0x2078350F),
                     start = Offset(x, 0f),
                     end = Offset(x, h),
                     strokeWidth = 1f
@@ -164,7 +153,7 @@ fun SplashScreen(
             var y = 0f
             while (y < h) {
                 drawLine(
-                    color = Color(0x2278350F),
+                    color = Color(0x2078350F),
                     start = Offset(0f, y),
                     end = Offset(w, y),
                     strokeWidth = 1f
@@ -178,12 +167,12 @@ fun SplashScreen(
                 var iy = 0f
                 while (iy < h + step) {
                     drawCircle(
-                        color = Color(0x3092400E),
+                        color = Color(0x2892400E),
                         radius = 2.5.dp.toPx(),
                         center = Offset(ix, iy)
                     )
                     drawCircle(
-                        color = Color(0x60FFFBEB),
+                        color = Color(0x50FFFBEB),
                         radius = 1.2.dp.toPx(),
                         center = Offset(ix, iy)
                     )
@@ -193,11 +182,11 @@ fun SplashScreen(
             }
         }
 
-        // Center Content Card (Frosted dark slate for striking contrast against the yellow background)
+        // Center Content Card - Seamless warm golden amber glass matching the yellow background
         Surface(
             shape = RoundedCornerShape(28.dp),
-            color = Color(0xEE0F172A),
-            border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFFBBF24)),
+            color = Color(0x2E78350F), // Warm transparent amber matching the background
+            border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0x60FFFBEB)),
             modifier = Modifier
                 .padding(24.dp)
                 .widthIn(max = 440.dp)
@@ -205,7 +194,7 @@ fun SplashScreen(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(horizontal = 28.dp, vertical = 24.dp)
+                modifier = Modifier.padding(horizontal = 28.dp, vertical = 26.dp)
             ) {
                 // Animated Worm Mascot Showcase (Continuous, seamless, no flicker)
                 Box(
@@ -251,110 +240,82 @@ fun SplashScreen(
                     }
                 }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Game Title Logo
-            Text(
-                text = "nana tayantuh",
-                style = MaterialTheme.typography.displayMedium,
-                color = Color(0xFF4ADE80),
-                fontWeight = FontWeight.Black,
-                letterSpacing = 2.sp
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = Color(0xFF263254),
-                border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFFD700))
-            ) {
-                Text(
-                    text = "${StringsHelper.get("outer_arena", language).uppercase()} • WIDE OPEN WORLD",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Black,
-                    color = Color(0xFFFFD700),
-                    letterSpacing = 1.5.sp,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(36.dp))
-
-            // Progress Bar Container
-            Column(
-                modifier = Modifier.width(360.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Percentage Row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = StringsHelper.get("loading", language),
-                        fontSize = 11.sp,
-                        color = Color(0xFFA0AEC0),
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "${(progressAnim.value * 100).toInt()}%",
-                        fontSize = 13.sp,
-                        color = Color(0xFF4ADE80),
-                        fontWeight = FontWeight.Black
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Custom Gradient Progress Bar
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(14.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    color = Color(0xFF14192B),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2E3858))
-                ) {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(progressAnim.value)
-                                .height(14.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(
-                                    Brush.horizontalGradient(
-                                        listOf(
-                                            Color(0xFF00E5FF),
-                                            Color(0xFF4ADE80),
-                                            Color(0xFFFFD700)
-                                        )
-                                    )
-                                )
-                        )
-                    }
-                }
-
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Animated Tip Message (Fixed height prevents any layout jump)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(36.dp),
-                    contentAlignment = Alignment.Center
+                // Game Title Logo - Rich dark amber / brown for high legibility on yellow
+                Text(
+                    text = "nana tayantuh",
+                    style = MaterialTheme.typography.displayMedium,
+                    color = Color(0xFF451A03),
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 2.sp
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0x3578350F),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF92400E).copy(alpha = 0.5f))
                 ) {
                     Text(
-                        text = tips[currentTipIndex],
-                        fontSize = 12.sp,
-                        color = Color(0xFFCBD5E1),
-                        textAlign = TextAlign.Center,
-                        fontWeight = FontWeight.Medium
+                        text = "${StringsHelper.get("outer_arena", language).uppercase()} • WIDE OPEN WORLD",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Black,
+                        color = Color(0xFF78350F),
+                        letterSpacing = 1.5.sp,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(30.dp))
+
+                // Progress Bar Container & Single Animated Loading Text
+                Column(
+                    modifier = Modifier.width(320.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Custom Gradient Progress Bar
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(12.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color(0x3578350F),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x5078350F))
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(progressAnim.value)
+                                    .height(12.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(
+                                        Brush.horizontalGradient(
+                                            listOf(
+                                                Color(0xFF15803D),
+                                                Color(0xFF22C55E),
+                                                Color(0xFFFDE047)
+                                            )
+                                        )
+                                    )
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Single Loading Text with moving dots (e.g. Loading ., Loading .., Loading ...)
+                    Text(
+                        text = "Loading" + ".".repeat(dotCount),
+                        fontSize = 16.sp,
+                        color = Color(0xFF451A03),
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.5.sp,
+                        textAlign = TextAlign.Center
                     )
                 }
             }
         }
     }
-}
 }

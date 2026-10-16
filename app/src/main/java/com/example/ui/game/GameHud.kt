@@ -290,13 +290,18 @@ fun GameHud(
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(8.dp)
-                                            .clip(CircleShape)
-                                            .background(type.color)
+                                    val iconSymbol = when (type) {
+                                        PotionType.MAGNET -> "🧲"
+                                        PotionType.SPEED_BOOST -> "⚡"
+                                        PotionType.MULTIPLIER -> "⭐"
+                                        PotionType.RADAR -> "📡"
+                                        PotionType.ZOOM -> "🔍"
+                                    }
+                                    Text(
+                                        text = iconSymbol,
+                                        fontSize = 12.sp,
+                                        modifier = Modifier.padding(end = 4.dp)
                                     )
-                                    Spacer(modifier = Modifier.width(6.dp))
                                     val potionName = when (type) {
                                         PotionType.SPEED_BOOST -> StringsHelper.get("potion_speed", lang)
                                         PotionType.MULTIPLIER -> StringsHelper.get("potion_multiplier", lang)

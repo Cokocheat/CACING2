@@ -41,5 +41,6 @@ data class FoodItem(
     val mass: Float = type.massValue,
     val radius: Float = type.baseRadius,
     var velocity: Vec2 = Vec2.Zero,
-    var rotation: Float = 0f
+    var rotation: Float = 0f,
+    var isDeathDrop: Boolean = false
 )

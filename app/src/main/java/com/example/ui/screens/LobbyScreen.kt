@@ -72,6 +72,12 @@ import androidx.compose.ui.unit.sp
 import com.example.data.AppLanguage
 import com.example.data.StringsHelper
 import com.example.data.UserGameData
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.layout.onSizeChanged
+import com.example.model.GameConfig
 import com.example.model.GameDifficulty
 import com.example.model.GameMode
 import com.example.model.MapTheme
@@ -115,16 +121,6 @@ fun LobbyScreen(
         label = "playPulse"
     )
 
-    val wigglePhase by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 2 * PI.toFloat(),
-        animationSpec = infiniteRepeatable(
-            animation = tween(11000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "slitherWiggle"
-    )
-
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.45f,
         targetValue = 0.95f,
@@ -135,9 +131,96 @@ fun LobbyScreen(
         label = "glowPulse"
     )
 
+    var screenWidth by remember { mutableFloatStateOf(1080f) }
+    var screenHeight by remember { mutableFloatStateOf(720f) }
+    var frameTick by remember { mutableLongStateOf(0L) }
+
+    val lobbyWorm = remember {
+        Worm(
+            id = "lobby_player",
+            name = "Nana",
+            isPlayer = true,
+            head = Vec2(350f, 400f),
+            angle = 0.5f,
+            targetAngle = 0.5f,
+            speed = 210f,
+            skin = userData.equippedSkin,
+            accessory = userData.equippedAccessory,
+            mass = 85f
+        ).apply {
+            initializeBody()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        var lastTime = System.nanoTime()
+        var wanderNoise = 0f
+        while (true) {
+            withFrameNanos { now ->
+                val dt = ((now - lastTime) / 1_000_000_000f).coerceIn(0.005f, 0.033f)
+                lastTime = now
+
+                wanderNoise += dt * 2.2f
+
+                // Screen margin avoidance
+                val margin = 80f
+                val head = lobbyWorm.head
+                val w = screenWidth.coerceAtLeast(300f)
+                val h = screenHeight.coerceAtLeast(300f)
+
+                val nearLeft = head.x < margin
+                val nearRight = head.x > w - margin
+                val nearTop = head.y < margin
+                val nearBottom = head.y > h - margin
+
+                if (nearLeft || nearRight || nearTop || nearBottom) {
+                    val toCenter = Vec2(w / 2f, h / 2f) - head
+                    lobbyWorm.targetAngle = toCenter.angle()
+                } else {
+                    // Organic slithering sine wave steering
+                    val wave = sin(wanderNoise) * 0.45f
+                    lobbyWorm.targetAngle = lobbyWorm.angle + wave * 0.25f
+                }
+
+                // Smooth steering towards target angle
+                val maxTurn = GameConfig.TURN_SPEED * 1.35f * dt
+                lobbyWorm.steerTowards(lobbyWorm.targetAngle, maxTurn)
+
+                // Move head forward
+                val velocity = Vec2.fromAngle(lobbyWorm.angle, lobbyWorm.speed * dt)
+                lobbyWorm.head = lobbyWorm.head + velocity
+
+                // Clamp within bounds
+                lobbyWorm.head = Vec2(
+                    lobbyWorm.head.x.coerceIn(24f, w - 24f),
+                    lobbyWorm.head.y.coerceIn(24f, h - 24f)
+                )
+
+                // Follow body segments strictly at in-game segment spacing (circles NEVER separate!)
+                var prevPoint = lobbyWorm.head
+                val desiredDist = GameConfig.SEGMENT_SPACING // 11f
+                for (i in lobbyWorm.bodyPoints.indices) {
+                    val current = lobbyWorm.bodyPoints[i]
+                    val diff = current - prevPoint
+                    val dist = diff.length()
+                    if (dist > 0.001f) {
+                        lobbyWorm.bodyPoints[i] = prevPoint + diff.normalized() * desiredDist
+                    }
+                    prevPoint = lobbyWorm.bodyPoints[i]
+                }
+
+                frameTick = now
+            }
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .onSizeChanged { size ->
+                screenWidth = size.width.toFloat()
+                screenHeight = size.height.toFloat()
+            }
             .testTag("lobby_screen")
     ) {
         // 1. In-Game Arena Background with current mapTheme (identical to game arena background)
@@ -172,56 +255,16 @@ fun LobbyScreen(
                 drawCircle(color = Color.White, radius = 1.2.dp.toPx(), center = pos)
             }
 
-            // Full-Screen Wandering Worm traversing the entire phone display
-            val cx = w * 0.5f
-            val cy = h * 0.5f
-            val t = wigglePhase
+            // 2. Full-Screen Wandering Worm (In-game physics with exact segment spacing - circles never separate!)
+            val tick = frameTick // Triggers recomposition at 60fps
 
-            val marginX = 32.dp.toPx()
-            val marginY = 28.dp.toPx()
-            val halfW = (w / 2f) - marginX
-            val halfH = (h / 2f) - marginY
-
-            val headX = cx + sin(t) * (halfW * 0.90f) + sin(2f * t + 1.2f) * (halfW * 0.22f)
-            val headY = cy + cos(t) * (halfH * 0.85f) + sin(3f * t + 0.6f) * (halfH * 0.22f)
-            val vx = cos(t) * (halfW * 0.90f) + 2f * cos(2f * t + 1.2f) * (halfW * 0.22f)
-            val vy = -sin(t) * (halfH * 0.85f) + 3f * cos(3f * t + 0.6f) * (halfH * 0.22f)
-            val headAngle = kotlin.math.atan2(vy, vx)
-
-            val fullScreenWorm = Worm(
-                id = "lobby_player",
-                name = nameInput.ifBlank { "Nana" },
-                isPlayer = true,
-                head = Vec2(headX, headY),
-                angle = headAngle,
-                targetAngle = headAngle,
-                skin = userData.equippedSkin,
-                accessory = userData.equippedAccessory,
-                mass = 85f
-            )
-
-            fullScreenWorm.bodyPoints.clear()
-            val numSegments = 20
-            for (i in 0 until numSegments) {
-                val segT = t - (i * 0.040f)
-                var sx = cx + sin(segT) * (halfW * 0.90f) + sin(2f * segT + 1.2f) * (halfW * 0.22f)
-                var sy = cy + cos(segT) * (halfH * 0.85f) + sin(3f * segT + 0.6f) * (halfH * 0.22f)
-
-                val segVx = cos(segT) * (halfW * 0.90f) + 2f * cos(2f * segT + 1.2f) * (halfW * 0.22f)
-                val segVy = -sin(segT) * (halfH * 0.85f) + 3f * cos(3f * segT + 0.6f) * (halfH * 0.22f)
-                val segAngle = kotlin.math.atan2(segVy, segVx)
-
-                val lateralWave = sin(t * 4.5f - i * 0.35f) * 3f
-                val normAngle = segAngle - (PI / 2).toFloat()
-                sx += cos(normAngle) * lateralWave
-                sy += sin(normAngle) * lateralWave
-
-                fullScreenWorm.bodyPoints.add(Vec2(sx, sy))
-            }
+            lobbyWorm.name = nameInput.ifBlank { "Nana" }
+            lobbyWorm.skin = userData.equippedSkin
+            lobbyWorm.accessory = userData.equippedAccessory
 
             WormsRenderer.drawWorm(
                 drawScope = this,
-                worm = fullScreenWorm,
+                worm = lobbyWorm,
                 cameraOffset = Offset.Zero,
                 zoom = 1.0f
             )
@@ -553,12 +596,14 @@ fun LobbyScreen(
                                         GameDifficulty.EASY -> "Santai & Lambat"
                                         GameDifficulty.NORMAL -> "Refleks Seimbang"
                                         GameDifficulty.HARD -> "AI Cerdas & Agresif!"
+                                        else -> "Refleks Seimbang"
                                     },
                                     fontSize = 9.sp,
                                     color = when (selectedDifficulty) {
                                         GameDifficulty.EASY -> Color(0xFF4ADE80)
                                         GameDifficulty.NORMAL -> Color(0xFFFFD700)
                                         GameDifficulty.HARD -> Color(0xFFFF5252)
+                                        else -> Color(0xFFFFD700)
                                     },
                                     fontWeight = FontWeight.Bold
                                 )
@@ -574,6 +619,7 @@ fun LobbyScreen(
                                         GameDifficulty.EASY -> Pair(Color(0xFF4ADE80), StringsHelper.get("diff_easy", lang))
                                         GameDifficulty.NORMAL -> Pair(Color(0xFFFFD700), StringsHelper.get("diff_normal", lang))
                                         GameDifficulty.HARD -> Pair(Color(0xFFFF5252), StringsHelper.get("diff_hard", lang))
+                                        else -> Pair(Color(0xFFFFD700), StringsHelper.get("diff_normal", lang))
                                     }
 
                                     Surface(

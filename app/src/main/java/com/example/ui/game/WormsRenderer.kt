@@ -508,10 +508,10 @@ object WormsRenderer {
 
                 FoodType.DEATH_FEAST -> {
                     // Glowing Banquet Deluxe
-                    drawCircle(color = Color(0x44FF1744), radius = r * 1.6f, center = screenPos)
-                    drawCircle(color = Color(0xFFFF5252), radius = r * 1.1f, center = screenPos)
-                    drawCircle(color = Color(0xFFFFD54F), radius = r * 0.65f, center = screenPos)
-                    drawCircle(color = Color.White, radius = r * 0.3f, center = screenPos)
+                    drawCircle(color = Color(0x55FF1744), radius = r * 1.8f, center = screenPos)
+                    drawCircle(color = Color(0xFFFF5252), radius = r * 1.15f, center = screenPos)
+                    drawCircle(color = Color(0xFFFFD54F), radius = r * 0.68f, center = screenPos)
+                    drawCircle(color = Color.White, radius = r * 0.35f, center = screenPos)
                 }
 
                 else -> {
@@ -519,6 +519,42 @@ object WormsRenderer {
                     drawCircle(color = food.type.primaryColor, radius = r, center = screenPos)
                     drawCircle(color = Color.White.copy(alpha = 0.6f), radius = r * 0.4f, center = Offset(x - r * 0.3f, y - r * 0.3f))
                 }
+            }
+
+            // Radiant light effect for dead worm food drops (efek cahaya musuh mati - gak buyar)
+            if (food.isDeathDrop || food.type == FoodType.DEATH_FEAST) {
+                // Multi-layered shimmering aura of glowing sunlight
+                drawCircle(
+                    color = Color(0x50FFF59D),
+                    radius = r * 2.4f,
+                    center = screenPos
+                )
+                drawCircle(
+                    color = Color(0x70FFD700),
+                    radius = r * 1.7f,
+                    center = screenPos
+                )
+                // Starburst light sparkle cross
+                val beam = r * 2.2f
+                drawLine(
+                    color = Color(0xDDFFFFFF),
+                    start = Offset(x - beam, y),
+                    end = Offset(x + beam, y),
+                    strokeWidth = 2.0f * zoom,
+                    cap = StrokeCap.Round
+                )
+                drawLine(
+                    color = Color(0xDDFFFFFF),
+                    start = Offset(x, y - beam),
+                    end = Offset(x, y + beam),
+                    strokeWidth = 2.0f * zoom,
+                    cap = StrokeCap.Round
+                )
+                drawCircle(
+                    color = Color.White,
+                    radius = r * 0.45f,
+                    center = screenPos
+                )
             }
         }
     }
@@ -529,38 +565,202 @@ object WormsRenderer {
             val x = screenPos.x
             val y = screenPos.y
 
-            // Pulsing aura
-            val pulse = (sin(potion.pulsePhase) * 0.15f + 0.85f)
+            // Pulsing luminous aura
+            val pulse = (sin(potion.pulsePhase) * 0.18f + 0.88f)
             drawCircle(
                 color = potion.type.color.copy(alpha = 0.35f * pulse),
-                radius = r * 1.6f * pulse,
+                radius = r * 1.7f * pulse,
                 center = screenPos
             )
 
-            // Flask base
-            drawCircle(color = potion.type.color, radius = r, center = screenPos)
-
-            // Neck of potion flask
-            drawRoundRect(
-                color = Color.White.copy(alpha = 0.8f),
-                topLeft = Offset(x - r * 0.3f, y - r * 1.4f),
-                size = Size(r * 0.6f, r * 0.5f),
-                cornerRadius = CornerRadius(2f, 2f)
-            )
-
-            // Shiny specular highlight
+            // Outer Powerup Orb / Disc
             drawCircle(
-                color = Color.White.copy(alpha = 0.75f),
-                radius = r * 0.35f,
-                center = Offset(x - r * 0.35f, y - r * 0.35f)
+                color = Color(0xDD111827), // Deep dark disc backing
+                radius = r * 1.15f,
+                center = screenPos
             )
-
-            // Flask stroke outline
             drawCircle(
-                color = Color.White,
-                radius = r,
+                color = potion.type.color.copy(alpha = 0.30f),
+                radius = r * 1.15f,
+                center = screenPos
+            )
+            // Vibrant glowing border ring
+            drawCircle(
+                color = potion.type.color,
+                radius = r * 1.15f,
                 center = screenPos,
-                style = Stroke(width = 2.5f * zoom)
+                style = Stroke(width = 3f * zoom)
+            )
+
+            // DRAW DISTINCT SPELL ICONS (NO RAMUAN/FLASKS)
+            when (potion.type) {
+                PotionType.MAGNET -> {
+                    // REAL HORSESHOE MAGNET ICON: Red U-body with silver/white tips & magnetic field waves
+                    val legOffset = r * 0.38f
+                    val uPath = Path().apply {
+                        moveTo(x - legOffset, y - r * 0.30f)
+                        lineTo(x - legOffset, y + r * 0.18f)
+                        quadraticBezierTo(x, y + r * 0.70f, x + legOffset, y + r * 0.18f)
+                        lineTo(x + legOffset, y - r * 0.30f)
+                    }
+                    // Red U-body
+                    drawPath(
+                        path = uPath,
+                        color = Color(0xFFEF4444),
+                        style = Stroke(width = r * 0.36f, cap = StrokeCap.Butt)
+                    )
+
+                    // Silver / White pole tips (N & S poles)
+                    val tipW = r * 0.38f
+                    val tipH = r * 0.28f
+                    drawRoundRect(
+                        color = Color(0xFFF8FAFC),
+                        topLeft = Offset(x - legOffset - tipW / 2f, y - r * 0.58f),
+                        size = Size(tipW, tipH),
+                        cornerRadius = CornerRadius(2f, 2f)
+                    )
+                    drawRoundRect(
+                        color = Color(0xFFF8FAFC),
+                        topLeft = Offset(x + legOffset - tipW / 2f, y - r * 0.58f),
+                        size = Size(tipW, tipH),
+                        cornerRadius = CornerRadius(2f, 2f)
+                    )
+
+                    // Cyan magnetic flux rays above the tips
+                    drawLine(
+                        color = Color(0xFF00E5FF),
+                        start = Offset(x - legOffset - r * 0.18f, y - r * 0.75f),
+                        end = Offset(x - legOffset + r * 0.18f, y - r * 0.75f),
+                        strokeWidth = 2f * zoom,
+                        cap = StrokeCap.Round
+                    )
+                    drawLine(
+                        color = Color(0xFF00E5FF),
+                        start = Offset(x + legOffset - r * 0.18f, y - r * 0.75f),
+                        end = Offset(x + legOffset + r * 0.18f, y - r * 0.75f),
+                        strokeWidth = 2f * zoom,
+                        cap = StrokeCap.Round
+                    )
+                }
+
+                PotionType.SPEED_BOOST -> {
+                    // LIGHTNING BOLT SPEED ICON
+                    val boltPath = Path().apply {
+                        moveTo(x + r * 0.12f, y - r * 0.65f)
+                        lineTo(x - r * 0.45f, y + r * 0.05f)
+                        lineTo(x - r * 0.02f, y + r * 0.05f)
+                        lineTo(x - r * 0.22f, y + r * 0.70f)
+                        lineTo(x + r * 0.45f, y - r * 0.05f)
+                        lineTo(x + r * 0.02f, y - r * 0.05f)
+                        close()
+                    }
+                    drawPath(boltPath, color = Color(0xFFFFEB3B), style = Fill)
+                    drawPath(boltPath, color = Color.White, style = Stroke(width = 1.8f * zoom))
+                }
+
+                PotionType.MULTIPLIER -> {
+                    // 2X MULTIPLIER / DOUBLE SCORE ICON
+                    // Golden starburst
+                    val starPath = Path().apply {
+                        moveTo(x, y - r * 0.68f)
+                        lineTo(x + r * 0.22f, y - r * 0.22f)
+                        lineTo(x + r * 0.68f, y)
+                        lineTo(x + r * 0.22f, y + r * 0.22f)
+                        lineTo(x, y + r * 0.68f)
+                        lineTo(x - r * 0.22f, y + r * 0.22f)
+                        lineTo(x - r * 0.68f, y)
+                        lineTo(x - r * 0.22f, y - r * 0.22f)
+                        close()
+                    }
+                    drawPath(starPath, color = Color(0xFFFFD700), style = Fill)
+
+                    // "2" numeral
+                    val p2 = Path().apply {
+                        moveTo(x - r * 0.40f, y - r * 0.25f)
+                        quadraticBezierTo(x - r * 0.22f, y - r * 0.45f, x - r * 0.08f, y - r * 0.25f)
+                        lineTo(x - r * 0.40f, y + r * 0.35f)
+                        lineTo(x - r * 0.05f, y + r * 0.35f)
+                    }
+                    drawPath(p2, color = Color.White, style = Stroke(width = 2.5f * zoom, cap = StrokeCap.Round))
+
+                    // "X" cross
+                    drawLine(
+                        color = Color.White,
+                        start = Offset(x + r * 0.08f, y - r * 0.25f),
+                        end = Offset(x + r * 0.42f, y + r * 0.25f),
+                        strokeWidth = 2.5f * zoom,
+                        cap = StrokeCap.Round
+                    )
+                    drawLine(
+                        color = Color.White,
+                        start = Offset(x + r * 0.42f, y - r * 0.25f),
+                        end = Offset(x + r * 0.08f, y + r * 0.25f),
+                        strokeWidth = 2.5f * zoom,
+                        cap = StrokeCap.Round
+                    )
+                }
+
+                PotionType.RADAR -> {
+                    // RADAR DISH / SCANNER TARGET ICON
+                    drawCircle(color = Color(0xFFA855F7), radius = r * 0.68f, center = screenPos, style = Stroke(width = 2f * zoom))
+                    drawCircle(color = Color(0xFFA855F7), radius = r * 0.38f, center = screenPos, style = Stroke(width = 1.5f * zoom))
+                    // Target crosshairs
+                    drawLine(
+                        color = Color(0xCCFFFFFF),
+                        start = Offset(x - r * 0.65f, y),
+                        end = Offset(x + r * 0.65f, y),
+                        strokeWidth = 1.5f * zoom
+                    )
+                    drawLine(
+                        color = Color(0xCCFFFFFF),
+                        start = Offset(x, y - r * 0.65f),
+                        end = Offset(x, y + r * 0.65f),
+                        strokeWidth = 1.5f * zoom
+                    )
+                    // Scanning line & target blip dot
+                    drawLine(
+                        color = Color(0xFF00E5FF),
+                        start = screenPos,
+                        end = Offset(x + r * 0.45f, y - r * 0.45f),
+                        strokeWidth = 2.2f * zoom,
+                        cap = StrokeCap.Round
+                    )
+                    drawCircle(color = Color(0xFF00E676), radius = 3.5f * zoom, center = Offset(x + r * 0.32f, y - r * 0.32f))
+                }
+
+                PotionType.ZOOM -> {
+                    // MAGNIFYING GLASS / EAGLE EYE ZOOM ICON
+                    val lensCenter = Offset(x - r * 0.12f, y - r * 0.12f)
+                    val lensR = r * 0.42f
+                    // Lens rim
+                    drawCircle(
+                        color = Color(0xFFFF9800),
+                        radius = lensR,
+                        center = lensCenter,
+                        style = Stroke(width = 3.2f * zoom)
+                    )
+                    // Glass highlight
+                    drawCircle(
+                        color = Color.White.copy(alpha = 0.5f),
+                        radius = lensR * 0.4f,
+                        center = Offset(lensCenter.x - lensR * 0.35f, lensCenter.y - lensR * 0.35f)
+                    )
+                    // Handle
+                    drawLine(
+                        color = Color(0xFFFFD54F),
+                        start = Offset(lensCenter.x + lensR * 0.70f, lensCenter.y + lensR * 0.70f),
+                        end = Offset(x + r * 0.65f, y + r * 0.65f),
+                        strokeWidth = 4.5f * zoom,
+                        cap = StrokeCap.Round
+                    )
+                }
+            }
+
+            // Shiny specular corner highlight on the orb
+            drawCircle(
+                color = Color.White.copy(alpha = 0.55f),
+                radius = r * 0.22f,
+                center = Offset(x - r * 0.45f, y - r * 0.45f)
             )
         }
     }
