@@ -23,6 +23,9 @@ enum class JoystickMode {
 data class DailyRewardInfo(
     val day: Int,
     val coins: Int,
+    val title: String = "",
+    val unlockSkin: SkinId? = null,
+    val unlockAccessory: FaceAccessory? = null,
     val isSpecial: Boolean = false
 )
 
@@ -44,7 +47,7 @@ data class UserGameData(
     val controlMode: ControlMode = ControlMode.JOYSTICK,
     val soundEnabled: Boolean = true,
     val vibrationEnabled: Boolean = true,
-    // 7 Days Daily Login Event
+    // 15 Days Daily Login Event
     val lastClaimedDay: Int = 0, // 0 means haven't claimed day 1 yet
     val lastClaimTimestamp: Long = 0L,
     val firstInstallTimestamp: Long = 0L,
@@ -63,13 +66,21 @@ data class UserGameData(
 ) {
     companion object {
         val DAILY_REWARDS = listOf(
-            DailyRewardInfo(1, 200),
-            DailyRewardInfo(2, 400),
-            DailyRewardInfo(3, 650),
-            DailyRewardInfo(4, 900),
-            DailyRewardInfo(5, 1200),
-            DailyRewardInfo(6, 1600),
-            DailyRewardInfo(7, 3000, isSpecial = true)
+            DailyRewardInfo(1, 300, "Paket Pemula"),
+            DailyRewardInfo(2, 500, "Bonus Koin"),
+            DailyRewardInfo(3, 750, "Kacamata Hitam Keren", unlockAccessory = FaceAccessory.SUNGLASSES, isSpecial = true),
+            DailyRewardInfo(4, 1000, "Ekstra Koin"),
+            DailyRewardInfo(5, 1400, "Skin Pelangi Berkilau", unlockSkin = SkinId.RAINBOW, isSpecial = true),
+            DailyRewardInfo(6, 1800, "Kantong Koin"),
+            DailyRewardInfo(7, 2500, "Peti Emas Minggu 1", isSpecial = true),
+            DailyRewardInfo(8, 2800, "Topeng Bajak Laut", unlockAccessory = FaceAccessory.PIRATE_PATCH, isSpecial = true),
+            DailyRewardInfo(9, 3200, "Tumpukan Koin"),
+            DailyRewardInfo(10, 3800, "Skin Neon Cyber", unlockSkin = SkinId.BUMBLEBEE, isSpecial = true),
+            DailyRewardInfo(11, 4200, "Koin Melimpah"),
+            DailyRewardInfo(12, 4800, "Kilau Mata Anime", unlockAccessory = FaceAccessory.ANIME_SPARKLE, isSpecial = true),
+            DailyRewardInfo(13, 5500, "Harta Karun"),
+            DailyRewardInfo(14, 6500, "Skin Kosmik Galaksi", unlockSkin = SkinId.GALAXY, isSpecial = true),
+            DailyRewardInfo(15, 12000, "KAISAR EMAS & MAHKOTA!", unlockSkin = SkinId.GOLDEN_EMPEROR, unlockAccessory = FaceAccessory.ROYAL_CROWN, isSpecial = true)
         )
         const val ONE_DAY_MILLIS = 24 * 60 * 60 * 1000L
     }
@@ -83,9 +94,9 @@ data class UserGameData(
 
     val nextDailyDay: Int
         get() {
-            return if (lastClaimedDay >= 7) {
-                // If finished 7 days and 1 day passed, loop back to 1
-                if (canClaimDailyToday) 1 else 7
+            return if (lastClaimedDay >= 15) {
+                // If finished 15 days and 1 day passed, loop back to 1
+                if (canClaimDailyToday) 1 else 15
             } else {
                 lastClaimedDay + 1
             }
@@ -244,11 +255,20 @@ class UserPreferencesRepository(context: Context) {
         val now = System.currentTimeMillis()
         val newCoins = current.coins + rewardCoins
         var newUnlockedSkins = current.unlockedSkins
+        var newUnlockedAccessories = current.unlockedAccessories
 
-        // Special Day 7 reward: Unlock Golden Skin if not unlocked!
-        if (targetDay == 7 && !newUnlockedSkins.contains(SkinId.GOLDEN_EMPEROR)) {
-            newUnlockedSkins = newUnlockedSkins + SkinId.GOLDEN_EMPEROR
-            prefs.edit().putStringSet("unlocked_skins", newUnlockedSkins.map { it.name }.toSet()).apply()
+        rewardInfo.unlockSkin?.let { skin ->
+            if (!newUnlockedSkins.contains(skin)) {
+                newUnlockedSkins = newUnlockedSkins + skin
+                prefs.edit().putStringSet("unlocked_skins", newUnlockedSkins.map { it.name }.toSet()).apply()
+            }
+        }
+
+        rewardInfo.unlockAccessory?.let { acc ->
+            if (!newUnlockedAccessories.contains(acc)) {
+                newUnlockedAccessories = newUnlockedAccessories + acc
+                prefs.edit().putStringSet("unlocked_accessories", newUnlockedAccessories.map { it.name }.toSet()).apply()
+            }
         }
 
         prefs.edit()
@@ -261,7 +281,8 @@ class UserPreferencesRepository(context: Context) {
             lastClaimedDay = targetDay,
             lastClaimTimestamp = now,
             coins = newCoins,
-            unlockedSkins = newUnlockedSkins
+            unlockedSkins = newUnlockedSkins,
+            unlockedAccessories = newUnlockedAccessories
         )
 
         return Pair(targetDay, rewardCoins)

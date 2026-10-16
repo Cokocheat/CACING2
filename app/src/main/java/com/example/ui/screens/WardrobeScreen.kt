@@ -74,6 +74,8 @@ import com.example.model.Vec2
 import com.example.model.Worm
 import com.example.ui.game.WormsRenderer
 import kotlin.math.PI
+import kotlin.math.atan2
+import kotlin.math.cos
 import kotlin.math.sin
 
 private fun getSkinLocalizedTitle(skin: SkinId, lang: AppLanguage): String {
@@ -209,21 +211,27 @@ fun WardrobeScreen(
                     val cx = size.width / 2f
                     val cy = size.height / 2f
 
+                    val headY = cy + sin(wigglePhase) * 16f
+                    val headX = cx + 55f
+                    val vy = cos(wigglePhase) * 16f
+                    val vx = 16f
+                    val headAngle = atan2(vy, vx)
+
                     val previewWorm = Worm(
                         id = "wardrobe_preview",
                         name = userData.playerName,
                         isPlayer = true,
-                        head = Vec2(cx + 60f, cy),
-                        angle = 0f,
+                        head = Vec2(headX, headY),
+                        angle = headAngle,
                         skin = previewSkin,
                         accessory = previewAccessory,
-                        mass = 80f
+                        mass = 85f
                     ).apply {
                         bodyPoints.clear()
-                        for (i in 0 until 18) {
-                            val wave = sin(wigglePhase + i * 0.4f) * 12f
-                            val px = (cx + 60f) - i * 14f
-                            val py = cy + wave
+                        for (i in 0 until 16) {
+                            val segPhase = wigglePhase - i * 0.38f
+                            val px = (cx + 55f) - i * 14f
+                            val py = cy + sin(segPhase) * 16f
                             bodyPoints.add(Vec2(px, py))
                         }
                     }
@@ -232,7 +240,7 @@ fun WardrobeScreen(
                         drawScope = this,
                         worm = previewWorm,
                         cameraOffset = Offset(0f, 0f),
-                        zoom = 1.0f
+                        zoom = 1.05f
                     )
                 }
 

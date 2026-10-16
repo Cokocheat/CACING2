@@ -728,43 +728,64 @@ fun DailyLoginDialog(
                                 color = when {
                                     isCurrentClaimable -> Color(0xFFFFD700)
                                     isClaimed -> Color(0xFF4ADE80)
+                                    reward.day == 15 -> Color(0xFFFFD700)
                                     else -> Color(0xFF2C3454)
                                 }
                             ),
-                            modifier = Modifier.width(110.dp)
+                            modifier = Modifier.width(125.dp)
                         ) {
                             Column(
-                                modifier = Modifier.padding(10.dp),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center
                             ) {
                                 // Day Header
                                 Text(
-                                    text = "${StringsHelper.get("day", lang)} ${reward.day}",
+                                    text = if (reward.day == 15) "HARI 15 (FINAL)" else "${StringsHelper.get("day", lang)} ${reward.day}",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = if (isCurrentClaimable) Color(0xFFFFD700) else Color(0xFFA0AEC0),
-                                    fontWeight = FontWeight.Bold
-                                )
-
-                                Spacer(modifier = Modifier.height(6.dp))
-
-                                // Reward Icon (NO EMOJI)
-                                Icon(
-                                    imageVector = if (reward.isSpecial) Icons.Default.MilitaryTech else Icons.Default.MonetizationOn,
-                                    contentDescription = null,
-                                    tint = Color(0xFFFFD700),
-                                    modifier = Modifier.size(26.dp)
+                                    color = if (reward.day == 15) Color(0xFFFFD700) else if (isCurrentClaimable) Color(0xFFFFD700) else Color(0xFFA0AEC0),
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 10.sp
                                 )
 
                                 Spacer(modifier = Modifier.height(4.dp))
 
-                                // Amount
+                                // Reward Icon
+                                val (iconVector, iconTint) = when {
+                                    reward.day == 15 -> Pair(Icons.Default.MilitaryTech, Color(0xFFFFD700))
+                                    reward.unlockSkin != null -> Pair(Icons.Default.EmojiEvents, Color(0xFF00E5FF))
+                                    reward.unlockAccessory != null -> Pair(Icons.Default.Stars, Color(0xFFFF80AB))
+                                    else -> Pair(Icons.Default.MonetizationOn, Color(0xFFFFD700))
+                                }
+
+                                Icon(
+                                    imageVector = iconVector,
+                                    contentDescription = null,
+                                    tint = iconTint,
+                                    modifier = Modifier.size(26.dp)
+                                )
+
+                                Spacer(modifier = Modifier.height(3.dp))
+
+                                // Coins Amount
                                 Text(
                                     text = "+${reward.coins}",
                                     style = MaterialTheme.typography.titleSmall,
                                     color = Color(0xFFFFD700),
                                     fontWeight = FontWeight.Black
                                 )
+
+                                // Item reward title
+                                if (reward.title.isNotEmpty()) {
+                                    Text(
+                                        text = reward.title,
+                                        fontSize = 8.5.sp,
+                                        color = if (reward.day == 15) Color(0xFFFFD700) else Color(0xFFE2E8F0),
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
 
                                 Spacer(modifier = Modifier.height(6.dp))
 

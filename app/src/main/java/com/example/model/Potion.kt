@@ -44,6 +44,6 @@ data class PotionItem(
     val id: Long,
     val position: Vec2,
     val type: PotionType,
-    val radius: Float = 22f,
+    val radius: Float = 36f,
     var pulsePhase: Float = 0f
 )

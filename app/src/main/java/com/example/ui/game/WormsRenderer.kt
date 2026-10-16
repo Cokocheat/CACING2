@@ -215,6 +215,29 @@ object WormsRenderer {
                 }
             }
 
+            // Outer edge magical glow for dead worm food (efek cahaya hanya di pinggir seperti screenshot)
+            if (food.isDeathDrop || food.type == FoodType.DEATH_FEAST) {
+                // Outer magenta / purple fiery aura stroke along the outer edge
+                drawCircle(
+                    color = Color(0x75EC4899),
+                    radius = r * 1.32f,
+                    center = screenPos,
+                    style = Stroke(width = 3.2f * zoom)
+                )
+                drawCircle(
+                    color = Color(0x40A855F7),
+                    radius = r * 1.52f,
+                    center = screenPos,
+                    style = Stroke(width = 2.0f * zoom)
+                )
+                // Sparkle ember on perimeter edge
+                val emberAngle = (food.id * 1.45f).toFloat()
+                val ex = x + cos(emberAngle) * (r * 1.28f)
+                val ey = y + sin(emberAngle) * (r * 1.28f)
+                drawCircle(color = Color(0xFFF472B6), radius = 2.4f * zoom, center = Offset(ex, ey))
+                drawCircle(color = Color.White, radius = 1.2f * zoom, center = Offset(ex, ey))
+            }
+
             // Ambient ground contact shadow for all foods
             drawOval(
                 color = Color(0x38000000),
@@ -519,42 +542,6 @@ object WormsRenderer {
                     drawCircle(color = food.type.primaryColor, radius = r, center = screenPos)
                     drawCircle(color = Color.White.copy(alpha = 0.6f), radius = r * 0.4f, center = Offset(x - r * 0.3f, y - r * 0.3f))
                 }
-            }
-
-            // Radiant light effect for dead worm food drops (efek cahaya musuh mati - gak buyar)
-            if (food.isDeathDrop || food.type == FoodType.DEATH_FEAST) {
-                // Multi-layered shimmering aura of glowing sunlight
-                drawCircle(
-                    color = Color(0x50FFF59D),
-                    radius = r * 2.4f,
-                    center = screenPos
-                )
-                drawCircle(
-                    color = Color(0x70FFD700),
-                    radius = r * 1.7f,
-                    center = screenPos
-                )
-                // Starburst light sparkle cross
-                val beam = r * 2.2f
-                drawLine(
-                    color = Color(0xDDFFFFFF),
-                    start = Offset(x - beam, y),
-                    end = Offset(x + beam, y),
-                    strokeWidth = 2.0f * zoom,
-                    cap = StrokeCap.Round
-                )
-                drawLine(
-                    color = Color(0xDDFFFFFF),
-                    start = Offset(x, y - beam),
-                    end = Offset(x, y + beam),
-                    strokeWidth = 2.0f * zoom,
-                    cap = StrokeCap.Round
-                )
-                drawCircle(
-                    color = Color.White,
-                    radius = r * 0.45f,
-                    center = screenPos
-                )
             }
         }
     }

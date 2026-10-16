@@ -107,7 +107,7 @@ fun LobbyScreen(
     var selectedMode by remember { mutableStateOf(GameMode.OPEN_ARENA) }
     var selectedDifficulty by remember(userData.gameDifficulty) { mutableStateOf(userData.gameDifficulty) }
     var nameInput by remember { mutableStateOf(userData.playerName) }
-    var showDailyLoginDialog by remember { mutableStateOf(false) }
+    var showDailyLoginDialog by remember(userData.canClaimDailyToday) { mutableStateOf(userData.canClaimDailyToday) }
 
     // Pulsing and slithering animations
     val infiniteTransition = rememberInfiniteTransition(label = "lobbyAnimations")
@@ -141,9 +141,9 @@ fun LobbyScreen(
             name = "Nana",
             isPlayer = true,
             head = Vec2(350f, 400f),
-            angle = 0.5f,
-            targetAngle = 0.5f,
-            speed = 210f,
+            angle = 0.3f,
+            targetAngle = 0.3f,
+            speed = 175f,
             skin = userData.equippedSkin,
             accessory = userData.equippedAccessory,
             mass = 85f
@@ -155,45 +155,50 @@ fun LobbyScreen(
     LaunchedEffect(Unit) {
         var lastTime = System.nanoTime()
         var wanderNoise = 0f
+        var cruiseHeading = 0.35f // Steady forward cruising heading across screen
+
         while (true) {
             withFrameNanos { now ->
                 val dt = ((now - lastTime) / 1_000_000_000f).coerceIn(0.005f, 0.033f)
                 lastTime = now
 
-                wanderNoise += dt * 2.2f
+                wanderNoise += dt * 3.5f
 
-                // Screen margin avoidance
-                val margin = 80f
+                // Screen margin bounce (so it moves forward across the screen and bounces naturally without spinning in circles)
+                val margin = 75f
                 val head = lobbyWorm.head
-                val w = screenWidth.coerceAtLeast(300f)
+                val w = screenWidth.coerceAtLeast(400f)
                 val h = screenHeight.coerceAtLeast(300f)
 
-                val nearLeft = head.x < margin
-                val nearRight = head.x > w - margin
-                val nearTop = head.y < margin
-                val nearBottom = head.y > h - margin
-
-                if (nearLeft || nearRight || nearTop || nearBottom) {
-                    val toCenter = Vec2(w / 2f, h / 2f) - head
-                    lobbyWorm.targetAngle = toCenter.angle()
-                } else {
-                    // Organic slithering sine wave steering
-                    val wave = sin(wanderNoise) * 0.45f
-                    lobbyWorm.targetAngle = lobbyWorm.angle + wave * 0.25f
+                // Smoothly reflect off walls so it keeps walking normally
+                if (head.x > w - margin && cos(cruiseHeading) > 0) {
+                    cruiseHeading = PI.toFloat() - (cruiseHeading * 0.4f)
+                } else if (head.x < margin && cos(cruiseHeading) < 0) {
+                    cruiseHeading = 0f + ((PI.toFloat() - cruiseHeading) * 0.4f)
                 }
 
+                if (head.y > h - margin && sin(cruiseHeading) > 0) {
+                    cruiseHeading = -kotlin.math.abs(cruiseHeading)
+                } else if (head.y < margin && sin(cruiseHeading) < 0) {
+                    cruiseHeading = kotlin.math.abs(cruiseHeading)
+                }
+
+                // Gentle natural sinusoidal slither around the straight cruise heading (walks forward normally, no looping/spinning!)
+                val slitherOffset = sin(wanderNoise) * 0.12f
+                lobbyWorm.targetAngle = cruiseHeading + slitherOffset
+
                 // Smooth steering towards target angle
-                val maxTurn = GameConfig.TURN_SPEED * 1.35f * dt
+                val maxTurn = GameConfig.TURN_SPEED * 1.5f * dt
                 lobbyWorm.steerTowards(lobbyWorm.targetAngle, maxTurn)
 
-                // Move head forward
+                // Move head forward at steady cruising pace
                 val velocity = Vec2.fromAngle(lobbyWorm.angle, lobbyWorm.speed * dt)
                 lobbyWorm.head = lobbyWorm.head + velocity
 
-                // Clamp within bounds
+                // Keep inside screen
                 lobbyWorm.head = Vec2(
-                    lobbyWorm.head.x.coerceIn(24f, w - 24f),
-                    lobbyWorm.head.y.coerceIn(24f, h - 24f)
+                    lobbyWorm.head.x.coerceIn(20f, w - 20f),
+                    lobbyWorm.head.y.coerceIn(20f, h - 20f)
                 )
 
                 // Follow body segments strictly at in-game segment spacing (circles NEVER separate!)
