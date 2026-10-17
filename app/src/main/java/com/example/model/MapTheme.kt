@@ -14,53 +14,53 @@ enum class MapTheme(
 ) {
     CYBER_FUNK(
         id = "cyber_funk",
-        title = "Kuning Cerah (Sunny Arena)",
-        icon = "☀️",
-        bgColor = Color(0xFFFDE047), // Bright sunny golden yellow arena (like icon & splash)
-        gridColor = Color(0x35B45309), // Warm amber motif grid
-        borderColor = Color(0xFFE11D48), // Vibrant crimson danger boundary
-        glowColor = Color(0xFFF97316), // Warm golden sunshine glow
-        description = "Arena kuning cerah ceria penuh motif geometris berenergi tinggi"
+        title = "Terracotta Klasik (Classic Arena)",
+        icon = "🧱",
+        bgColor = Color(0xFF6B383D), // Warm terracotta / cocoa maroon exactly like the screenshot
+        gridColor = Color(0xFF55252A), // Checkerboard tile line tone
+        borderColor = Color(0xFFFF5722), // Vibrant danger boundary
+        glowColor = Color(0xFFFF8A65), // Warm boundary glow
+        description = "Arena terracotta bermotif catur hangat dengan efek bayangan gelap elegan"
     ),
     RAINBOW_CARNIVAL(
         id = "rainbow_carnival",
-        title = "Langit Pelangi (Sky Carnival)",
-        icon = "🎪",
-        bgColor = Color(0xFFBAE6FD), // Bright vibrant sky cyan
-        gridColor = Color(0x350369A1), // Deep sky cyan grid
-        borderColor = Color(0xFF8B5CF6), // Neon purple boundary
-        glowColor = Color(0xFF06B6D4), // Cyan energetic glow
-        description = "Karnaval langit pelangi cerah penuh warna ceria dan motif pesta"
+        title = "Langit Malam (Midnight Slate)",
+        icon = "🌌",
+        bgColor = Color(0xFF26334D), // Deep slate blue checkered
+        gridColor = Color(0xFF1B2538),
+        borderColor = Color(0xFF8B5CF6),
+        glowColor = Color(0xFF06B6D4),
+        description = "Karnaval malam bermotif catur dengan kilau warna elegan"
     ),
     SWEET_CANDY(
         id = "sweet_candy",
-        title = "Permen Manis (Sweet Candy)",
+        title = "Permen Berry (Berry Maroon)",
         icon = "🍭",
-        bgColor = Color(0xFFFCE7F3), // Bright sweet strawberry cream pink
-        gridColor = Color(0x35BE185D), // Berry grid lines
-        borderColor = Color(0xFFEC4899), // Deep pink danger border
-        glowColor = Color(0xFFA855F7), // Sweet sugar glow
-        description = "Dunia permen manis gula-gula cerah penuh warna ceria"
+        bgColor = Color(0xFF4D243B), // Deep berry maroon checkered
+        gridColor = Color(0xFF3B182B),
+        borderColor = Color(0xFFEC4899),
+        glowColor = Color(0xFFA855F7),
+        description = "Dunia permen manis berry bermotif catur lembut"
     ),
     COSMIC_SPACE(
         id = "green_meadow",
-        title = "Padang Rumput (Green Meadow)",
-        icon = "🌱",
-        bgColor = Color(0xFF86EFAC), // Bright lush emerald pasture
-        gridColor = Color(0x35047857), // Forest green lawn grid
-        borderColor = Color(0xFFFFD700), // Golden border
-        glowColor = Color(0xFF10B981), // Fresh emerald glow
-        description = "Padang rumput hijau cerah berseri penuh kesegaran"
+        title = "Hutan Lumut (Deep Forest)",
+        icon = "🌲",
+        bgColor = Color(0xFF263A29), // Deep forest moss checkered
+        gridColor = Color(0xFF1B2B1D),
+        borderColor = Color(0xFF4ADE80),
+        glowColor = Color(0xFF10B981),
+        description = "Padang rumput hutan hijau teduh bermotif catur nyaman di mata"
     ),
     LAVA_VOLCANO(
         id = "lava_volcano",
-        title = "Koral Magma (Coral Sunburst)",
+        title = "Batu Magma (Ember Stone)",
         icon = "🌋",
-        bgColor = Color(0xFFFED7AA), // Bright warm coral peach sunburst
-        gridColor = Color(0x35EA580C), // Warm coral grid lines
-        borderColor = Color(0xFFDC2626), // Deep crimson danger border
-        glowColor = Color(0xFFF59E0B), // Warm flame glow
-        description = "Arena koral hangat terang dengan motif cerah berenergi"
+        bgColor = Color(0xFF3D2321), // Deep volcanic chocolate checkered
+        gridColor = Color(0xFF2E1715),
+        borderColor = Color(0xFFDC2626),
+        glowColor = Color(0xFFF59E0B),
+        description = "Kawah batu magma hangat dengan efek bayangan gelap dramatis"
     );
 
     companion object {

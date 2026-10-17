@@ -24,7 +24,9 @@ import com.example.model.SkinId
 import com.example.model.Vec2
 import com.example.model.Worm
 import kotlin.math.PI
+import kotlin.math.ceil
 import kotlin.math.cos
+import kotlin.math.floor
 import kotlin.math.sin
 
 object WormsRenderer {
@@ -38,111 +40,85 @@ object WormsRenderer {
         mapTheme: MapTheme = MapTheme.CYBER_FUNK
     ) {
         with(drawScope) {
-            // Draw bright background fill
+            // 1. Draw base arena background color
             drawRect(color = mapTheme.bgColor)
 
-            // Luminous ambient bloom from arena center for cheerful depth
+            // 2. Draw checkerboard tiles (alternating subtle dark/light squares like screenshot)
+            val tileSize = 70f * zoom
+            val offsetX = cameraOffset.x
+            val offsetY = cameraOffset.y
+
+            val startTileX = floor(-offsetX / tileSize).toInt() - 1
+            val endTileX = ceil((size.width - offsetX) / tileSize).toInt() + 1
+            val startTileY = floor(-offsetY / tileSize).toInt() - 1
+            val endTileY = ceil((size.height - offsetY) / tileSize).toInt() + 1
+
+            val darkTileColor = Color(0x18000000) // subtle darker square
+            val lightTileColor = Color(0x0CFFFFFF) // subtle lighter square
+
+            for (tx in startTileX..endTileX) {
+                val tileLeft = tx * tileSize + offsetX
+                for (ty in startTileY..endTileY) {
+                    val tileTop = ty * tileSize + offsetY
+                    val isDark = ((tx + ty) % 2) != 0
+                    drawRect(
+                        color = if (isDark) darkTileColor else lightTileColor,
+                        topLeft = Offset(tileLeft, tileTop),
+                        size = Size(tileSize, tileSize)
+                    )
+                }
+            }
+
+            // 3. Subtle grid lines between tiles
+            val gridColor = mapTheme.gridColor.copy(alpha = 0.28f)
+            val startGridX = (offsetX % tileSize + tileSize) % tileSize
+            var gx = startGridX
+            while (gx < size.width) {
+                drawLine(
+                    color = gridColor,
+                    start = Offset(gx, 0f),
+                    end = Offset(gx, size.height),
+                    strokeWidth = 1f
+                )
+                gx += tileSize
+            }
+
+            val startGridY = (offsetY % tileSize + tileSize) % tileSize
+            var gy = startGridY
+            while (gy < size.height) {
+                drawLine(
+                    color = gridColor,
+                    start = Offset(0f, gy),
+                    end = Offset(size.width, gy),
+                    strokeWidth = 1f
+                )
+                gy += tileSize
+            }
+
+            // 4. Dark Vignette Effect ("efek gelap gelapnya gitu" around screen edges)
+            drawRect(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color.Transparent,
+                        Color(0x15000000),
+                        Color(0x55000000),
+                        Color(0x88000000)
+                    ),
+                    center = Offset(size.width * 0.5f, size.height * 0.5f),
+                    radius = maxOf(size.width, size.height) * 0.75f
+                )
+            )
+
+            // 5. Draw Arena Boundary Danger Zone
             val centerOnScreen = Offset(
                 (arenaCenter.x) * zoom + cameraOffset.x,
                 (arenaCenter.y) * zoom + cameraOffset.y
             )
             val radiusOnScreen = arenaRadius * zoom
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = 0.28f),
-                        mapTheme.glowColor.copy(alpha = 0.10f),
-                        Color.Transparent
-                    ),
-                    center = centerOnScreen,
-                    radius = radiusOnScreen.coerceAtLeast(400f)
-                ),
-                radius = radiusOnScreen.coerceAtLeast(400f),
-                center = centerOnScreen
-            )
-
-            // Draw bright patterned grid lines & motifs
-            val gridSize = 90f * zoom
-            val startX = (cameraOffset.x % gridSize)
-            val startY = (cameraOffset.y % gridSize)
-
-            val gridColor = mapTheme.gridColor
-            val motifColor = mapTheme.borderColor
-            val glowColor = mapTheme.glowColor
-
-            var x = startX
-            while (x < size.width) {
-                drawLine(
-                    color = gridColor,
-                    start = Offset(x, 0f),
-                    end = Offset(x, size.height),
-                    strokeWidth = 1.4f
-                )
-                x += gridSize
-            }
-            var y = startY
-            while (y < size.height) {
-                drawLine(
-                    color = gridColor,
-                    start = Offset(0f, y),
-                    end = Offset(size.width, y),
-                    strokeWidth = 1.4f
-                )
-                y += gridSize
-            }
-
-            // Draw Bright Motifs: Intersection Crosshairs & Center Cell Diamonds
-            var px = startX
-            while (px < size.width + gridSize) {
-                var py = startY
-                while (py < size.height + gridSize) {
-                    // Bright glowing intersection crosshair motif
-                    val crossSize = 5f * zoom
-                    drawLine(
-                        color = motifColor.copy(alpha = 0.65f),
-                        start = Offset(px - crossSize, py),
-                        end = Offset(px + crossSize, py),
-                        strokeWidth = 1.5f * zoom
-                    )
-                    drawLine(
-                        color = motifColor.copy(alpha = 0.65f),
-                        start = Offset(px, py - crossSize),
-                        end = Offset(px, py + crossSize),
-                        strokeWidth = 1.5f * zoom
-                    )
-                    drawCircle(
-                        color = motifColor,
-                        radius = 1.8f * zoom,
-                        center = Offset(px, py)
-                    )
-
-                    // Cell Center Diamond Motif
-                    val cellCx = px + gridSize * 0.5f
-                    val cellCy = py + gridSize * 0.5f
-                    if (cellCx < size.width + 20f && cellCy < size.height + 20f) {
-                        drawCircle(
-                            color = glowColor.copy(alpha = 0.16f),
-                            radius = 4f * zoom,
-                            center = Offset(cellCx, cellCy)
-                        )
-                        drawCircle(
-                            color = motifColor.copy(alpha = 0.35f),
-                            radius = 1.6f * zoom,
-                            center = Offset(cellCx, cellCy)
-                        )
-                    }
-
-                    py += gridSize
-                }
-                px += gridSize
-            }
-
-            // Draw Arena Boundary Danger Zone
-            // (Using centerOnScreen and radiusOnScreen declared above)
 
             // Danger outer glow
             drawCircle(
-                color = mapTheme.glowColor.copy(alpha = 0.30f),
+                color = mapTheme.glowColor.copy(alpha = 0.25f),
                 radius = radiusOnScreen + 18f * zoom,
                 center = centerOnScreen,
                 style = Stroke(width = 28f * zoom)

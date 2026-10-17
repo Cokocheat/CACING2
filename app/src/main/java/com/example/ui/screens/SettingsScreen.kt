@@ -387,12 +387,12 @@ fun SettingsScreen(
             // 4. TEMA LATAR BELAKANG ARENA (CERAH & BERMOTIF)
             item {
                 SettingsCard(
-                    title = "LATAR BELAKANG ARENA CERAH",
+                    title = "LATAR BELAKANG ARENA",
                     icon = Icons.Default.Palette,
                     accentColor = Color(0xFF00E5FF)
                 ) {
                     Text(
-                        text = "Pilih tema warna dan motif cerah untuk arena permainan dan menu utama",
+                        text = "Pilih tema warna dan motif catur arena untuk gameplay dan menu utama",
                         fontSize = 12.sp,
                         color = Color(0xFF94A3B8)
                     )
