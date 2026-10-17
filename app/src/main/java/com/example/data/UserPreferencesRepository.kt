@@ -46,6 +46,8 @@ data class UserGameData(
     val speedLevel: Int = 1,
     val controlMode: ControlMode = ControlMode.JOYSTICK,
     val soundEnabled: Boolean = true,
+    val soundVolume: Int = 8, // 0 to 10
+    val musicVolume: Int = 7, // 0 to 10
     val vibrationEnabled: Boolean = true,
     // 15 Days Daily Login Event
     val lastClaimedDay: Int = 0, // 0 means haven't claimed day 1 yet
@@ -147,6 +149,8 @@ class UserPreferencesRepository(context: Context) {
         val controlMode = runCatching { ControlMode.valueOf(ctrlStr) }.getOrDefault(ControlMode.JOYSTICK)
 
         val sound = prefs.getBoolean("sound_enabled", true)
+        val soundVol = prefs.getInt("sound_volume", 8)
+        val musicVol = prefs.getInt("music_volume", 7)
         val vibration = prefs.getBoolean("vibration_enabled", true)
 
         var firstInstall = prefs.getLong("first_install_time", 0L)
@@ -195,6 +199,8 @@ class UserPreferencesRepository(context: Context) {
             speedLevel = speedLvl,
             controlMode = controlMode,
             soundEnabled = sound,
+            soundVolume = soundVol,
+            musicVolume = musicVol,
             vibrationEnabled = vibration,
             lastClaimedDay = lastClaimDay,
             lastClaimTimestamp = lastClaimTime,
@@ -450,6 +456,18 @@ class UserPreferencesRepository(context: Context) {
     fun toggleSound(enabled: Boolean) {
         prefs.edit().putBoolean("sound_enabled", enabled).apply()
         _userData.value = _userData.value.copy(soundEnabled = enabled)
+    }
+
+    fun setSoundVolume(volume: Int) {
+        val v = volume.coerceIn(0, 10)
+        prefs.edit().putInt("sound_volume", v).putBoolean("sound_enabled", v > 0).apply()
+        _userData.value = _userData.value.copy(soundVolume = v, soundEnabled = v > 0)
+    }
+
+    fun setMusicVolume(volume: Int) {
+        val v = volume.coerceIn(0, 10)
+        prefs.edit().putInt("music_volume", v).apply()
+        _userData.value = _userData.value.copy(musicVolume = v)
     }
 
     fun toggleVibration(enabled: Boolean) {

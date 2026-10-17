@@ -10,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,45 +26,47 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CardGiftcard
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Checkroom
+import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.MilitaryTech
+import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Stars
-import androidx.compose.material.icons.filled.Timeline
-import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Upgrade
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -72,11 +75,6 @@ import androidx.compose.ui.unit.sp
 import com.example.data.AppLanguage
 import com.example.data.StringsHelper
 import com.example.data.UserGameData
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.withFrameNanos
-import androidx.compose.ui.layout.onSizeChanged
 import com.example.model.GameConfig
 import com.example.model.GameDifficulty
 import com.example.model.GameMode
@@ -104,46 +102,37 @@ fun LobbyScreen(
 ) {
     val lang = userData.language
 
-    var selectedMode by remember { mutableStateOf(GameMode.OPEN_ARENA) }
-    var selectedDifficulty by remember(userData.gameDifficulty) { mutableStateOf(userData.gameDifficulty) }
-    var nameInput by remember { mutableStateOf(userData.playerName) }
+    val selectedMode by remember { mutableStateOf(GameMode.OPEN_ARENA) }
     var showDailyLoginDialog by remember(userData.canClaimDailyToday) { mutableStateOf(userData.canClaimDailyToday) }
+    var showProfileDialog by remember { mutableStateOf(false) }
+    var tempNameInput by remember(userData.playerName) { mutableStateOf(userData.playerName) }
 
     // Pulsing and slithering animations
     val infiniteTransition = rememberInfiniteTransition(label = "lobbyAnimations")
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 1.0f,
-        targetValue = 1.05f,
+        targetValue = 1.06f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1100, easing = FastOutSlowInEasing),
+            animation = tween(900, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "playPulse"
+        label = "btnPulse"
     )
 
-    val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.45f,
-        targetValue = 0.95f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "glowPulse"
-    )
-
-    var screenWidth by remember { mutableFloatStateOf(1080f) }
-    var screenHeight by remember { mutableFloatStateOf(720f) }
+    // Full-Screen In-Game Physics Worm wandering in lobby
+    var screenWidth by remember { mutableFloatStateOf(1000f) }
+    var screenHeight by remember { mutableFloatStateOf(700f) }
     var frameTick by remember { mutableLongStateOf(0L) }
 
     val lobbyWorm = remember {
         Worm(
             id = "lobby_player",
-            name = "Nana",
+            name = userData.playerName,
             isPlayer = true,
             head = Vec2(350f, 400f),
             angle = 0.3f,
             targetAngle = 0.3f,
-            speed = 250f, // Faster, lively cruising speed
+            speed = 250f,
             skin = userData.equippedSkin,
             accessory = userData.equippedAccessory,
             mass = 85f
@@ -155,7 +144,7 @@ fun LobbyScreen(
     LaunchedEffect(Unit) {
         var lastTime = System.nanoTime()
         var wanderNoise = 0f
-        var cruiseHeading = 0.35f // Steady forward cruising heading across screen
+        var cruiseHeading = 0.35f
 
         while (true) {
             withFrameNanos { now ->
@@ -164,13 +153,11 @@ fun LobbyScreen(
 
                 wanderNoise += dt * 5.0f
 
-                // Screen margin bounce (so it moves forward across the screen and bounces naturally without spinning in circles)
                 val margin = 75f
                 val head = lobbyWorm.head
                 val w = screenWidth.coerceAtLeast(400f)
                 val h = screenHeight.coerceAtLeast(300f)
 
-                // Smoothly reflect off walls so it keeps walking normally
                 if (head.x > w - margin && cos(cruiseHeading) > 0) {
                     cruiseHeading = PI.toFloat() - (cruiseHeading * 0.4f)
                 } else if (head.x < margin && cos(cruiseHeading) < 0) {
@@ -183,27 +170,22 @@ fun LobbyScreen(
                     cruiseHeading = kotlin.math.abs(cruiseHeading)
                 }
 
-                // Gentle natural sinusoidal slither around the straight cruise heading (walks forward normally, no looping/spinning!)
                 val slitherOffset = sin(wanderNoise) * 0.15f
                 lobbyWorm.targetAngle = cruiseHeading + slitherOffset
 
-                // Smooth steering towards target angle
                 val maxTurn = GameConfig.TURN_SPEED * 2.2f * dt
                 lobbyWorm.steerTowards(lobbyWorm.targetAngle, maxTurn)
 
-                // Move head forward at steady cruising pace
                 val velocity = Vec2.fromAngle(lobbyWorm.angle, lobbyWorm.speed * dt)
                 lobbyWorm.head = lobbyWorm.head + velocity
 
-                // Keep inside screen
                 lobbyWorm.head = Vec2(
                     lobbyWorm.head.x.coerceIn(20f, w - 20f),
                     lobbyWorm.head.y.coerceIn(20f, h - 20f)
                 )
 
-                // Follow body segments strictly at in-game segment spacing (circles NEVER separate!)
                 var prevPoint = lobbyWorm.head
-                val desiredDist = GameConfig.SEGMENT_SPACING // 11f
+                val desiredDist = GameConfig.SEGMENT_SPACING
                 for (i in lobbyWorm.bodyPoints.indices) {
                     val current = lobbyWorm.bodyPoints[i]
                     val diff = current - prevPoint
@@ -228,12 +210,11 @@ fun LobbyScreen(
             }
             .testTag("lobby_screen")
     ) {
-        // 1. In-Game Arena Background with current mapTheme (identical to game arena background)
+        // 1. In-Game Arena Background with warm terracotta checkerboard & dark vignette (matches screenshot!)
         Canvas(modifier = Modifier.fillMaxSize()) {
             val w = size.width
             val h = size.height
 
-            // Arena background & grid & motif crosshairs
             WormsRenderer.drawArenaBackground(
                 drawScope = this,
                 cameraOffset = Offset.Zero,
@@ -243,16 +224,14 @@ fun LobbyScreen(
                 mapTheme = userData.mapTheme
             )
 
-            // Scattered glowing food pellets across the screen edges
+            // Scattered glowing food treats on the ground
             val foodPellets = listOf(
-                Offset(w * 0.10f, h * 0.18f) to Color(0xFFFF5252),
-                Offset(w * 0.22f, h * 0.88f) to Color(0xFFFFD700),
-                Offset(w * 0.78f, h * 0.15f) to Color(0xFF00E5FF),
-                Offset(w * 0.88f, h * 0.82f) to Color(0xFF4ADE80),
-                Offset(w * 0.48f, h * 0.10f) to Color(0xFFFF4081),
-                Offset(w * 0.58f, h * 0.92f) to Color(0xFFFFB300),
-                Offset(w * 0.06f, h * 0.60f) to Color(0xFFE040FB),
-                Offset(w * 0.94f, h * 0.42f) to Color(0xFF00E5FF)
+                Offset(w * 0.14f, h * 0.22f) to Color(0xFFFF5252),
+                Offset(w * 0.28f, h * 0.82f) to Color(0xFFFFD700),
+                Offset(w * 0.72f, h * 0.18f) to Color(0xFF00E5FF),
+                Offset(w * 0.85f, h * 0.78f) to Color(0xFF4ADE80),
+                Offset(w * 0.44f, h * 0.14f) to Color(0xFFFF4081),
+                Offset(w * 0.62f, h * 0.88f) to Color(0xFFFFB300)
             )
             for ((pos, color) in foodPellets) {
                 drawCircle(color = color.copy(alpha = 0.35f), radius = 6.dp.toPx(), center = pos)
@@ -260,10 +239,9 @@ fun LobbyScreen(
                 drawCircle(color = Color.White, radius = 1.2.dp.toPx(), center = pos)
             }
 
-            // 2. Full-Screen Wandering Worm (In-game physics with exact segment spacing - circles never separate!)
-            val tick = frameTick // Triggers recomposition at 60fps
-
-            lobbyWorm.name = nameInput.ifBlank { "Nana" }
+            // Draw full-screen wandering worm
+            val tick = frameTick
+            lobbyWorm.name = userData.playerName
             lobbyWorm.skin = userData.equippedSkin
             lobbyWorm.accessory = userData.equippedAccessory
 
@@ -275,497 +253,453 @@ fun LobbyScreen(
             )
         }
 
-        // Foreground UI Elements
+        // 2. FOREGROUND UI LAYOUT (EXACTLY MATCHING Screenshot_20261017-092349.jpg)
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp, vertical = 12.dp),
+                .padding(horizontal = 18.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // TOP HEADER BAR: Game Logo "nana tayantuh", "ARENA LUAR", Event 7 Hari, Coins, Settings
+            // TOP BAR: Player Profile (Left) & Energy + Coins (Right)
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 2.dp),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Game title & "ARENA LUAR"
+                // TOP-LEFT: Warm Amber-Chocolate Profile Card (Blends seamlessly with the arena theme)
                 Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = Color(0xDD0F172A),
-                    border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFF4ADE80)),
+                    onClick = { showProfileDialog = true },
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color(0xEB28170B), // Warm chocolate amber matching theme
+                    border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFF59E0B)),
                     shadowElevation = 6.dp
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        modifier = Modifier.padding(start = 6.dp, end = 14.dp, top = 6.dp, bottom = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "nana tayantuh",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = Color(0xFF4ADE80),
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.sp
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = Color(0xFF1E293B),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF00E5FF))
-                        ) {
+                        // Avatar Circle with Level 16 badge
+                        Box(contentAlignment = Alignment.BottomCenter) {
+                            Surface(
+                                shape = CircleShape,
+                                color = Color(0xFF332012),
+                                border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFDE047)),
+                                modifier = Modifier.size(46.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text("😊", fontSize = 24.sp)
+                                }
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = Color(0xFFF59E0B),
+                                modifier = Modifier.padding(bottom = 0.dp)
+                            ) {
+                                Text(
+                                    text = "16",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color.Black,
+                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(10.dp))
+
+                        // Profil label & Orange Energy Bar
+                        Column {
                             Text(
-                                text = StringsHelper.get("outer_arena", lang).uppercase(),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color(0xFF00E5FF),
+                                text = userData.playerName.ifBlank { "Profil" },
+                                fontSize = 14.sp,
                                 fontWeight = FontWeight.Black,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                letterSpacing = 1.sp
+                                color = Color.White
                             )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            // Energy / XP Progress Bar
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = Color(0xFF190E06),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF59E0B).copy(alpha = 0.7f)),
+                                modifier = Modifier.width(110.dp).height(12.dp)
+                            ) {
+                                Box(modifier = Modifier.fillMaxSize()) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxHeight()
+                                            .fillMaxWidth(0.65f)
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(
+                                                Brush.horizontalGradient(
+                                                    listOf(Color(0xFFF97316), Color(0xFFFBBF24))
+                                                )
+                                            )
+                                    )
+                                }
+                            }
                         }
                     }
                 }
 
-                // Top Right: Event 7 Hari Button + Coins + Settings (NO EMOJIS)
+                // TOP-RIGHT: Apples (Energy) + Gold Coins
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Event 7 Hari Button (Vector Icon)
+                    // Apple Stamina Pill
                     Surface(
-                        onClick = { showDailyLoginDialog = true },
-                        shape = RoundedCornerShape(20.dp),
-                        color = if (userData.canClaimDailyToday) Color(0xFF3A2B55) else Color(0xCC1A2342),
-                        border = androidx.compose.foundation.BorderStroke(
-                            width = 1.5.dp,
-                            color = if (userData.canClaimDailyToday) Color(0xFFFFD700) else Color(0xFF35446E)
-                        ),
-                        shadowElevation = if (userData.canClaimDailyToday) 6.dp else 2.dp,
-                        modifier = Modifier.testTag("btn_daily_event")
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xEB28170B),
+                        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFF97316))
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            modifier = Modifier.padding(start = 8.dp, end = 4.dp, top = 3.dp, bottom = 3.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.CardGiftcard,
-                                contentDescription = null,
-                                tint = if (userData.canClaimDailyToday) Color(0xFFFFD700) else Color(0xFF00E5FF),
-                                modifier = Modifier.size(16.dp)
+                            Text("🍎", fontSize = 16.sp)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "85/20",
+                                color = Color.White,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 13.sp
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = if (userData.canClaimDailyToday) "${StringsHelper.get("daily_event", lang)} (!)" else StringsHelper.get("daily_event", lang),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = if (userData.canClaimDailyToday) Color(0xFFFFD700) else Color.White,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color(0xFF38BDF8),
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                                }
+                            }
                         }
                     }
 
-                    // Coins Badge (Vector Icon)
+                    // Gold Coin Pill
                     Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = Color(0xCC16223D),
-                        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFFD700)),
-                        shadowElevation = 4.dp
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xEB28170B),
+                        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFACC15))
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            modifier = Modifier.padding(start = 8.dp, end = 4.dp, top = 3.dp, bottom = 3.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.MonetizationOn,
-                                contentDescription = null,
-                                tint = Color(0xFFFFD700),
-                                modifier = Modifier.size(17.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("😊", fontSize = 16.sp)
+                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "${userData.coins}",
-                                style = MaterialTheme.typography.titleSmall,
-                                color = Color(0xFFFFD700),
-                                fontWeight = FontWeight.Bold
+                                color = Color.White,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 13.sp
                             )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color(0xFF38BDF8),
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                                }
+                            }
                         }
-                    }
-
-                    // Settings Button
-                    IconButton(
-                        onClick = onOpenSettings,
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xCC1A2342))
-                            .border(1.5.dp, Color(0xFF35446E), CircleShape)
-                            .testTag("settings_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = StringsHelper.get("settings", lang),
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
                     }
                 }
             }
 
-            // MAIN LANDSCAPE 2-COLUMN CONTENT
+            // MIDDLE AREA: Left Event Badges + Center Cartoon Logo & Action Buttons + Right Mascots
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
                     .padding(vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // LEFT COLUMN: Clean Profile Card (No oval/round stage, open view for full-screen worm)
+                // LEFT STACK: Event / Bonus Badges (Warm theme harmony)
                 Column(
-                    modifier = Modifier
-                        .weight(1.05f)
-                        .fillMaxHeight(),
-                    verticalArrangement = Arrangement.SpaceBetween,
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Profile & Skin Status Card
+                    // No Ads / Bonus Button
                     Surface(
-                        shape = RoundedCornerShape(18.dp),
-                        color = Color(0xDD0D1629),
-                        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFF1E355B)),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
+                        onClick = onOpenUpgrades,
+                        shape = CircleShape,
+                        color = Color(0xFFDC2626),
+                        border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFFDE047)),
+                        shadowElevation = 6.dp,
+                        modifier = Modifier.size(54.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("BONUS", fontSize = 9.sp, fontWeight = FontWeight.Black, color = Color.White)
+                                Text("⭐", fontSize = 14.sp)
+                            }
+                        }
+                    }
+
+                    // Trophy Ribbon Badge ("2h 2j")
+                    Surface(
+                        onClick = onOpenRecords,
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color(0xEB28170B),
+                        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFACC15)),
+                        modifier = Modifier.width(64.dp)
                     ) {
                         Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(12.dp),
-                            verticalArrangement = Arrangement.SpaceBetween
+                            modifier = Modifier.padding(4.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            // Player Nickname & Skin
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
-                                    Text(
-                                        text = StringsHelper.get("player_name", lang),
-                                        fontSize = 11.sp,
-                                        color = Color(0xFFA0AEC0),
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                    Text(
-                                        text = nameInput.ifBlank { "Nana Tayantuh" },
-                                        fontSize = 17.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = Color(0xFF4ADE80)
-                                    )
-                                }
-                                Surface(
-                                    shape = RoundedCornerShape(8.dp),
-                                    color = Color(0xFF1A2845),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF00E5FF).copy(alpha = 0.5f))
-                                ) {
-                                    Text(
-                                        text = userData.equippedSkin.name.replace("_", " "),
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF00E5FF),
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                    )
-                                }
-                            }
+                            Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = Color(0xFFFDE047), modifier = Modifier.size(26.dp))
+                            Text("2h 2j", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color.White)
+                        }
+                    }
 
-                            // Stats Badges
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Surface(
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = Color(0xFF131D36),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF283A63)),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {
-                                        Text(text = StringsHelper.get("high_score", lang), fontSize = 10.sp, color = Color(0xFFA0AEC0))
-                                        Text(text = "${userData.highScore}", fontSize = 14.sp, fontWeight = FontWeight.Black, color = Color(0xFFFFD700))
-                                    }
-                                }
-                                Surface(
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = Color(0xFF131D36),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF283A63)),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {
-                                        Text(text = StringsHelper.get("kills", lang), fontSize = 10.sp, color = Color(0xFFA0AEC0))
-                                        Text(text = "${userData.totalKills}", fontSize = 14.sp, fontWeight = FontWeight.Black, color = Color(0xFFFF5252))
-                                    }
-                                }
-                                Surface(
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = Color(0xFF131D36),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF283A63)),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {
-                                        Text(text = StringsHelper.get("segments", lang), fontSize = 10.sp, color = Color(0xFFA0AEC0))
-                                        Text(text = "${userData.longestLength}", fontSize = 14.sp, fontWeight = FontWeight.Black, color = Color(0xFF38BDF8))
-                                    }
+                    // Calendar / 15-Hari Daily Login Gift Clipboard ("7j 50m")
+                    Surface(
+                        onClick = { showDailyLoginDialog = true },
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color(0xEB28170B),
+                        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFACC15)),
+                        modifier = Modifier.width(64.dp).testTag("btn_daily_event")
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(4.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Box(contentAlignment = Alignment.TopEnd) {
+                                Icon(Icons.Default.CardGiftcard, contentDescription = null, tint = Color(0xFF38BDF8), modifier = Modifier.size(26.dp))
+                                if (userData.canClaimDailyToday) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFFEF4444))
+                                    )
                                 }
                             }
-
-                            // Quick Action Navigation Buttons (Wardrobe, Upgrades, Records)
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                LandscapeNavButton(
-                                    icon = Icons.Default.Checkroom,
-                                    title = StringsHelper.get("wardrobe", lang),
-                                    color = Color(0xFF00E5FF),
-                                    testTag = "btn_wardrobe",
-                                    onClick = onOpenWardrobe,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                LandscapeNavButton(
-                                    icon = Icons.Default.Upgrade,
-                                    title = StringsHelper.get("upgrades", lang),
-                                    color = Color(0xFFFF9100),
-                                    testTag = "btn_upgrades",
-                                    onClick = onOpenUpgrades,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                LandscapeNavButton(
-                                    icon = Icons.Default.EmojiEvents,
-                                    title = StringsHelper.get("records", lang),
-                                    color = Color(0xFF4ADE80),
-                                    testTag = "btn_records",
-                                    onClick = onOpenRecords,
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
+                            Text("7j 50m", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color.White)
                         }
                     }
                 }
 
-                // RIGHT COLUMN: Nickname, Enemy Difficulty Selector, Game Mode, Play Button
+                // CENTER COLUMN: Big Cartoon 3D Logo + Center Mascot + "Bertempur!" + "Lemari Cacing"
                 Column(
-                    modifier = Modifier
-                        .weight(1.15f)
-                        .fillMaxHeight(),
-                    verticalArrangement = Arrangement.SpaceBetween
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    // Player Nickname Input
-                    OutlinedTextField(
-                        value = nameInput,
-                        onValueChange = {
-                            if (it.length <= 16) {
-                                nameInput = it
-                                onUpdateName(it)
-                            }
-                        },
-                        label = { Text(StringsHelper.get("player_name", lang)) },
-                        leadingIcon = {
-                            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color(0xFF4ADE80))
-                        },
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF4ADE80),
-                            unfocusedBorderColor = Color(0xFF35446E),
-                            focusedLabelColor = Color(0xFF4ADE80),
-                            unfocusedLabelColor = Color(0xFFA0AEC0),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("player_name_input")
-                    )
-
-                    // ENEMY DIFFICULTY SELECTOR (Mudah, Sedang, Sulit with real mechanics)
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color(0xDD121B33),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2E3D66)),
-                        modifier = Modifier.fillMaxWidth()
+                    // Big Cartoon 3D Game Logo
+                    // Big Cartoon 3D Game Logo
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(bottom = 6.dp)
                     ) {
-                        Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = Color(0xFA2C170B), // Warm chocolate base banner
+                            border = androidx.compose.foundation.BorderStroke(2.5.dp, Color(0xFFFACC15)),
+                            shadowElevation = 8.dp
+                        ) {
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.padding(horizontal = 18.dp, vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = StringsHelper.get("diff_title", lang),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color(0xFFFFD700),
+                                    text = "WORMS",
+                                    fontSize = 24.sp,
                                     fontWeight = FontWeight.Black,
-                                    fontSize = 10.sp
+                                    color = Color(0xFFFDE047),
+                                    letterSpacing = 1.sp
                                 )
+                                Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = when (selectedDifficulty) {
-                                        GameDifficulty.EASY -> "Santai & Lambat"
-                                        GameDifficulty.NORMAL -> "Refleks Seimbang"
-                                        GameDifficulty.HARD -> "AI Cerdas & Agresif!"
-                                        else -> "Refleks Seimbang"
-                                    },
-                                    fontSize = 9.sp,
-                                    color = when (selectedDifficulty) {
-                                        GameDifficulty.EASY -> Color(0xFF4ADE80)
-                                        GameDifficulty.NORMAL -> Color(0xFFFFD700)
-                                        GameDifficulty.HARD -> Color(0xFFFF5252)
-                                        else -> Color(0xFFFFD700)
-                                    },
-                                    fontWeight = FontWeight.Bold
+                                    text = "ZONE",
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color(0xFF38BDF8),
+                                    letterSpacing = 1.sp
                                 )
                             }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                GameDifficulty.entries.forEach { diff ->
-                                    val isSelected = selectedDifficulty == diff
-                                    val (diffColor, diffLabel) = when (diff) {
-                                        GameDifficulty.EASY -> Pair(Color(0xFF4ADE80), StringsHelper.get("diff_easy", lang))
-                                        GameDifficulty.NORMAL -> Pair(Color(0xFFFFD700), StringsHelper.get("diff_normal", lang))
-                                        GameDifficulty.HARD -> Pair(Color(0xFFFF5252), StringsHelper.get("diff_hard", lang))
-                                        else -> Pair(Color(0xFFFFD700), StringsHelper.get("diff_normal", lang))
-                                    }
+                        }
+                    }
 
-                                    Surface(
-                                        onClick = {
-                                            selectedDifficulty = diff
-                                            onSetGameDifficulty(diff)
-                                        },
-                                        shape = RoundedCornerShape(8.dp),
-                                        color = if (isSelected) Color(0xFF223558) else Color(0xFF141E34),
-                                        border = androidx.compose.foundation.BorderStroke(
-                                            width = if (isSelected) 1.5.dp else 1.dp,
-                                            color = if (isSelected) diffColor else Color(0xFF2C3C64)
-                                        ),
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(vertical = 5.dp, horizontal = 4.dp),
-                                            horizontalArrangement = Arrangement.Center,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(text = diff.badge, fontSize = 10.sp)
-                                            Spacer(modifier = Modifier.width(3.dp))
-                                            Text(
-                                                text = diffLabel,
-                                                fontSize = 11.sp,
-                                                fontWeight = if (isSelected) FontWeight.Black else FontWeight.Medium,
-                                                color = if (isSelected) diffColor else Color.White
-                                            )
-                                        }
-                                    }
-                                }
+                    // Center Mascot Worm with "▶ Video" Pill
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    ) {
+                        Text("🐛", fontSize = 38.sp)
+                        Surface(
+                            onClick = onOpenUpgrades,
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color(0xEB28170B),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFACC15)),
+                            modifier = Modifier.padding(top = 2.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color(0xFFFDE047), modifier = Modifier.size(12.dp))
+                                Spacer(modifier = Modifier.width(3.dp))
+                                Text("Video", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White)
                             }
                         }
                     }
 
-                    // Mode Selection Row (NO EMOJIS, Vector Icons)
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // GIANT "Bertempur!" PLAY BUTTON (Glossy Green with Golden Border like screenshot!)
                     Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color(0xDD121B33),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2E3D66)),
-                        modifier = Modifier.fillMaxWidth()
+                        onClick = { onPlayClick(selectedMode) },
+                        shape = RoundedCornerShape(26.dp),
+                        color = Color(0xFF22C55E), // Vibrant glossy green
+                        border = androidx.compose.foundation.BorderStroke(3.5.dp, Color(0xFFFACC15)), // Thick gold stroke
+                        shadowElevation = 10.dp,
+                        modifier = Modifier
+                            .scale(pulseScale)
+                            .width(230.dp)
+                            .height(58.dp)
+                            .testTag("play_button")
                     ) {
-                        Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
                             Text(
-                                text = StringsHelper.get("choose_mode", lang),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color(0xFF4ADE80),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 10.sp
+                                text = "Bertempur!",
+                                fontSize = 26.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color.White,
+                                letterSpacing = 1.sp
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                GameMode.entries.forEach { mode ->
-                                    val isSelected = selectedMode == mode
-                                    val (modeIcon, modeColor) = when (mode) {
-                                        GameMode.OPEN_ARENA -> Pair(Icons.Default.Public, Color(0xFF4ADE80))
-                                        GameMode.TIME_ATTACK -> Pair(Icons.Default.Timer, Color(0xFFFF9100))
-                                        GameMode.BATTLE_ROYALE -> Pair(Icons.Default.MilitaryTech, Color(0xFFC084FC))
-                                    }
+                        }
+                    }
 
-                                    Surface(
-                                        onClick = { selectedMode = mode },
-                                        shape = RoundedCornerShape(8.dp),
-                                        color = if (isSelected) Color(0xFF223558) else Color(0xFF141E34),
-                                        border = androidx.compose.foundation.BorderStroke(
-                                            width = if (isSelected) 1.5.dp else 1.dp,
-                                            color = if (isSelected) modeColor else Color(0xFF2C3C64)
-                                        ),
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        Column(
-                                            modifier = Modifier.padding(vertical = 4.dp, horizontal = 2.dp),
-                                            horizontalAlignment = Alignment.CenterHorizontally
-                                        ) {
-                                            Icon(
-                                                imageVector = modeIcon,
-                                                contentDescription = null,
-                                                tint = if (isSelected) modeColor else Color(0xFFA0AEC0),
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                            Spacer(modifier = Modifier.height(2.dp))
-                                            Text(
-                                                text = when (mode) {
-                                                    GameMode.OPEN_ARENA -> StringsHelper.get("outer_arena", lang)
-                                                    GameMode.TIME_ATTACK -> StringsHelper.get("time_attack", lang)
-                                                    GameMode.BATTLE_ROYALE -> StringsHelper.get("battle_royale", lang)
-                                                },
-                                                fontSize = 9.sp,
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                                color = if (isSelected) modeColor else Color.White,
-                                                textAlign = TextAlign.Center
-                                            )
-                                        }
-                                    }
-                                }
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // BLUE PILL BUTTON: "Lemari Cacing" with red notification dot
+                    Surface(
+                        onClick = onOpenWardrobe,
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFF0284C7), // Glossy cyan-blue
+                        border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFF59E0B)),
+                        shadowElevation = 6.dp,
+                        modifier = Modifier.width(180.dp).height(38.dp).testTag("btn_wardrobe")
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Lemari Cacing",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color.White
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFFEF4444))
+                                )
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(2.dp))
-
-                    // BIG PLAY BUTTON
-                    Button(
-                        onClick = { onPlayClick(selectedMode) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp)
-                            .scale(pulseScale)
-                            .shadow(16.dp, RoundedCornerShape(16.dp), spotColor = Color(0xFF4ADE80))
-                            .testTag("play_game_button"),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4ADE80)),
-                        shape = RoundedCornerShape(16.dp)
+                    // Subtitle below button with cozy translucent pill
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color(0xCC1E1208),
+                        modifier = Modifier.padding(top = 4.dp)
                     ) {
-                        Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, tint = Color.Black, modifier = Modifier.size(26.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = StringsHelper.get("play", lang),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Color.Black,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.sp
+                            text = "Pilih tema untuk cacingmu",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFFDE047),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                         )
                     }
+                }
+
+                // RIGHT STACK: Piggy bank & Mascot
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("🐍", fontSize = 34.sp)
+
+                    Surface(
+                        onClick = onOpenUpgrades,
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color(0xEB28170B),
+                        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFACC15)),
+                        modifier = Modifier.width(64.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(4.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text("🐷", fontSize = 22.sp)
+                            Text("23j 55m", fontSize = 9.sp, fontWeight = FontWeight.Black, color = Color.White)
+                        }
+                    }
+                }
+            }
+
+            // BOTTOM BAR: Left (Leaderboard, Calendar, Chat) & Right (Share, Settings)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Bottom-Left Buttons (Blue rounded square with orange border)
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    // Leaderboard / Records
+                    CartoonSquareButton(
+                        icon = Icons.Default.Leaderboard,
+                        testTag = "btn_records",
+                        onClick = onOpenRecords
+                    )
+                    // Calendar / Event
+                    CartoonSquareButton(
+                        icon = Icons.Default.CalendarMonth,
+                        testTag = "btn_calendar",
+                        onClick = { showDailyLoginDialog = true }
+                    )
+                    // Chat
+                    CartoonSquareButton(
+                        icon = Icons.Default.ChatBubble,
+                        testTag = "btn_chat",
+                        onClick = { /* Chat dialog */ }
+                    )
+                }
+
+                // Bottom-Right Buttons (Share & Settings)
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    // Share
+                    CartoonSquareButton(
+                        icon = Icons.Default.Share,
+                        testTag = "btn_share",
+                        onClick = { /* Share dialog */ }
+                    )
+                    // Settings
+                    CartoonSquareButton(
+                        icon = Icons.Default.Settings,
+                        testTag = "settings_button",
+                        onClick = onOpenSettings
+                    )
                 }
             }
         }
 
-        // Daily Login Event Modal
+        // Daily Login Dialog Popup
         if (showDailyLoginDialog) {
             DailyLoginDialog(
                 userData = userData,
@@ -778,41 +712,73 @@ fun LobbyScreen(
                 }
             )
         }
+
+        // Quick Profile Dialog
+        if (showProfileDialog) {
+            AlertDialog(
+                onDismissRequest = { showProfileDialog = false },
+                title = { Text("Profil & Ganti Nama", fontWeight = FontWeight.Black) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("Masukkan nama cacing Anda:", fontSize = 13.sp)
+                        OutlinedTextField(
+                            value = tempNameInput,
+                            onValueChange = { if (it.length <= 16) tempNameInput = it },
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFFFACC15),
+                                unfocusedBorderColor = Color(0xFF94A3B8)
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Text("Skor Tertinggi: ${userData.highScore}", fontWeight = FontWeight.Bold, color = Color(0xFFB45309))
+                        Text("Total Mangsa: ${userData.totalKills}", fontWeight = FontWeight.Bold, color = Color(0xFFB45309))
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (tempNameInput.isNotBlank()) {
+                                onUpdateName(tempNameInput)
+                            }
+                            showProfileDialog = false
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22C55E))
+                    ) {
+                        Text("Simpan", fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showProfileDialog = false }) {
+                        Text("Batal")
+                    }
+                }
+            )
+        }
     }
 }
 
+// WARM CARTOON SQUARE BUTTON WITH GOLD BORDER (Signature style matching theme)
 @Composable
-private fun LandscapeNavButton(
+private fun CartoonSquareButton(
     icon: ImageVector,
-    title: String,
-    color: Color,
     testTag: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onClick: () -> Unit
 ) {
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(14.dp),
-        color = Color(0xCC141E36),
-        border = androidx.compose.foundation.BorderStroke(1.5.dp, color.copy(alpha = 0.7f)),
-        shadowElevation = 4.dp,
-        modifier = modifier
-            .height(52.dp)
-            .testTag(testTag)
+        color = Color(0xEB28170B), // Warm theme chocolate amber
+        border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFF59E0B)), // Warm orange-gold border
+        shadowElevation = 5.dp,
+        modifier = Modifier.size(46.dp).testTag(testTag)
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Icon(imageVector = icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelMedium,
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = Color(0xFFFDE047), // Vibrant cartoon golden icon
+                modifier = Modifier.size(24.dp)
             )
         }
     }

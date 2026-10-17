@@ -128,6 +128,8 @@ fun MainScreen() {
                         onSetLanguage = { userPrefs.setLanguage(it) },
                         onSetJoystickMode = { userPrefs.setJoystickMode(it) },
                         onSetMapTheme = { userPrefs.setMapTheme(it) },
+                        onSetSoundVolume = { userPrefs.setSoundVolume(it) },
+                        onSetMusicVolume = { userPrefs.setMusicVolume(it) },
                         onBack = { currentScreen = AppScreen.LOBBY }
                     )
                 }

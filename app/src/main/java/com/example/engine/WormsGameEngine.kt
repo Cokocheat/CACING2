@@ -170,12 +170,12 @@ class WormsGameEngine(
         // Create player
         player = createInitialPlayer()
 
-        // Starting food clusters
-        repeat(16) {
+        // Starting food clusters all around player
+        repeat(80) {
             val offsetAngle = Random.nextFloat() * 2 * PI.toFloat()
-            val dist = Random.nextFloat() * 260f + 60f
+            val dist = Random.nextFloat() * 450f + 50f
             val foodPos = player.head + Vec2(cos(offsetAngle) * dist, sin(offsetAngle) * dist)
-            val type = if (it % 4 == 0) FoodType.DONUT else if (it % 4 == 1) FoodType.BURGER else FoodType.APPLE
+            val type = FoodType.entries[it % FoodType.entries.size]
             foods.add(
                 FoodItem(
                     id = idGen.incrementAndGet(),
@@ -188,7 +188,7 @@ class WormsGameEngine(
         }
 
         // Spawn arena-wide food
-        repeat(GameConfig.FOOD_COUNT_TARGET - 16) {
+        repeat(GameConfig.FOOD_COUNT_TARGET - 80) {
             spawnRandomFood()
         }
 
@@ -197,8 +197,8 @@ class WormsGameEngine(
             spawnRandomPotion()
         }
 
-        // Spawn AI Bots (in Battle Royale, spawn 15 initial bots)
-        val initialBotCount = if (gameMode == GameMode.BATTLE_ROYALE) 14 else GameConfig.BOT_COUNT_TARGET
+        // Spawn AI Bots (in Battle Royale, spawn 24 initial bots, otherwise full BOT_COUNT_TARGET)
+        val initialBotCount = if (gameMode == GameMode.BATTLE_ROYALE) 24 else GameConfig.BOT_COUNT_TARGET
         repeat(initialBotCount) {
             spawnBot()
         }

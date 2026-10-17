@@ -73,10 +73,11 @@ object GameConfig {
     const val SEGMENT_SPACING = 14f
     const val INITIAL_SEGMENTS = 14
 
-    const val FOOD_COUNT_TARGET = 360
-    const val POTION_COUNT_TARGET = 16
-    const val BOT_COUNT_TARGET = 14
+    const val FOOD_COUNT_TARGET = 1500 // Substantially increased foods everywhere
+    const val POTION_COUNT_TARGET = 35 // More potions and spells
+    const val BOT_COUNT_TARGET = 40 // Lots of lively enemy bots roaming the arena
 
     const val MAGNET_BASE_RADIUS = 240f
     const val MAGNET_UPGRADED_MAX = 420f
 }
+

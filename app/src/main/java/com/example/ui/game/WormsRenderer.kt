@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -951,6 +952,96 @@ object WormsRenderer {
                     center = headPos,
                     style = Stroke(width = 2f * zoom)
                 )
+            }
+
+            // 4. Direction Pointer Arrow (Panah Arah Analog di Depan Muka Cacing Player)
+            // 4. Direction Pointer Arrow (Panah Arah Analog di Depan Muka Cacing Player)
+            if (worm.isPlayer) {
+                val arrowDistance = (headR * 2.8f).coerceAtLeast(42f * zoom)
+                val arrowAngle = worm.targetAngle // Exact analog steering angle
+                val arrowCenterX = headPos.x + cos(arrowAngle) * arrowDistance
+                val arrowCenterY = headPos.y + sin(arrowAngle) * arrowDistance
+                val arrowCenter = Offset(arrowCenterX, arrowCenterY)
+                val angleDeg = Math.toDegrees(arrowAngle.toDouble()).toFloat()
+
+                // Animated pulsing scale
+                val pulse = 1f + 0.08f * sin(gameTime * 8f)
+                val arrowLength = (headR * 1.25f * pulse).coerceAtLeast(26f * zoom)
+                val arrowWidth = (headR * 0.95f * pulse).coerceAtLeast(22f * zoom)
+
+                // Dotted guidance sightline beam from snout to pointer
+                val sightSteps = 4
+                for (s in 1..sightSteps) {
+                    val frac = s.toFloat() / (sightSteps + 1)
+                    val dotDist = headR * 1.2f + frac * (arrowDistance - headR * 1.7f)
+                    val dotPos = Offset(headPos.x + cos(arrowAngle) * dotDist, headPos.y + sin(arrowAngle) * dotDist)
+                    val dotAlpha = 0.35f + 0.5f * frac
+                    drawCircle(color = Color.Black.copy(alpha = 0.4f), radius = 3.5f * zoom, center = dotPos)
+                    drawCircle(color = Color(0xFFFDE047).copy(alpha = dotAlpha), radius = 2.4f * zoom, center = dotPos)
+                }
+
+                // Main Pointer Arrow
+                rotate(degrees = angleDeg, pivot = arrowCenter) {
+                    val arrowPath = Path().apply {
+                        moveTo(arrowCenter.x + arrowLength * 0.55f, arrowCenter.y) // Sharp front tip
+                        lineTo(arrowCenter.x - arrowLength * 0.45f, arrowCenter.y - arrowWidth * 0.5f) // Top wing
+                        lineTo(arrowCenter.x - arrowLength * 0.18f, arrowCenter.y) // Inward notch
+                        lineTo(arrowCenter.x - arrowLength * 0.45f, arrowCenter.y + arrowWidth * 0.5f) // Bottom wing
+                        close()
+                    }
+
+                    // 1. Dark Shadow Drop for absolute contrast on bright or dark ground
+                    drawPath(
+                        path = arrowPath,
+                        color = Color(0x99000000),
+                        style = Stroke(width = 5.5f * zoom, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                    )
+
+                    // 2. Neon Golden/Cyan Halo Glow
+                    drawPath(
+                        path = arrowPath,
+                        color = Color(0xFFFDE047).copy(alpha = 0.65f),
+                        style = Stroke(width = 3.5f * zoom, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                    )
+
+                    // 3. Vibrant Solid Arrow Body (Bright Golden Yellow)
+                    drawPath(
+                        path = arrowPath,
+                        color = Color(0xFFFACC15)
+                    )
+
+                    // 4. Inner Sharp Core (Pure White)
+                    val innerPath = Path().apply {
+                        moveTo(arrowCenter.x + arrowLength * 0.35f, arrowCenter.y)
+                        lineTo(arrowCenter.x - arrowLength * 0.25f, arrowCenter.y - arrowWidth * 0.28f)
+                        lineTo(arrowCenter.x - arrowLength * 0.10f, arrowCenter.y)
+                        lineTo(arrowCenter.x - arrowLength * 0.25f, arrowCenter.y + arrowWidth * 0.28f)
+                        close()
+                    }
+                    drawPath(path = innerPath, color = Color.White)
+                }
+
+                // Trailing mini chevron (>> flow indicator)
+                val trailDist = arrowDistance - arrowLength * 0.70f
+                val trailCenter = Offset(headPos.x + cos(arrowAngle) * trailDist, headPos.y + sin(arrowAngle) * trailDist)
+                rotate(degrees = angleDeg, pivot = trailCenter) {
+                    val trailPath = Path().apply {
+                        moveTo(trailCenter.x + arrowLength * 0.25f, trailCenter.y)
+                        lineTo(trailCenter.x - arrowLength * 0.20f, trailCenter.y - arrowWidth * 0.35f)
+                        moveTo(trailCenter.x + arrowLength * 0.25f, trailCenter.y)
+                        lineTo(trailCenter.x - arrowLength * 0.20f, trailCenter.y + arrowWidth * 0.35f)
+                    }
+                    drawPath(
+                        path = trailPath,
+                        color = Color.Black.copy(alpha = 0.5f),
+                        style = Stroke(width = 4.5f * zoom, cap = StrokeCap.Round)
+                    )
+                    drawPath(
+                        path = trailPath,
+                        color = Color(0xFF38BDF8),
+                        style = Stroke(width = 2.8f * zoom, cap = StrokeCap.Round)
+                    )
+                }
             }
         }
     }
