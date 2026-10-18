@@ -64,7 +64,15 @@ data class UserGameData(
     // Language & Map Theme & Enemy Difficulty Customization
     val language: AppLanguage = AppLanguage.INDONESIAN,
     val mapTheme: MapTheme = MapTheme.CYBER_FUNK,
-    val gameDifficulty: GameDifficulty = GameDifficulty.NORMAL
+    val gameDifficulty: GameDifficulty = GameDifficulty.NORMAL,
+    // Detailed Profile Stats & Achievements (from screenshots)
+    val bestSurvivalSeconds: Int = 1658, // 27m 38d
+    val totalPlayTimeSeconds: Long = 12175L, // 3j 22m 55d
+    val piggyBankCoins: Int = 1500,
+    val claimedAchievements: Set<String> = emptySet(),
+    val showAnalogArrow: Boolean = true,
+    val foodSkinPack: String = "FAST_FOOD",
+    val highFpsEnabled: Boolean = true
 ) {
     companion object {
         val DAILY_REWARDS = listOf(
@@ -182,6 +190,15 @@ class UserPreferencesRepository(context: Context) {
         val joyModeStr = prefs.getString("joystick_mode", JoystickMode.STATIC.name) ?: JoystickMode.STATIC.name
         val joystickMode = try { JoystickMode.valueOf(joyModeStr) } catch (_: Exception) { JoystickMode.STATIC }
 
+        val bestSurvival = prefs.getInt("best_survival", 1658)
+        val totalPlay = prefs.getLong("total_play_time", 12175L)
+        val piggyCoins = prefs.getInt("piggy_bank_coins", 1500)
+        val claimedAch = prefs.getStringSet("claimed_achievements", emptySet()) ?: emptySet()
+
+        val showArrow = prefs.getBoolean("show_analog_arrow", true)
+        val foodPack = prefs.getString("food_skin_pack", "FAST_FOOD") ?: "FAST_FOOD"
+        val highFps = prefs.getBoolean("high_fps_enabled", true)
+
         return UserGameData(
             playerName = name,
             coins = coins,
@@ -214,7 +231,58 @@ class UserPreferencesRepository(context: Context) {
             boostScale = boostScale,
             language = language,
             mapTheme = mapTheme,
-            gameDifficulty = gameDifficulty
+            gameDifficulty = gameDifficulty,
+            bestSurvivalSeconds = bestSurvival,
+            totalPlayTimeSeconds = totalPlay,
+            piggyBankCoins = piggyCoins,
+            claimedAchievements = claimedAch,
+            showAnalogArrow = showArrow,
+            foodSkinPack = foodPack,
+            highFpsEnabled = highFps
+        )
+    }
+
+    fun claimAchievement(achievementId: String, rewardCoins: Int) {
+        val current = _userData.value
+        val updatedClaimed = current.claimedAchievements + achievementId
+        val updatedCoins = current.coins + rewardCoins
+        prefs.edit()
+            .putStringSet("claimed_achievements", updatedClaimed)
+            .putInt("coins", updatedCoins)
+            .apply()
+        _userData.value = current.copy(
+            coins = updatedCoins,
+            claimedAchievements = updatedClaimed
+        )
+    }
+
+    fun breakPiggyBank(): Int {
+        val current = _userData.value
+        val reward = current.piggyBankCoins
+        val updatedCoins = current.coins + reward
+        prefs.edit()
+            .putInt("piggy_bank_coins", 0)
+            .putInt("coins", updatedCoins)
+            .apply()
+        _userData.value = current.copy(
+            coins = updatedCoins,
+            piggyBankCoins = 0
+        )
+        return reward
+    }
+
+    fun resetAllUserData() {
+        prefs.edit().clear().apply()
+        _userData.value = UserGameData(
+            playerName = "Nana Tayantuh",
+            coins = 1500,
+            highScore = 0,
+            totalKills = 0,
+            totalGames = 0,
+            unlockedSkins = setOf(SkinId.CLASSIC_GREEN),
+            unlockedAccessories = setOf(FaceAccessory.NONE),
+            claimedAchievements = emptySet(),
+            piggyBankCoins = 500
         )
     }
 
@@ -488,5 +556,20 @@ class UserPreferencesRepository(context: Context) {
     fun setGameDifficulty(diff: GameDifficulty) {
         prefs.edit().putString("game_difficulty", diff.id).apply()
         _userData.value = _userData.value.copy(gameDifficulty = diff)
+    }
+
+    fun toggleAnalogArrow(enabled: Boolean) {
+        prefs.edit().putBoolean("show_analog_arrow", enabled).apply()
+        _userData.value = _userData.value.copy(showAnalogArrow = enabled)
+    }
+
+    fun setFoodSkinPack(pack: String) {
+        prefs.edit().putString("food_skin_pack", pack).apply()
+        _userData.value = _userData.value.copy(foodSkinPack = pack)
+    }
+
+    fun toggleHighFps(enabled: Boolean) {
+        prefs.edit().putBoolean("high_fps_enabled", enabled).apply()
+        _userData.value = _userData.value.copy(highFpsEnabled = enabled)
     }
 }

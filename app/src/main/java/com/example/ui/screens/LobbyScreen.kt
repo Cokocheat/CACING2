@@ -77,11 +77,15 @@ import com.example.data.StringsHelper
 import com.example.data.UserGameData
 import com.example.model.GameConfig
 import com.example.model.GameDifficulty
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
 import com.example.model.GameMode
 import com.example.model.MapTheme
 import com.example.model.Vec2
 import com.example.model.Worm
 import com.example.ui.game.DailyLoginDialog
+import com.example.ui.game.LuckyBonusDialog
+import com.example.ui.game.PiggyBankDialog
 import com.example.ui.game.WormsRenderer
 import kotlin.math.PI
 import kotlin.math.cos
@@ -95,17 +99,22 @@ fun LobbyScreen(
     onOpenUpgrades: () -> Unit,
     onOpenRecords: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenProfile: () -> Unit,
+    onOpenCoinShop: () -> Unit,
+    onAddCoins: (Int) -> Unit = {},
+    onBreakPiggyBank: () -> Unit = {},
     onClaimDailyReward: () -> Any? = {},
-    onUpdateName: (String) -> Unit,
+    onUpdateName: (String) -> Unit = {},
     onSetMapTheme: (MapTheme) -> Unit = {},
     onSetGameDifficulty: (GameDifficulty) -> Unit = {}
 ) {
+    val context = LocalContext.current
     val lang = userData.language
 
     val selectedMode by remember { mutableStateOf(GameMode.OPEN_ARENA) }
     var showDailyLoginDialog by remember(userData.canClaimDailyToday) { mutableStateOf(userData.canClaimDailyToday) }
-    var showProfileDialog by remember { mutableStateOf(false) }
-    var tempNameInput by remember(userData.playerName) { mutableStateOf(userData.playerName) }
+    var showBonusDialog by remember { mutableStateOf(false) }
+    var showPiggyDialog by remember { mutableStateOf(false) }
 
     // Pulsing and slithering animations
     val infiniteTransition = rememberInfiniteTransition(label = "lobbyAnimations")
@@ -268,7 +277,7 @@ fun LobbyScreen(
             ) {
                 // TOP-LEFT: Warm Amber-Chocolate Profile Card (Blends seamlessly with the arena theme)
                 Surface(
-                    onClick = { showProfileDialog = true },
+                    onClick = onOpenProfile,
                     shape = RoundedCornerShape(16.dp),
                     color = Color(0xEB28170B), // Warm chocolate amber matching theme
                     border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFF59E0B)),
@@ -310,7 +319,7 @@ fun LobbyScreen(
                         // Profil label & Orange Energy Bar
                         Column {
                             Text(
-                                text = userData.playerName.ifBlank { "Profil" },
+                                text = userData.playerName.ifBlank { StringsHelper.get("tab_profile", lang) },
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Black,
                                 color = Color.White
@@ -348,6 +357,7 @@ fun LobbyScreen(
                 ) {
                     // Apple Stamina Pill
                     Surface(
+                        onClick = onOpenCoinShop,
                         shape = RoundedCornerShape(16.dp),
                         color = Color(0xEB28170B),
                         border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFF97316))
@@ -371,7 +381,7 @@ fun LobbyScreen(
                                 modifier = Modifier.size(24.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
-                                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                                    Icon(Icons.Default.Add, contentDescription = "Tambah Stamina", tint = Color.White, modifier = Modifier.size(15.dp))
                                 }
                             }
                         }
@@ -379,6 +389,7 @@ fun LobbyScreen(
 
                     // Gold Coin Pill
                     Surface(
+                        onClick = onOpenCoinShop,
                         shape = RoundedCornerShape(16.dp),
                         color = Color(0xEB28170B),
                         border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFACC15))
@@ -402,7 +413,7 @@ fun LobbyScreen(
                                 modifier = Modifier.size(24.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
-                                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                                    Icon(Icons.Default.Add, contentDescription = "Tambah Koin", tint = Color.White, modifier = Modifier.size(15.dp))
                                 }
                             }
                         }
@@ -424,9 +435,9 @@ fun LobbyScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // No Ads / Bonus Button
+                    // Bonus Button
                     Surface(
-                        onClick = onOpenUpgrades,
+                        onClick = { showBonusDialog = true },
                         shape = CircleShape,
                         color = Color(0xFFDC2626),
                         border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFFDE047)),
@@ -492,7 +503,6 @@ fun LobbyScreen(
                     verticalArrangement = Arrangement.Center
                 ) {
                     // Big Cartoon 3D Game Logo
-                    // Big Cartoon 3D Game Logo
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.padding(bottom = 6.dp)
@@ -533,7 +543,7 @@ fun LobbyScreen(
                     ) {
                         Text("🐛", fontSize = 38.sp)
                         Surface(
-                            onClick = onOpenUpgrades,
+                            onClick = onOpenCoinShop,
                             shape = RoundedCornerShape(8.dp),
                             color = Color(0xEB28170B),
                             border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFACC15)),
@@ -570,7 +580,7 @@ fun LobbyScreen(
                             modifier = Modifier.fillMaxSize()
                         ) {
                             Text(
-                                text = "Bertempur!",
+                                text = StringsHelper.get("battle_btn", lang),
                                 fontSize = 26.sp,
                                 fontWeight = FontWeight.Black,
                                 color = Color.White,
@@ -596,7 +606,7 @@ fun LobbyScreen(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    text = "Lemari Cacing",
+                                    text = StringsHelper.get("wardrobe_btn", lang),
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Black,
                                     color = Color.White
@@ -619,7 +629,7 @@ fun LobbyScreen(
                         modifier = Modifier.padding(top = 4.dp)
                     ) {
                         Text(
-                            text = "Pilih tema untuk cacingmu",
+                            text = StringsHelper.get("choose_theme_sub", lang),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFFFDE047),
@@ -636,7 +646,7 @@ fun LobbyScreen(
                     Text("🐍", fontSize = 34.sp)
 
                     Surface(
-                        onClick = onOpenUpgrades,
+                        onClick = { showPiggyDialog = true },
                         shape = RoundedCornerShape(12.dp),
                         color = Color(0xEB28170B),
                         border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFACC15)),
@@ -653,13 +663,13 @@ fun LobbyScreen(
                 }
             }
 
-            // BOTTOM BAR: Left (Leaderboard, Calendar, Chat) & Right (Share, Settings)
+            // BOTTOM BAR: Left (Leaderboard, Upgrades) & Right (Share, Settings)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Bottom-Left Buttons (Blue rounded square with orange border)
+                // Bottom-Left Buttons
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     // Leaderboard / Records
                     CartoonSquareButton(
@@ -667,17 +677,11 @@ fun LobbyScreen(
                         testTag = "btn_records",
                         onClick = onOpenRecords
                     )
-                    // Calendar / Event
+                    // Upgrades / Peningkatan
                     CartoonSquareButton(
-                        icon = Icons.Default.CalendarMonth,
-                        testTag = "btn_calendar",
-                        onClick = { showDailyLoginDialog = true }
-                    )
-                    // Chat
-                    CartoonSquareButton(
-                        icon = Icons.Default.ChatBubble,
-                        testTag = "btn_chat",
-                        onClick = { /* Chat dialog */ }
+                        icon = Icons.Default.Upgrade,
+                        testTag = "btn_upgrades",
+                        onClick = onOpenUpgrades
                     )
                 }
 
@@ -687,7 +691,17 @@ fun LobbyScreen(
                     CartoonSquareButton(
                         icon = Icons.Default.Share,
                         testTag = "btn_share",
-                        onClick = { /* Share dialog */ }
+                        onClick = {
+                            val sendIntent = Intent().apply {
+                                action = Intent.ACTION_SEND
+                                putExtra(
+                                    Intent.EXTRA_TEXT,
+                                    "Ayo tanding di Nana Tayantuh Worms Zone IO! Skor Tertinggi: ${userData.highScore} dengan ${userData.totalKills} cacing dikalahkan!"
+                                )
+                                type = "text/plain"
+                            }
+                            context.startActivity(Intent.createChooser(sendIntent, StringsHelper.get("share_profile", lang)))
+                        }
                     )
                     // Settings
                     CartoonSquareButton(
@@ -713,45 +727,29 @@ fun LobbyScreen(
             )
         }
 
-        // Quick Profile Dialog
-        if (showProfileDialog) {
-            AlertDialog(
-                onDismissRequest = { showProfileDialog = false },
-                title = { Text("Profil & Ganti Nama", fontWeight = FontWeight.Black) },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("Masukkan nama cacing Anda:", fontSize = 13.sp)
-                        OutlinedTextField(
-                            value = tempNameInput,
-                            onValueChange = { if (it.length <= 16) tempNameInput = it },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFFACC15),
-                                unfocusedBorderColor = Color(0xFF94A3B8)
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Text("Skor Tertinggi: ${userData.highScore}", fontWeight = FontWeight.Bold, color = Color(0xFFB45309))
-                        Text("Total Mangsa: ${userData.totalKills}", fontWeight = FontWeight.Bold, color = Color(0xFFB45309))
-                    }
+        // Lucky Bonus Dialog
+        if (showBonusDialog) {
+            LuckyBonusDialog(
+                onClaimBonus = {
+                    onAddCoins(750)
+                    showBonusDialog = false
                 },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            if (tempNameInput.isNotBlank()) {
-                                onUpdateName(tempNameInput)
-                            }
-                            showProfileDialog = false
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22C55E))
-                    ) {
-                        Text("Simpan", fontWeight = FontWeight.Bold)
-                    }
+                onDismiss = {
+                    showBonusDialog = false
+                }
+            )
+        }
+
+        // Piggy Bank Dialog
+        if (showPiggyDialog) {
+            PiggyBankDialog(
+                piggyCoins = userData.piggyBankCoins,
+                onBreak = {
+                    onBreakPiggyBank()
+                    showPiggyDialog = false
                 },
-                dismissButton = {
-                    TextButton(onClick = { showProfileDialog = false }) {
-                        Text("Batal")
-                    }
+                onDismiss = {
+                    showPiggyDialog = false
                 }
             )
         }

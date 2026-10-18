@@ -17,9 +17,11 @@ import androidx.compose.ui.platform.LocalContext
 import com.example.audio.GameSoundManager
 import com.example.data.UserPreferencesRepository
 import com.example.model.GameMode
+import com.example.ui.game.CoinShopDialog
 import com.example.ui.game.MainGameScreen
 import com.example.ui.screens.ControlLayoutEditorScreen
 import com.example.ui.screens.LobbyScreen
+import com.example.ui.screens.ProfileScreen
 import com.example.ui.screens.RecordsScreen
 import com.example.ui.screens.SettingsScreen
 import com.example.ui.screens.SplashScreen
@@ -35,7 +37,8 @@ enum class AppScreen {
     UPGRADES,
     RECORDS,
     SETTINGS,
-    LAYOUT_EDITOR
+    LAYOUT_EDITOR,
+    PROFILE
 }
 
 @Composable
@@ -51,6 +54,7 @@ fun MainScreen() {
 
     var currentScreen by remember { mutableStateOf(AppScreen.SPLASH) }
     var selectedGameMode by remember { mutableStateOf(GameMode.OPEN_ARENA) }
+    var showCoinShopDialog by remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -79,6 +83,10 @@ fun MainScreen() {
                         onOpenUpgrades = { currentScreen = AppScreen.UPGRADES },
                         onOpenRecords = { currentScreen = AppScreen.RECORDS },
                         onOpenSettings = { currentScreen = AppScreen.SETTINGS },
+                        onOpenProfile = { currentScreen = AppScreen.PROFILE },
+                        onOpenCoinShop = { showCoinShopDialog = true },
+                        onAddCoins = { userPrefs.addCoins(it) },
+                        onBreakPiggyBank = { userPrefs.breakPiggyBank() },
                         onUpdateName = { userPrefs.updatePlayerName(it) },
                         onClaimDailyReward = { userPrefs.claimDailyReward() },
                         onSetMapTheme = { userPrefs.setMapTheme(it) },
@@ -130,6 +138,21 @@ fun MainScreen() {
                         onSetMapTheme = { userPrefs.setMapTheme(it) },
                         onSetSoundVolume = { userPrefs.setSoundVolume(it) },
                         onSetMusicVolume = { userPrefs.setMusicVolume(it) },
+                        onToggleAnalogArrow = { userPrefs.toggleAnalogArrow(it) },
+                        onSetFoodSkinPack = { userPrefs.setFoodSkinPack(it) },
+                        onToggleHighFps = { userPrefs.toggleHighFps(it) },
+                        onOpenProfile = { currentScreen = AppScreen.PROFILE },
+                        onOpenCoinShop = { showCoinShopDialog = true },
+                        onBack = { currentScreen = AppScreen.LOBBY }
+                    )
+                }
+                AppScreen.PROFILE -> {
+                    ProfileScreen(
+                        userData = userData,
+                        onUpdateName = { userPrefs.updatePlayerName(it) },
+                        onResetData = { userPrefs.resetAllUserData() },
+                        onClaimAchievement = { id, reward -> userPrefs.claimAchievement(id, reward) },
+                        onOpenCoinShop = { showCoinShopDialog = true },
                         onBack = { currentScreen = AppScreen.LOBBY }
                     )
                 }
@@ -145,6 +168,19 @@ fun MainScreen() {
                     )
                 }
             }
+        }
+
+        if (showCoinShopDialog) {
+            CoinShopDialog(
+                userData = userData,
+                lang = userData.language,
+                onAddCoins = { amount ->
+                    userPrefs.addCoins(amount)
+                },
+                onDismiss = {
+                    showCoinShopDialog = false
+                }
+            )
         }
     }
 }

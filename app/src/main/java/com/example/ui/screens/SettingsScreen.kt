@@ -102,6 +102,11 @@ fun SettingsScreen(
     onSetMapTheme: (MapTheme) -> Unit = {},
     onSetSoundVolume: (Int) -> Unit = {},
     onSetMusicVolume: (Int) -> Unit = {},
+    onToggleAnalogArrow: (Boolean) -> Unit = {},
+    onSetFoodSkinPack: (String) -> Unit = {},
+    onToggleHighFps: (Boolean) -> Unit = {},
+    onOpenProfile: () -> Unit = {},
+    onOpenCoinShop: () -> Unit = {},
     onBack: () -> Unit
 ) {
     BackHandler { onBack() }
@@ -110,14 +115,14 @@ fun SettingsScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
     var nameInput by remember(userData.playerName) { mutableStateOf(userData.playerName) }
 
-    val tabs = remember {
+    val tabs = remember(lang) {
         listOf(
-            SettingsTabItem("Opsi", Icons.Default.Settings),
-            SettingsTabItem("Kontrol", Icons.Default.Gamepad),
-            SettingsTabItem("Arena", Icons.Default.Image),
-            SettingsTabItem("Makanan", Icons.Default.Fastfood),
-            SettingsTabItem("Profil", Icons.Default.Person),
-            SettingsTabItem("Bahasa", Icons.Default.Language)
+            SettingsTabItem(StringsHelper.get("tab_options", lang), Icons.Default.Settings),
+            SettingsTabItem(StringsHelper.get("tab_controls", lang), Icons.Default.Gamepad),
+            SettingsTabItem(StringsHelper.get("tab_arena", lang), Icons.Default.Image),
+            SettingsTabItem(StringsHelper.get("tab_food", lang), Icons.Default.Fastfood),
+            SettingsTabItem(StringsHelper.get("tab_profile", lang), Icons.Default.Person),
+            SettingsTabItem(StringsHelper.get("tab_language", lang), Icons.Default.Language)
         )
     }
 
@@ -164,7 +169,7 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Pengaturan",
+                    text = StringsHelper.get("settings", lang),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Black,
                     color = Color(0xFFFDE047), // Vibrant cartoon yellow
@@ -177,6 +182,7 @@ fun SettingsScreen(
                 ) {
                     // Coins Pill (Smiling Coin face + amount + blue plus button)
                     Surface(
+                        onClick = onOpenCoinShop,
                         shape = RoundedCornerShape(20.dp),
                         color = Color(0xFF1E293B),
                         border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFACC15))
@@ -200,7 +206,7 @@ fun SettingsScreen(
                                 modifier = Modifier.size(24.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
-                                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.Add, contentDescription = "Tambah Koin", tint = Color.White, modifier = Modifier.size(16.dp))
                                 }
                             }
                         }
@@ -300,9 +306,13 @@ fun SettingsScreen(
                     when (targetIndex) {
                         0 -> OpsiTabContent(
                             userData = userData,
+                            lang = lang,
                             onSetSoundVolume = onSetSoundVolume,
                             onSetMusicVolume = onSetMusicVolume,
-                            onToggleSound = onToggleSound
+                            onToggleSound = onToggleSound,
+                            onToggleVibration = onToggleVibration,
+                            onToggleAnalogArrow = onToggleAnalogArrow,
+                            onToggleHighFps = onToggleHighFps
                         )
                         1 -> KontrolTabContent(
                             userData = userData,
@@ -314,19 +324,27 @@ fun SettingsScreen(
                         )
                         2 -> ArenaTabContent(
                             userData = userData,
+                            lang = lang,
                             onSetMapTheme = onSetMapTheme
                         )
-                        3 -> MakananTabContent()
+                        3 -> MakananTabContent(
+                            userData = userData,
+                            lang = lang,
+                            onSetFoodSkinPack = onSetFoodSkinPack
+                        )
                         4 -> ProfilTabContent(
                             userData = userData,
+                            lang = lang,
                             nameInput = nameInput,
                             onNameChange = {
                                 nameInput = it
                                 onUpdateName(it)
-                            }
+                            },
+                            onOpenProfile = onOpenProfile
                         )
                         5 -> BahasaTabContent(
                             userData = userData,
+                            lang = lang,
                             onSetLanguage = onSetLanguage
                         )
                     }
@@ -341,96 +359,188 @@ private data class SettingsTabItem(
     val icon: ImageVector
 )
 
-// TAB 0: OPSI (EXACTLY AS IN SCREENSHOT: SEGMENTED VOLUME BARS, SOCIALS, PRIVACY, TERMS)
+// TAB 0: OPSI (VOLUME BARS, TOGGLES, SOCIALS, PRIVACY, TERMS)
 @Composable
 private fun OpsiTabContent(
     userData: UserGameData,
+    lang: AppLanguage,
     onSetSoundVolume: (Int) -> Unit,
     onSetMusicVolume: (Int) -> Unit,
-    onToggleSound: (Boolean) -> Unit
+    onToggleSound: (Boolean) -> Unit,
+    onToggleVibration: (Boolean) -> Unit,
+    onToggleAnalogArrow: (Boolean) -> Unit,
+    onToggleHighFps: (Boolean) -> Unit
 ) {
+    var showPrivacyDialog by remember { mutableStateOf(false) }
+    var showTermsDialog by remember { mutableStateOf(false) }
+    var showSocialBonusDialog by remember { mutableStateOf<String?>(null) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp, vertical = 18.dp)
+            .padding(horizontal = 24.dp, vertical = 14.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+        // 1. Musik Volume Bar
+        SegmentedVolumeRow(
+            label = StringsHelper.get("music_label", lang),
+            volume = userData.musicVolume,
+            icon = Icons.Default.MusicNote,
+            onDecrease = { onSetMusicVolume((userData.musicVolume - 1).coerceAtLeast(0)) },
+            onIncrease = { onSetMusicVolume((userData.musicVolume + 1).coerceAtMost(10)) }
+        )
+
+        // 2. Suara Volume Bar
+        SegmentedVolumeRow(
+            label = StringsHelper.get("sound_label", lang),
+            volume = userData.soundVolume,
+            icon = Icons.Default.VolumeUp,
+            onDecrease = { onSetSoundVolume((userData.soundVolume - 1).coerceAtLeast(0)) },
+            onIncrease = { onSetSoundVolume((userData.soundVolume + 1).coerceAtMost(10)) }
+        )
+
+        // TOGGLE SWITCHES ROW (Vibration, Analog Arrow, 60 FPS)
+        Surface(
+            shape = RoundedCornerShape(14.dp),
+            color = Color(0xFF24366A),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF3B5DA8)),
             modifier = Modifier.fillMaxWidth()
         ) {
-            // 1. Musik Volume Bar
-            SegmentedVolumeRow(
-                label = "Musik",
-                volume = userData.musicVolume,
-                icon = Icons.Default.MusicNote,
-                onDecrease = { onSetMusicVolume((userData.musicVolume - 1).coerceAtLeast(0)) },
-                onIncrease = { onSetMusicVolume((userData.musicVolume + 1).coerceAtMost(10)) }
-            )
-
-            // 2. Suara Volume Bar
-            SegmentedVolumeRow(
-                label = "Suara",
-                volume = userData.soundVolume,
-                icon = Icons.Default.VolumeUp,
-                onDecrease = { onSetSoundVolume((userData.soundVolume - 1).coerceAtLeast(0)) },
-                onIncrease = { onSetSoundVolume((userData.soundVolume + 1).coerceAtMost(10)) }
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            // Subtitle
-            Text(
-                text = "Jangan lewatkan acara dan hadiah spesial!",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                textAlign = TextAlign.Center
-            )
-
-            // Social Buttons Row (Facebook, TikTok, YouTube like screenshot)
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Facebook
-                Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = Color(0xFF1877F2),
-                    modifier = Modifier.size(48.dp)
+            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                // Getaran / Vibration
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text("f", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Black)
+                    Column {
+                        Text(StringsHelper.get("vibration", lang), fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
+                        Text("Getaran saat boost & memangsa", fontSize = 11.sp, color = Color(0xBBFFFFFF))
+                    }
+                    Surface(
+                        onClick = { onToggleVibration(!userData.vibrationEnabled) },
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (userData.vibrationEnabled) Color(0xFF22C55E) else Color(0xFF475569),
+                        modifier = Modifier.size(width = 54.dp, height = 30.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = if (userData.vibrationEnabled) "ON" else "OFF",
+                                fontWeight = FontWeight.Black,
+                                fontSize = 12.sp,
+                                color = Color.White
+                            )
+                        }
                     }
                 }
-                // TikTok
-                Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = Color(0xFF0F172A),
-                    border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFF00F2FE)),
-                    modifier = Modifier.size(48.dp)
+
+                // Panah Arah Analog
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text("🎵", fontSize = 22.sp)
+                    Column {
+                        Text(StringsHelper.get("analog_arrow", lang), fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
+                        Text(StringsHelper.get("analog_arrow_desc", lang), fontSize = 11.sp, color = Color(0xBBFFFFFF))
+                    }
+                    Surface(
+                        onClick = { onToggleAnalogArrow(!userData.showAnalogArrow) },
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (userData.showAnalogArrow) Color(0xFF22C55E) else Color(0xFF475569),
+                        modifier = Modifier.size(width = 54.dp, height = 30.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = if (userData.showAnalogArrow) "ON" else "OFF",
+                                fontWeight = FontWeight.Black,
+                                fontSize = 12.sp,
+                                color = Color.White
+                            )
+                        }
                     }
                 }
-                // YouTube
-                Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = Color(0xFFFF0000),
-                    modifier = Modifier.size(48.dp)
+
+                // High FPS (60 FPS)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(28.dp))
+                    Column {
+                        Text(StringsHelper.get("high_fps", lang), fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
+                        Text(StringsHelper.get("high_fps_desc", lang), fontSize = 11.sp, color = Color(0xBBFFFFFF))
+                    }
+                    Surface(
+                        onClick = { onToggleHighFps(!userData.highFpsEnabled) },
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (userData.highFpsEnabled) Color(0xFF22C55E) else Color(0xFF475569),
+                        modifier = Modifier.size(width = 54.dp, height = 30.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = if (userData.highFpsEnabled) "ON" else "OFF",
+                                fontWeight = FontWeight.Black,
+                                fontSize = 12.sp,
+                                color = Color.White
+                            )
+                        }
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        // Subtitle
+        Text(
+            text = StringsHelper.get("social_sub", lang),
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            textAlign = TextAlign.Center
+        )
+
+        // Social Buttons Row (Facebook, TikTok, YouTube like screenshot)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Facebook
+            Surface(
+                onClick = { showSocialBonusDialog = "Facebook" },
+                shape = RoundedCornerShape(14.dp),
+                color = Color(0xFF1877F2),
+                modifier = Modifier.size(48.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text("f", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Black)
+                }
+            }
+            // TikTok
+            Surface(
+                onClick = { showSocialBonusDialog = "TikTok" },
+                shape = RoundedCornerShape(14.dp),
+                color = Color(0xFF0F172A),
+                border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFF00F2FE)),
+                modifier = Modifier.size(48.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text("🎵", fontSize = 22.sp)
+                }
+            }
+            // YouTube
+            Surface(
+                onClick = { showSocialBonusDialog = "YouTube" },
+                shape = RoundedCornerShape(14.dp),
+                color = Color(0xFFFF0000),
+                modifier = Modifier.size(48.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(28.dp))
+                }
+            }
+        }
 
         // Privacy & Terms of Service Buttons
         Row(
@@ -438,6 +548,7 @@ private fun OpsiTabContent(
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Surface(
+                onClick = { showPrivacyDialog = true },
                 shape = RoundedCornerShape(12.dp),
                 color = Color(0xFF4C6BB5),
                 border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFF8BB4F8)),
@@ -447,7 +558,7 @@ private fun OpsiTabContent(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
-                        text = "Kebijakan Privasi",
+                        text = StringsHelper.get("privacy_policy", lang),
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp
@@ -456,6 +567,7 @@ private fun OpsiTabContent(
             }
 
             Surface(
+                onClick = { showTermsDialog = true },
                 shape = RoundedCornerShape(12.dp),
                 color = Color(0xFF4C6BB5),
                 border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFF8BB4F8)),
@@ -465,7 +577,7 @@ private fun OpsiTabContent(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
-                        text = "Ketentuan Layanan",
+                        text = StringsHelper.get("terms_of_service", lang),
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp
@@ -474,13 +586,60 @@ private fun OpsiTabContent(
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
-
         Text(
-            text = "v1.3.0, id, Nana Tayantuh • Worms Zone IO Edition",
+            text = "v1.4.0, ${lang.code}, ${userData.playerName} • Worms Zone IO Edition",
             fontSize = 11.sp,
             color = Color(0xBBFFFFFF),
             textAlign = TextAlign.Center
+        )
+    }
+
+    if (showSocialBonusDialog != null) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showSocialBonusDialog = null },
+            title = { Text("Ikuti ${showSocialBonusDialog} Kami!", fontWeight = FontWeight.Black) },
+            text = { Text("Terima kasih telah mengunjungi komunitas resmi kami! Tetap nantikan update skin terbaru, turnamen, dan hadiah harian.") },
+            confirmButton = {
+                Button(onClick = { showSocialBonusDialog = null }) {
+                    Text("OK", fontWeight = FontWeight.Bold)
+                }
+            }
+        )
+    }
+
+    if (showPrivacyDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showPrivacyDialog = false },
+            title = { Text(StringsHelper.get("privacy_policy", lang), fontWeight = FontWeight.Black) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Kebijakan Privasi Nana Tayantuh:", fontWeight = FontWeight.Bold)
+                    Text("Permainan ini menyimpan data rekor, skin yang dimiliki, koin, dan pengaturan kontrol secara lokal di perangkat Anda. Tidak ada data pribadi atau pelacakan privasi pihak ketiga.")
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showPrivacyDialog = false }) {
+                    Text("Tutup", fontWeight = FontWeight.Bold)
+                }
+            }
+        )
+    }
+
+    if (showTermsDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showTermsDialog = false },
+            title = { Text(StringsHelper.get("terms_of_service", lang), fontWeight = FontWeight.Black) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Ketentuan Layanan:", fontWeight = FontWeight.Bold)
+                    Text("Selamat bermain cacing di arena! Dilarang menggunakan software berbahaya atau kecurangan. Nikmati permainan yang adil dan seru bersama teman-teman.")
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showTermsDialog = false }) {
+                    Text("Tutup", fontWeight = FontWeight.Bold)
+                }
+            }
         )
     }
 }
@@ -728,6 +887,7 @@ private fun KontrolTabContent(
 @Composable
 private fun ArenaTabContent(
     userData: UserGameData,
+    lang: AppLanguage,
     onSetMapTheme: (MapTheme) -> Unit
 ) {
     Column(
@@ -737,8 +897,8 @@ private fun ArenaTabContent(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("PILIHAN TEMA LATAR BELAKANG ARENA", fontSize = 14.sp, fontWeight = FontWeight.Black, color = Color(0xFFFDE047))
-        Text("Warna dan motif catur arena berlaku untuk menu utama dan saat bermain di game.", fontSize = 12.sp, color = Color.White)
+        Text(StringsHelper.get("arena_theme_choice", lang), fontSize = 14.sp, fontWeight = FontWeight.Black, color = Color(0xFFFDE047))
+        Text(StringsHelper.get("arena_theme_desc", lang), fontSize = 12.sp, color = Color.White)
 
         MapTheme.entries.forEach { theme ->
             val isSelected = userData.mapTheme == theme
@@ -788,9 +948,20 @@ private fun ArenaTabContent(
     }
 }
 
-// TAB 3: MAKANAN (INFO SNACKS & SPELLS)
+// TAB 3: MAKANAN (PILIHAN TAMPILAN MAKANAN + PANDUAN SPELL)
 @Composable
-private fun MakananTabContent() {
+private fun MakananTabContent(
+    userData: UserGameData,
+    lang: AppLanguage,
+    onSetFoodSkinPack: (String) -> Unit
+) {
+    val foodPacks = listOf(
+        Triple("FAST_FOOD", StringsHelper.get("fast_food", lang), "🍔 🍕 🌭 🍩"),
+        Triple("SWEETS", StringsHelper.get("sweets", lang), "🍭 🍬 🍫 🍦"),
+        Triple("FRUITS", StringsHelper.get("fruits", lang), "🍎 🍉 🍓 🍊"),
+        Triple("CRYSTALS", StringsHelper.get("crystals", lang), "💎 ⭐ 🔮 🌟")
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -798,7 +969,83 @@ private fun MakananTabContent() {
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Text("PANDUAN MAKANAN & SPELL", fontSize = 14.sp, fontWeight = FontWeight.Black, color = Color(0xFFFDE047))
+        Text(StringsHelper.get("food_appearance", lang), fontSize = 14.sp, fontWeight = FontWeight.Black, color = Color(0xFFFDE047))
+        Text(StringsHelper.get("food_appearance_desc", lang), fontSize = 12.sp, color = Color(0xDDFFFFFF))
+
+        // Food Pack Selection Cards
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            foodPacks.take(2).forEach { (id, title, icons) ->
+                val isSelected = userData.foodSkinPack == id
+                Surface(
+                    onClick = { onSetFoodSkinPack(id) },
+                    shape = RoundedCornerShape(14.dp),
+                    color = if (isSelected) Color(0xFF223668) else Color(0xFF1E2A4F),
+                    border = androidx.compose.foundation.BorderStroke(2.dp, if (isSelected) Color(0xFFFDE047) else Color(0xFF334B85)),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(icons, fontSize = 18.sp)
+                            if (isSelected) {
+                                Surface(shape = CircleShape, color = Color(0xFFFDE047), modifier = Modifier.size(20.dp)) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(Icons.Default.Check, contentDescription = null, tint = Color.Black, modifier = Modifier.size(14.dp))
+                                    }
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(title, fontWeight = FontWeight.Black, color = if (isSelected) Color(0xFFFDE047) else Color.White, fontSize = 12.sp)
+                    }
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            foodPacks.drop(2).forEach { (id, title, icons) ->
+                val isSelected = userData.foodSkinPack == id
+                Surface(
+                    onClick = { onSetFoodSkinPack(id) },
+                    shape = RoundedCornerShape(14.dp),
+                    color = if (isSelected) Color(0xFF223668) else Color(0xFF1E2A4F),
+                    border = androidx.compose.foundation.BorderStroke(2.dp, if (isSelected) Color(0xFFFDE047) else Color(0xFF334B85)),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(icons, fontSize = 18.sp)
+                            if (isSelected) {
+                                Surface(shape = CircleShape, color = Color(0xFFFDE047), modifier = Modifier.size(20.dp)) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(Icons.Default.Check, contentDescription = null, tint = Color.Black, modifier = Modifier.size(14.dp))
+                                    }
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(title, fontWeight = FontWeight.Black, color = if (isSelected) Color(0xFFFDE047) else Color.White, fontSize = 12.sp)
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(StringsHelper.get("food_guide_title", lang), fontSize = 14.sp, fontWeight = FontWeight.Black, color = Color(0xFFFDE047))
 
         Surface(
             shape = RoundedCornerShape(14.dp),
@@ -808,8 +1055,8 @@ private fun MakananTabContent() {
         ) {
             Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("🍔 Makanan Lezat Arena:", fontWeight = FontWeight.Black, color = Color.White)
-                Text("• Burger, Keju, Roti, Jamur, Sosis, dan Daging Ayam memberikan massa untuk cacingmu bertambah panjang.", fontSize = 12.sp, color = Color(0xDDFFFFFF))
-                Text("• Daging Korban Cacing Mati: Menghasilkan santapan berenergi tinggi dengan aura kilau biru terang di tepinya!", fontSize = 12.sp, color = Color(0xFF38BDF8))
+                Text("• Makanan memberikan massa untuk cacingmu bertambah panjang dan gesit.", fontSize = 12.sp, color = Color(0xDDFFFFFF))
+                Text("• Cacing yang gugur meninggalkan santapan berenergi tinggi dengan pendaran kilau luar!", fontSize = 12.sp, color = Color(0xFF38BDF8))
             }
         }
 
@@ -834,8 +1081,10 @@ private fun MakananTabContent() {
 @Composable
 private fun ProfilTabContent(
     userData: UserGameData,
+    lang: AppLanguage,
     nameInput: String,
-    onNameChange: (String) -> Unit
+    onNameChange: (String) -> Unit,
+    onOpenProfile: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -844,12 +1093,12 @@ private fun ProfilTabContent(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Text("PROFIL PEMAIN", fontSize = 14.sp, fontWeight = FontWeight.Black, color = Color(0xFFFDE047))
+        Text(StringsHelper.get("tab_profile", lang).uppercase(), fontSize = 14.sp, fontWeight = FontWeight.Black, color = Color(0xFFFDE047))
 
         OutlinedTextField(
             value = nameInput,
             onValueChange = onNameChange,
-            label = { Text("Nama Panggilan") },
+            label = { Text(StringsHelper.get("player_name", lang)) },
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color(0xFFFDE047),
@@ -868,19 +1117,35 @@ private fun ProfilTabContent(
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Statistik Permainan:", fontWeight = FontWeight.Black, color = Color.White)
-                Text("• Skor Tertinggi: ${userData.highScore}", fontSize = 13.sp, color = Color(0xFFFFD700))
-                Text("• Total Mangsa Dikalahkan: ${userData.totalKills}", fontSize = 13.sp, color = Color(0xFF4ADE80))
-                Text("• Total Pertandingan: ${userData.totalGames}", fontSize = 13.sp, color = Color(0xFF00E5FF))
+                Text(StringsHelper.get("records", lang) + ":", fontWeight = FontWeight.Black, color = Color.White)
+                Text("• ${StringsHelper.get("high_score", lang)}: ${userData.highScore}", fontSize = 13.sp, color = Color(0xFFFFD700))
+                Text("• ${StringsHelper.get("kills", lang)}: ${userData.totalKills}", fontSize = 13.sp, color = Color(0xFF4ADE80))
+                Text("• ${StringsHelper.get("total_games", lang)}: ${userData.totalGames}", fontSize = 13.sp, color = Color(0xFF00E5FF))
             }
+        }
+
+        // Button to open full Profile Screen with Tabs (Berkas, Prestasi) matching screenshot
+        Button(
+            onClick = onOpenProfile,
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF59E0B)),
+            modifier = Modifier.fillMaxWidth().height(48.dp)
+        ) {
+            Text(
+                text = StringsHelper.get("open_full_profile", lang),
+                fontWeight = FontWeight.Black,
+                color = Color.Black,
+                fontSize = 13.sp
+            )
         }
     }
 }
 
-// TAB 5: BAHASA
+// TAB 5: BAHASA (LANGUAGES WITH INSTANT REACTIVITY)
 @Composable
 private fun BahasaTabContent(
     userData: UserGameData,
+    lang: AppLanguage,
     onSetLanguage: (AppLanguage) -> Unit
 ) {
     Column(
@@ -890,7 +1155,7 @@ private fun BahasaTabContent(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Text("PILIH BAHASA APLIKASI", fontSize = 14.sp, fontWeight = FontWeight.Black, color = Color(0xFFFDE047))
+        Text(StringsHelper.get("choose_lang_title", lang), fontSize = 14.sp, fontWeight = FontWeight.Black, color = Color(0xFFFDE047))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -912,6 +1177,10 @@ private fun BahasaTabContent(
                         Text(appLang.badgeCode, fontWeight = FontWeight.Black, color = if (isSelected) Color.Black else Color(0xFF38BDF8), fontSize = 13.sp)
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(appLang.displayName, fontWeight = FontWeight.Bold, color = if (isSelected) Color.Black else Color.White, fontSize = 12.sp)
+                        if (isSelected) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("✓", fontWeight = FontWeight.Black, color = Color.Black, fontSize = 12.sp)
+                        }
                     }
                 }
             }
@@ -937,6 +1206,10 @@ private fun BahasaTabContent(
                         Text(appLang.badgeCode, fontWeight = FontWeight.Black, color = if (isSelected) Color.Black else Color(0xFF38BDF8), fontSize = 13.sp)
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(appLang.displayName, fontWeight = FontWeight.Bold, color = if (isSelected) Color.Black else Color.White, fontSize = 12.sp)
+                        if (isSelected) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("✓", fontWeight = FontWeight.Black, color = Color.Black, fontSize = 12.sp)
+                        }
                     }
                 }
             }

@@ -751,7 +751,8 @@ object WormsRenderer {
         cameraOffset: Offset,
         zoom: Float,
         isProtected: Boolean = false,
-        gameTime: Float = 0f
+        gameTime: Float = 0f,
+        showAnalogArrow: Boolean = true
     ) {
         if (!worm.isAlive) return
         with(drawScope) {
@@ -955,8 +956,7 @@ object WormsRenderer {
             }
 
             // 4. Direction Pointer Arrow (Panah Arah Analog di Depan Muka Cacing Player)
-            // 4. Direction Pointer Arrow (Panah Arah Analog di Depan Muka Cacing Player)
-            if (worm.isPlayer) {
+            if (worm.isPlayer && showAnalogArrow) {
                 val arrowDistance = (headR * 2.8f).coerceAtLeast(42f * zoom)
                 val arrowAngle = worm.targetAngle // Exact analog steering angle
                 val arrowCenterX = headPos.x + cos(arrowAngle) * arrowDistance

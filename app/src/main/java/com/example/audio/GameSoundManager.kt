@@ -27,12 +27,19 @@ class GameSoundManager(private val context: Context) {
 
     var soundEnabled: Boolean = true
     var vibrationEnabled: Boolean = true
+    var soundVolumeFactor: Float = 0.8f
+
+    fun setSoundVolume(volumeInt: Int) {
+        soundVolumeFactor = (volumeInt / 10f).coerceIn(0f, 1f)
+        soundEnabled = volumeInt > 0
+    }
 
     private val sampleRate = 22050
 
     // Synthesize simple pleasant waveform PCM buffer
     private fun playTone(frequencies: FloatArray, durationMs: Int, volume: Float = 0.4f) {
-        if (!soundEnabled) return
+        if (!soundEnabled || soundVolumeFactor <= 0f) return
+        val finalVol = volume * soundVolumeFactor
         scope.launch {
             try {
                 val totalSamples = (sampleRate * (durationMs / 1000f)).toInt().coerceAtLeast(1)
@@ -46,7 +53,7 @@ class GameSoundManager(private val context: Context) {
 
                     // Envelope: attack and smooth decay
                     val envelope = (1f - progress) * (progress * 8f).coerceAtMost(1f)
-                    val sample = sin(2.0 * PI * i * freq / sampleRate) * envelope * volume * Short.MAX_VALUE
+                    val sample = sin(2.0 * PI * i * freq / sampleRate) * envelope * finalVol * Short.MAX_VALUE
                     buffer[i] = sample.toInt().toShort()
                 }
 
@@ -112,6 +119,16 @@ class GameSoundManager(private val context: Context) {
     fun playVictorySound() {
         playTone(floatArrayOf(523f, 659f, 784f, 1046f), 500, 0.5f)
         vibrate(100)
+    }
+
+    fun playClickSound() {
+        playTone(floatArrayOf(800f, 1200f), 45, 0.25f)
+        vibrate(10)
+    }
+
+    fun playCoinSound() {
+        playTone(floatArrayOf(987.77f, 1318.51f), 120, 0.40f)
+        vibrate(25)
     }
 
     fun vibrate(durationMs: Long) {

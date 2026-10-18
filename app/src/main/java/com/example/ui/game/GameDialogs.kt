@@ -53,6 +53,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -926,3 +927,313 @@ private fun StatRow(
         )
     }
 }
+
+// COIN SHOP & FREE REWARDS DIALOG
+@Composable
+fun CoinShopDialog(
+    userData: UserGameData,
+    lang: AppLanguage,
+    onAddCoins: (Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = Color(0xFF1E293B),
+            border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFFACC15)),
+            shadowElevation = 12.dp,
+            modifier = Modifier
+                .fillMaxWidth(0.95f)
+                .padding(vertical = 16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(20.dp)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("🪙", fontSize = 26.sp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = StringsHelper.get("coin_shop_title", lang),
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color(0xFFFDE047)
+                        )
+                    }
+                    Surface(
+                        onClick = onDismiss,
+                        shape = CircleShape,
+                        color = Color(0xFF334155),
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(Icons.Default.Close, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                        }
+                    }
+                }
+
+                Text(
+                    text = "Koin saat ini: ${userData.coins} 🪙",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+
+                // Package 1: Watch Video +500 Coins
+                CoinPackageItem(
+                    icon = "🎬",
+                    title = "Tonton Video Singkat",
+                    reward = "+500 Koin Gratis",
+                    badge = "GRATIS",
+                    badgeColor = Color(0xFF22C55E),
+                    onClick = {
+                        onAddCoins(500)
+                        onDismiss()
+                    }
+                )
+
+                // Package 2: Daily Mystery Chest +1000 Coins
+                CoinPackageItem(
+                    icon = "🎁",
+                    title = "Peti Emas Misteri",
+                    reward = "+1,000 Koin Emas",
+                    badge = "HARIAN",
+                    badgeColor = Color(0xFFEAB308),
+                    onClick = {
+                        onAddCoins(1000)
+                        onDismiss()
+                    }
+                )
+
+                // Package 3: Starter Pack +5000 Coins
+                CoinPackageItem(
+                    icon = "💎",
+                    title = "Paket Pemula",
+                    reward = "+5,000 Koin",
+                    badge = "POPULER",
+                    badgeColor = Color(0xFF38BDF8),
+                    onClick = {
+                        onAddCoins(5000)
+                        onDismiss()
+                    }
+                )
+
+                // Package 4: Sultan Pack +25000 Coins
+                CoinPackageItem(
+                    icon = "👑",
+                    title = "Paket Sultan",
+                    reward = "+25,000 Koin",
+                    badge = "HEMAT",
+                    badgeColor = Color(0xFFA855F7),
+                    onClick = {
+                        onAddCoins(25000)
+                        onDismiss()
+                    }
+                )
+
+                // Package 5: Mega King Pack +100000 Coins
+                CoinPackageItem(
+                    icon = "🌟",
+                    title = "Paket Raja Cacing",
+                    reward = "+100,000 Koin",
+                    badge = "MEGA BONUS",
+                    badgeColor = Color(0xFFEF4444),
+                    onClick = {
+                        onAddCoins(100000)
+                        onDismiss()
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CoinPackageItem(
+    icon: String,
+    title: String,
+    reward: String,
+    badge: String,
+    badgeColor: Color,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(14.dp),
+        color = Color(0xFF0F172A),
+        border = androidx.compose.foundation.BorderStroke(1.5.dp, badgeColor.copy(alpha = 0.7f)),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(icon, fontSize = 28.sp)
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(title, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 14.sp)
+                    Text(reward, fontWeight = FontWeight.Black, color = Color(0xFFFDE047), fontSize = 13.sp)
+                }
+            }
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = badgeColor
+            ) {
+                Text(
+                    text = badge,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color.White,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+        }
+    }
+}
+
+// PIGGY BANK DIALOG
+@Composable
+fun PiggyBankDialog(
+    piggyCoins: Int,
+    onBreak: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = Color(0xFF1E293B),
+            border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFFACC15)),
+            shadowElevation = 12.dp,
+            modifier = Modifier.fillMaxWidth(0.9f)
+        ) {
+            Column(
+                modifier = Modifier.padding(22.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Text("🐷", fontSize = 54.sp)
+                Text(
+                    text = "Celengan Babi Nana",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color(0xFFFDE047)
+                )
+                Text(
+                    text = "Celenganmu telah mengumpulkan koin dari pertandingan!",
+                    fontSize = 13.sp,
+                    color = Color.White,
+                    textAlign = TextAlign.Center
+                )
+
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(0xFF0F172A),
+                    border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFF59E0B)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("Total Tabungan Koin:", fontSize = 12.sp, color = Color(0xFFA0AEC0))
+                        Text(
+                            text = "$piggyCoins 🪙",
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color(0xFFFACC15)
+                        )
+                    }
+                }
+
+                Button(
+                    onClick = onBreak,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22C55E)),
+                    modifier = Modifier.fillMaxWidth().height(48.dp)
+                ) {
+                    Text("Pecahkan Celengan & Ambil Koin!", fontWeight = FontWeight.Black, fontSize = 14.sp)
+                }
+
+                TextButton(onClick = onDismiss) {
+                    Text("Nanti Saja", color = Color(0xFFA0AEC0))
+                }
+            }
+        }
+    }
+}
+
+// LUCKY BONUS DIALOG
+@Composable
+fun LuckyBonusDialog(
+    onClaimBonus: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = Color(0xFF1E293B),
+            border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFEF4444)),
+            shadowElevation = 12.dp,
+            modifier = Modifier.fillMaxWidth(0.9f)
+        ) {
+            Column(
+                modifier = Modifier.padding(22.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Text("⭐", fontSize = 52.sp)
+                Text(
+                    text = "Bonus Harian Spesial!",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color(0xFFFDE047)
+                )
+                Text(
+                    text = "Selamat! Anda mendapatkan hadiah koin kejutan harian sebesar:",
+                    fontSize = 13.sp,
+                    color = Color.White,
+                    textAlign = TextAlign.Center
+                )
+
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(0xFF450A0A),
+                    border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFEF4444)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("+750 Koin Emas", fontSize = 24.sp, fontWeight = FontWeight.Black, color = Color(0xFFFDE047))
+                    }
+                }
+
+                Button(
+                    onClick = onClaimBonus,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
+                    modifier = Modifier.fillMaxWidth().height(48.dp)
+                ) {
+                    Text("KLAIM SEKARANG!", fontWeight = FontWeight.Black, fontSize = 15.sp)
+                }
+
+                TextButton(onClick = onDismiss) {
+                    Text("Tutup", color = Color(0xFFA0AEC0))
+                }
+            }
+        }
+    }
+}
+

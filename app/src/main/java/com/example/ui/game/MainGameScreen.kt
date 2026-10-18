@@ -199,7 +199,8 @@ fun MainGameScreen(
                 cameraOffset = cameraOffset,
                 zoom = zoom,
                 isProtected = engine.isPlayerProtected,
-                gameTime = engine.gameTimeSeconds
+                gameTime = engine.gameTimeSeconds,
+                showAnalogArrow = userData.showAnalogArrow
             )
 
             // 6. Draw Particles
