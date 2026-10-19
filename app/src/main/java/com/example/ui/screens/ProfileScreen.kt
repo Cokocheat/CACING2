@@ -950,16 +950,22 @@ private fun AchievementCard(
                     )
                 }
             } else if (isClaimable) {
+                var isClaiming by remember { mutableStateOf(false) }
                 Surface(
-                    onClick = onClaim,
+                    onClick = {
+                        if (!isClaiming) {
+                            isClaiming = true
+                            onClaim()
+                        }
+                    },
                     shape = RoundedCornerShape(8.dp),
-                    color = Color(0xFF22C55E),
+                    color = if (isClaiming) Color(0xFF16A34A) else Color(0xFF22C55E),
                     border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF86EFAC)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(vertical = 4.dp)) {
                         Text(
-                            text = "Hadiah (+$rewardCoins 🪙)",
+                            text = if (isClaiming) "Mengklaim..." else "Hadiah (+$rewardCoins 🪙)",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Black,
                             color = Color.White

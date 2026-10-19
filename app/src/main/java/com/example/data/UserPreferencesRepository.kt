@@ -72,7 +72,8 @@ data class UserGameData(
     val claimedAchievements: Set<String> = emptySet(),
     val showAnalogArrow: Boolean = true,
     val foodSkinPack: String = "FAST_FOOD",
-    val highFpsEnabled: Boolean = true
+    val highFpsEnabled: Boolean = true,
+    val lastBonusClaimTimestamp: Long = 0L
 ) {
     companion object {
         val DAILY_REWARDS = listOf(
@@ -93,6 +94,7 @@ data class UserGameData(
             DailyRewardInfo(15, 12000, "KAISAR EMAS & MAHKOTA!", unlockSkin = SkinId.GOLDEN_EMPEROR, unlockAccessory = FaceAccessory.ROYAL_CROWN, isSpecial = true)
         )
         const val ONE_DAY_MILLIS = 24 * 60 * 60 * 1000L
+        const val BONUS_COOLDOWN_MILLIS = 8 * 60 * 60 * 1000L // 8 Hours Cooldown
     }
 
     val canClaimDailyToday: Boolean
@@ -100,6 +102,20 @@ data class UserGameData(
             if (lastClaimedDay == 0) return true // First login ever, can claim day 1 immediately
             val elapsed = System.currentTimeMillis() - lastClaimTimestamp
             return elapsed >= ONE_DAY_MILLIS
+        }
+
+    val canClaimLuckyBonus: Boolean
+        get() {
+            if (lastBonusClaimTimestamp == 0L) return true
+            val elapsed = System.currentTimeMillis() - lastBonusClaimTimestamp
+            return elapsed >= BONUS_COOLDOWN_MILLIS
+        }
+
+    val millisUntilNextBonus: Long
+        get() {
+            if (canClaimLuckyBonus) return 0L
+            val elapsed = System.currentTimeMillis() - lastBonusClaimTimestamp
+            return (BONUS_COOLDOWN_MILLIS - elapsed).coerceAtLeast(0L)
         }
 
     val nextDailyDay: Int
@@ -198,6 +214,7 @@ class UserPreferencesRepository(context: Context) {
         val showArrow = prefs.getBoolean("show_analog_arrow", true)
         val foodPack = prefs.getString("food_skin_pack", "FAST_FOOD") ?: "FAST_FOOD"
         val highFps = prefs.getBoolean("high_fps_enabled", true)
+        val lastBonusTime = prefs.getLong("last_bonus_claim_time", 0L)
 
         return UserGameData(
             playerName = name,
@@ -238,12 +255,15 @@ class UserPreferencesRepository(context: Context) {
             claimedAchievements = claimedAch,
             showAnalogArrow = showArrow,
             foodSkinPack = foodPack,
-            highFpsEnabled = highFps
+            highFpsEnabled = highFps,
+            lastBonusClaimTimestamp = lastBonusTime
         )
     }
 
-    fun claimAchievement(achievementId: String, rewardCoins: Int) {
+    fun claimAchievement(achievementId: String, rewardCoins: Int): Boolean {
         val current = _userData.value
+        // Strict guard against duplicate claims
+        if (current.claimedAchievements.contains(achievementId)) return false
         val updatedClaimed = current.claimedAchievements + achievementId
         val updatedCoins = current.coins + rewardCoins
         prefs.edit()
@@ -254,11 +274,31 @@ class UserPreferencesRepository(context: Context) {
             coins = updatedCoins,
             claimedAchievements = updatedClaimed
         )
+        return true
+    }
+
+    fun claimLuckyBonus(rewardCoins: Int): Boolean {
+        val current = _userData.value
+        // Strict guard against duplicate claims
+        if (!current.canClaimLuckyBonus) return false
+        val now = System.currentTimeMillis()
+        val newCoins = current.coins + rewardCoins
+        prefs.edit()
+            .putLong("last_bonus_claim_time", now)
+            .putInt("coins", newCoins)
+            .apply()
+        _userData.value = current.copy(
+            coins = newCoins,
+            lastBonusClaimTimestamp = now
+        )
+        return true
     }
 
     fun breakPiggyBank(): Int {
         val current = _userData.value
         val reward = current.piggyBankCoins
+        // Strict guard: cannot break empty piggy bank
+        if (reward <= 0) return 0
         val updatedCoins = current.coins + reward
         prefs.edit()
             .putInt("piggy_bank_coins", 0)

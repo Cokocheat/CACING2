@@ -163,7 +163,7 @@ fun MainGameScreen(
                 if (sx >= -viewMargin && sx <= w + viewMargin &&
                     sy >= -viewMargin && sy <= h + viewMargin
                 ) {
-                    WormsRenderer.drawFood(this, food, Offset(sx, sy), zoom, userData.mapTheme)
+                    WormsRenderer.drawFood(this, food, Offset(sx, sy), zoom, userData.mapTheme, userData.foodSkinPack)
                 }
             }
 
@@ -179,17 +179,26 @@ fun MainGameScreen(
                 }
             }
 
-            // 4. Draw AI Bots
+            // 4. Draw AI Bots (viewport culled for silky smooth 60-120 FPS performance)
+            val botCullMargin = 180f
             for (i in engine.bots.indices) {
                 val bot = engine.bots[i]
-                WormsRenderer.drawWorm(
-                    drawScope = this,
-                    worm = bot,
-                    cameraOffset = cameraOffset,
-                    zoom = zoom,
-                    isProtected = false,
-                    gameTime = engine.gameTimeSeconds
-                )
+                if (!bot.isAlive) continue
+                val headSx = bot.head.x * zoom + cameraOffset.x
+                val headSy = bot.head.y * zoom + cameraOffset.y
+                val botSpan = (bot.bodyPoints.size * bot.segmentRadius * 0.9f * zoom) + botCullMargin
+                if (headSx >= -botSpan && headSx <= w + botSpan &&
+                    headSy >= -botSpan && headSy <= h + botSpan
+                ) {
+                    WormsRenderer.drawWorm(
+                        drawScope = this,
+                        worm = bot,
+                        cameraOffset = cameraOffset,
+                        zoom = zoom,
+                        isProtected = false,
+                        gameTime = engine.gameTimeSeconds
+                    )
+                }
             }
 
             // 5. Draw Player Worm

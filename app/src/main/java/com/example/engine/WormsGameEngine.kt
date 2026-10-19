@@ -111,8 +111,8 @@ class WormsGameEngine(
         private set
     val isPlayerProtected: Boolean get() = spawnProtectionTimer > 0f
 
-    // Smooth camera zoom (zoomed closer for clear visibility)
-    var cameraZoom: Float = 1.30f
+    // Smooth camera zoom (zoomed closer for clear visibility and immersion)
+    var cameraZoom: Float = 1.70f
         private set
 
     private var hudUpdateTimer = 0f
@@ -161,7 +161,7 @@ class WormsGameEngine(
         killEventTimer = 0f
         currentArenaRadius = GameConfig.ARENA_RADIUS
         spawnProtectionTimer = 6.0f
-        cameraZoom = 1.0f
+        cameraZoom = 1.70f
         foods.clear()
         potions.clear()
         bots.clear()
@@ -373,9 +373,9 @@ class WormsGameEngine(
             spawnProtectionTimer = (spawnProtectionTimer - dt).coerceAtLeast(0f)
         }
 
-        // Smooth camera zoom (brought closer to worm so it is not too far away)
+        // Smooth camera zoom (zoomed in closer per request for larger worm, food, and clear immersion)
         val hasZoomPotion = player.hasPotion(PotionType.ZOOM)
-        val targetZoom = if (hasZoomPotion) 0.90f else (1.30f - (player.bodyPoints.size / 360f) * 0.35f).coerceIn(0.95f, 1.35f)
+        val targetZoom = if (hasZoomPotion) 1.25f else (1.80f - (player.bodyPoints.size / 320f) * 0.40f).coerceIn(1.40f, 1.90f)
         cameraZoom += (targetZoom - cameraZoom) * (dt * 3.5f).coerceAtMost(1f)
 
         // 1. Update player
@@ -612,13 +612,16 @@ class WormsGameEngine(
                 }
             }
 
-            // Check against other bots
+            // Check against other bots with fast bounding-box early out
             if (avoidAngle == null) {
                 for (i in bots.indices) {
                     val other = bots[i]
                     if (other.id == bot.id || !other.isAlive) continue
+                    // Skip if other bot is too far away to pose a collision hazard
+                    if (kotlin.math.abs(bot.head.x - other.head.x) > 380f && kotlin.math.abs(bot.head.y - other.head.y) > 380f) continue
                     for (pt in checkPoints) {
-                        for (seg in other.bodyPoints) {
+                        for (s in other.bodyPoints.indices step 2) {
+                            val seg = other.bodyPoints[s]
                             if (pt.distanceSquaredTo(seg) < avoidDistSq) {
                                 avoidAngle = (bot.head - seg).angle()
                                 break
@@ -686,10 +689,15 @@ class WormsGameEngine(
                 BotPersonality.SCAVENGER -> {
                     var feastPos: Vec2? = null
                     var feastDistSq = 600f * 600f
-                    for (i in foods.indices) {
+                    val scanSlice = minOf(foods.size, 150)
+                    for (i in 0 until scanSlice) {
                         val f = foods[i]
                         if (f.type == FoodType.DEATH_FEAST || f.type == FoodType.BURGER) {
-                            val dSq = bot.head.distanceSquaredTo(f.position)
+                            val dx = kotlin.math.abs(bot.head.x - f.position.x)
+                            if (dx > 600f) continue
+                            val dy = kotlin.math.abs(bot.head.y - f.position.y)
+                            if (dy > 600f) continue
+                            val dSq = dx * dx + dy * dy
                             if (dSq < feastDistSq) {
                                 feastDistSq = dSq
                                 feastPos = f.position
@@ -707,7 +715,11 @@ class WormsGameEngine(
                     var potionDistSq = 500f * 500f
                     for (i in potions.indices) {
                         val p = potions[i]
-                        val dSq = bot.head.distanceSquaredTo(p.position)
+                        val dx = kotlin.math.abs(bot.head.x - p.position.x)
+                        if (dx > 500f) continue
+                        val dy = kotlin.math.abs(bot.head.y - p.position.y)
+                        if (dy > 500f) continue
+                        val dSq = dx * dx + dy * dy
                         if (dSq < potionDistSq) {
                             potionDistSq = dSq
                             potionPos = p.position
@@ -721,15 +733,26 @@ class WormsGameEngine(
                 BotPersonality.WANDERER -> {}
             }
 
-            // Default: find closest food
+            // Default: find nearby food (high-performance slice scan with early-out)
             var closestFoodPos: Vec2? = null
-            var closestDistSq = 350f * 350f
-            for (i in foods.indices) {
-                val f = foods[i]
-                val dSq = bot.head.distanceSquaredTo(f.position)
-                if (dSq < closestDistSq) {
-                    closestDistSq = dSq
-                    closestFoodPos = f.position
+            var closestDistSq = 320f * 320f
+            val foodCount = foods.size
+            if (foodCount > 0) {
+                val startIdx = (bot.id.hashCode() and 0x7FFFFFFF) % foodCount
+                val scanSlice = minOf(foodCount, 120)
+                for (offset in 0 until scanSlice) {
+                    val idx = (startIdx + offset) % foodCount
+                    val f = foods[idx]
+                    val dx = kotlin.math.abs(bot.head.x - f.position.x)
+                    if (dx > 320f) continue
+                    val dy = kotlin.math.abs(bot.head.y - f.position.y)
+                    if (dy > 320f) continue
+                    val dSq = dx * dx + dy * dy
+                    if (dSq < closestDistSq) {
+                        closestDistSq = dSq
+                        closestFoodPos = f.position
+                        if (dSq < 100f * 100f) break // Found immediate food in front
+                    }
                 }
             }
 
@@ -909,47 +932,70 @@ class WormsGameEngine(
         }
 
         val foodIterator = foods.iterator()
+        val magnetRadiusSq = magnetRadius * magnetRadius
+        val maxEatRadiusPlayer = player.segmentRadius + 36f
+        val maxEatRadiusPlayerSq = maxEatRadiusPlayer * maxEatRadiusPlayer
+
         while (foodIterator.hasNext()) {
             val food = foodIterator.next()
+            val fx = food.position.x
+            val fy = food.position.y
 
             if (player.isAlive) {
-                val dist = playerHead.distanceTo(food.position)
-                if (dist < magnetRadius) {
-                    val dir = (playerHead - food.position).normalized()
-                    val pullSpeed = (1f - dist / magnetRadius) * 450f + 120f
-                    food.position = food.position + dir * (pullSpeed * dt)
-                }
+                val pdx = kotlin.math.abs(playerHead.x - fx)
+                if (pdx < magnetRadius) {
+                    val pdy = kotlin.math.abs(playerHead.y - fy)
+                    if (pdy < magnetRadius) {
+                        val dSq = pdx * pdx + pdy * pdy
+                        if (dSq < magnetRadiusSq) {
+                            val dist = kotlin.math.sqrt(dSq).coerceAtLeast(1f)
+                            val dirX = (playerHead.x - fx) / dist
+                            val dirY = (playerHead.y - fy) / dist
+                            val pullSpeed = (1f - dist / magnetRadius) * 450f + 120f
+                            food.position = Vec2(fx + dirX * (pullSpeed * dt), fy + dirY * (pullSpeed * dt))
+                        }
 
-                if (dist < player.segmentRadius + food.radius + 6f) {
-                    foodIterator.remove()
-                    val massGained = food.mass * scoreMultiplier
-                    player.mass += massGained
-                    player.mouthOpen = 1f
+                        val eatThreshold = player.segmentRadius + food.radius + 6f
+                        if (dSq < eatThreshold * eatThreshold) {
+                            foodIterator.remove()
+                            val massGained = food.mass * scoreMultiplier
+                            player.mass += massGained
+                            player.mouthOpen = 1f
 
-                    if (food.type == FoodType.GOLDEN_COIN) {
-                        coinsCollectedInSession += 2
+                            if (food.type == FoodType.GOLDEN_COIN) {
+                                coinsCollectedInSession += 2
+                            }
+
+                            soundManager.playEatSound()
+
+                            if (particles.size < 35) {
+                                particles.add(
+                                    GameParticle(
+                                        position = food.position,
+                                        velocity = Vec2(Random.nextFloat() * 50f - 25f, Random.nextFloat() * 50f - 25f),
+                                        color = food.type.primaryColor,
+                                        initialSize = 8f,
+                                        maxLifetime = 0.3f
+                                    )
+                                )
+                            }
+                            continue
+                        }
                     }
-
-                    soundManager.playEatSound()
-
-                    particles.add(
-                        GameParticle(
-                            position = food.position,
-                            velocity = Vec2(Random.nextFloat() * 50f - 25f, Random.nextFloat() * 50f - 25f),
-                            color = food.type.primaryColor,
-                            initialSize = 8f,
-                            maxLifetime = 0.3f
-                        )
-                    )
-                    continue
                 }
             }
 
+            // Bots eating food (fast bounding box rejection)
             for (i in bots.indices) {
                 val bot = bots[i]
                 if (!bot.isAlive) continue
-                val dist = bot.head.distanceTo(food.position)
-                if (dist < bot.segmentRadius + food.radius + 6f) {
+                val maxEat = bot.segmentRadius + food.radius + 6f
+                val bdx = kotlin.math.abs(bot.head.x - fx)
+                if (bdx > maxEat) continue
+                val bdy = kotlin.math.abs(bot.head.y - fy)
+                if (bdy > maxEat) continue
+
+                if (bdx * bdx + bdy * bdy < maxEat * maxEat) {
                     foodIterator.remove()
                     bot.mass += food.mass
                     bot.mouthOpen = 1f

@@ -65,19 +65,19 @@ object GameConfig {
     const val ARENA_HEIGHT = 7600f
 
     const val INITIAL_MASS = 25f
-    const val BASE_SPEED = 230f
-    const val BOOST_SPEED = 420f
-    const val TURN_SPEED = 5.2f // radians per second
+    const val BASE_SPEED = 305f // Nimble and responsive worm movement
+    const val BOOST_SPEED = 525f // Snappy turbo boost
+    const val TURN_SPEED = 5.8f // radians per second for agile steering
 
     const val BASE_SEGMENT_RADIUS = 16f
     const val SEGMENT_SPACING = 14f
     const val INITIAL_SEGMENTS = 14
 
-    const val FOOD_COUNT_TARGET = 1500 // Substantially increased foods everywhere
-    const val POTION_COUNT_TARGET = 35 // More potions and spells
-    const val BOT_COUNT_TARGET = 40 // Lots of lively enemy bots roaming the arena
+    const val FOOD_COUNT_TARGET = 950 // Balanced density, smooth 60-120fps on budget devices
+    const val POTION_COUNT_TARGET = 30 // Plentiful power-up potions
+    const val BOT_COUNT_TARGET = 28 // Dense lively arena with zero CPU bottleneck
 
-    const val MAGNET_BASE_RADIUS = 240f
-    const val MAGNET_UPGRADED_MAX = 420f
+    const val MAGNET_BASE_RADIUS = 260f
+    const val MAGNET_UPGRADED_MAX = 440f
 }
 

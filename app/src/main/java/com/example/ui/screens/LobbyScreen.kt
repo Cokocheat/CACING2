@@ -102,6 +102,7 @@ fun LobbyScreen(
     onOpenProfile: () -> Unit,
     onOpenCoinShop: () -> Unit,
     onAddCoins: (Int) -> Unit = {},
+    onClaimLuckyBonus: (Int) -> Boolean = { false },
     onBreakPiggyBank: () -> Unit = {},
     onClaimDailyReward: () -> Any? = {},
     onUpdateName: (String) -> Unit = {},
@@ -432,53 +433,44 @@ fun LobbyScreen(
             ) {
                 // LEFT STACK: Event / Bonus Badges (Warm theme harmony)
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Bonus Button
+                    // 1. Bonus Harian / Lucky Bonus Button (With real status & cooldown)
+                    val canClaimBonus = userData.canClaimLuckyBonus
                     Surface(
                         onClick = { showBonusDialog = true },
                         shape = CircleShape,
-                        color = Color(0xFFDC2626),
-                        border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFFDE047)),
+                        color = if (canClaimBonus) Color(0xFFDC2626) else Color(0xFF334155),
+                        border = androidx.compose.foundation.BorderStroke(2.dp, if (canClaimBonus) Color(0xFFFDE047) else Color(0xFF64748B)),
                         shadowElevation = 6.dp,
                         modifier = Modifier.size(54.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("BONUS", fontSize = 9.sp, fontWeight = FontWeight.Black, color = Color.White)
-                                Text("⭐", fontSize = 14.sp)
+                                val bonusHours = (userData.millisUntilNextBonus / (1000 * 60 * 60)).toInt()
+                                val bonusMins = ((userData.millisUntilNextBonus / (1000 * 60)) % 60).toInt()
+                                Text(
+                                    text = if (canClaimBonus) "BONUS" else "${bonusHours}j ${bonusMins}m",
+                                    fontSize = if (canClaimBonus) 9.sp else 7.5.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = if (canClaimBonus) Color(0xFFFDE047) else Color(0xFFA0AEC0)
+                                )
+                                Text(if (canClaimBonus) "⭐" else "⏳", fontSize = 14.sp)
                             }
                         }
                     }
 
-                    // Trophy Ribbon Badge ("2h 2j")
-                    Surface(
-                        onClick = onOpenRecords,
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color(0xEB28170B),
-                        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFACC15)),
-                        modifier = Modifier.width(64.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(4.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = Color(0xFFFDE047), modifier = Modifier.size(26.dp))
-                            Text("2h 2j", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color.White)
-                        }
-                    }
-
-                    // Calendar / 15-Hari Daily Login Gift Clipboard ("7j 50m")
+                    // 2. Calendar / 15-Hari Daily Login Gift ("Event 15 Hari")
                     Surface(
                         onClick = { showDailyLoginDialog = true },
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(14.dp),
                         color = Color(0xEB28170B),
-                        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFACC15)),
-                        modifier = Modifier.width(64.dp).testTag("btn_daily_event")
+                        border = androidx.compose.foundation.BorderStroke(1.5.dp, if (userData.canClaimDailyToday) Color(0xFFFACC15) else Color(0xFF78350F)),
+                        modifier = Modifier.width(66.dp).testTag("btn_daily_event")
                     ) {
                         Column(
-                            modifier = Modifier.padding(4.dp),
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Box(contentAlignment = Alignment.TopEnd) {
@@ -486,13 +478,21 @@ fun LobbyScreen(
                                 if (userData.canClaimDailyToday) {
                                     Box(
                                         modifier = Modifier
-                                            .size(8.dp)
+                                            .size(9.dp)
                                             .clip(CircleShape)
                                             .background(Color(0xFFEF4444))
                                     )
                                 }
                             }
-                            Text("7j 50m", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color.White)
+                            Spacer(modifier = Modifier.height(2.dp))
+                            val nextClaimHours = (userData.millisUntilNextClaim / (1000 * 60 * 60)).toInt()
+                            val nextClaimMins = ((userData.millisUntilNextClaim / (1000 * 60)) % 60).toInt()
+                            Text(
+                                text = if (userData.canClaimDailyToday) "KLAIM!" else "${nextClaimHours}j ${nextClaimMins}m",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Black,
+                                color = if (userData.canClaimDailyToday) Color(0xFF4ADE80) else Color(0xCCFFFFFF)
+                            )
                         }
                     }
                 }
@@ -720,6 +720,7 @@ fun LobbyScreen(
                 lang = lang,
                 onClaimReward = {
                     onClaimDailyReward()
+                    showDailyLoginDialog = false
                 },
                 onDismiss = {
                     showDailyLoginDialog = false
@@ -730,8 +731,9 @@ fun LobbyScreen(
         // Lucky Bonus Dialog
         if (showBonusDialog) {
             LuckyBonusDialog(
+                userData = userData,
                 onClaimBonus = {
-                    onAddCoins(750)
+                    onClaimLuckyBonus(750)
                     showBonusDialog = false
                 },
                 onDismiss = {

@@ -956,10 +956,9 @@ private fun MakananTabContent(
     onSetFoodSkinPack: (String) -> Unit
 ) {
     val foodPacks = listOf(
-        Triple("FAST_FOOD", StringsHelper.get("fast_food", lang), "🍔 🍕 🌭 🍩"),
-        Triple("SWEETS", StringsHelper.get("sweets", lang), "🍭 🍬 🍫 🍦"),
-        Triple("FRUITS", StringsHelper.get("fruits", lang), "🍎 🍉 🍓 🍊"),
-        Triple("CRYSTALS", StringsHelper.get("crystals", lang), "💎 ⭐ 🔮 🌟")
+        Triple("SWEETS", StringsHelper.get("sweets", lang), "🍭 🍬 🍫"),
+        Triple("FRUITS", StringsHelper.get("fruits", lang), "🍎 🍉 🍓"),
+        Triple("FAST_FOOD", StringsHelper.get("fast_food", lang), "🍔 🍕 🍩")
     )
 
     Column(
@@ -972,12 +971,12 @@ private fun MakananTabContent(
         Text(StringsHelper.get("food_appearance", lang), fontSize = 14.sp, fontWeight = FontWeight.Black, color = Color(0xFFFDE047))
         Text(StringsHelper.get("food_appearance_desc", lang), fontSize = 12.sp, color = Color(0xDDFFFFFF))
 
-        // Food Pack Selection Cards
+        // 3 Food Pack Selection Cards
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            foodPacks.take(2).forEach { (id, title, icons) ->
+            foodPacks.forEach { (id, title, icons) ->
                 val isSelected = userData.foodSkinPack == id
                 Surface(
                     onClick = { onSetFoodSkinPack(id) },
@@ -986,7 +985,10 @@ private fun MakananTabContent(
                     border = androidx.compose.foundation.BorderStroke(2.dp, if (isSelected) Color(0xFFFDE047) else Color(0xFF334B85)),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -1001,43 +1003,14 @@ private fun MakananTabContent(
                                 }
                             }
                         }
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(title, fontWeight = FontWeight.Black, color = if (isSelected) Color(0xFFFDE047) else Color.White, fontSize = 12.sp)
-                    }
-                }
-            }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            foodPacks.drop(2).forEach { (id, title, icons) ->
-                val isSelected = userData.foodSkinPack == id
-                Surface(
-                    onClick = { onSetFoodSkinPack(id) },
-                    shape = RoundedCornerShape(14.dp),
-                    color = if (isSelected) Color(0xFF223668) else Color(0xFF1E2A4F),
-                    border = androidx.compose.foundation.BorderStroke(2.dp, if (isSelected) Color(0xFFFDE047) else Color(0xFF334B85)),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(icons, fontSize = 18.sp)
-                            if (isSelected) {
-                                Surface(shape = CircleShape, color = Color(0xFFFDE047), modifier = Modifier.size(20.dp)) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Icon(Icons.Default.Check, contentDescription = null, tint = Color.Black, modifier = Modifier.size(14.dp))
-                                    }
-                                }
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(title, fontWeight = FontWeight.Black, color = if (isSelected) Color(0xFFFDE047) else Color.White, fontSize = 12.sp)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = title,
+                            fontWeight = FontWeight.Black,
+                            color = if (isSelected) Color(0xFFFDE047) else Color.White,
+                            fontSize = 12.sp,
+                            textAlign = TextAlign.Center
+                        )
                     }
                 }
             }

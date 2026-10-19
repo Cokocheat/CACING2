@@ -140,90 +140,38 @@ object WormsRenderer {
         food: FoodItem,
         screenPos: Offset,
         zoom: Float,
-        mapTheme: MapTheme = MapTheme.CYBER_FUNK
+        mapTheme: MapTheme = MapTheme.CYBER_FUNK,
+        foodSkinPack: String = "FAST_FOOD"
     ) {
         with(drawScope) {
-            val r = food.radius * zoom
+            val r = food.radius * zoom * 1.25f
             val x = screenPos.x
             val y = screenPos.y
 
-            // Theme-specific ambient food aura
+            // Theme-specific ambient food aura (optimized)
             when (mapTheme) {
                 MapTheme.CYBER_FUNK -> {
-                    drawCircle(
-                        color = Color(0x3300E5FF),
-                        radius = r * 1.35f,
-                        center = screenPos
-                    )
-                    drawCircle(
-                        color = Color(0x6600E5FF),
-                        radius = r * 1.2f,
-                        center = screenPos,
-                        style = Stroke(width = 1.2f * zoom)
-                    )
+                    drawCircle(color = Color(0x3300E5FF), radius = r * 1.35f, center = screenPos)
+                    drawCircle(color = Color(0x6600E5FF), radius = r * 1.2f, center = screenPos, style = Stroke(width = 1.2f * zoom))
                 }
                 MapTheme.COSMIC_SPACE -> {
-                    drawCircle(
-                        color = Color(0x337C4DFF),
-                        radius = r * 1.35f,
-                        center = screenPos
-                    )
-                    drawCircle(
-                        color = Color(0xAAFFFFFF),
-                        radius = 1.4f * zoom,
-                        center = Offset(x - r * 0.9f, y - r * 0.8f)
-                    )
+                    drawCircle(color = Color(0x337C4DFF), radius = r * 1.35f, center = screenPos)
                 }
                 MapTheme.SWEET_CANDY -> {
-                    drawCircle(
-                        color = Color(0x33FF4081),
-                        radius = r * 1.3f,
-                        center = screenPos
-                    )
+                    drawCircle(color = Color(0x33FF4081), radius = r * 1.3f, center = screenPos)
                 }
                 MapTheme.LAVA_VOLCANO -> {
-                    drawCircle(
-                        color = Color(0x44FF5722),
-                        radius = r * 1.35f,
-                        center = screenPos
-                    )
-                    drawCircle(
-                        color = Color(0xFFFF9100),
-                        radius = 1.4f * zoom,
-                        center = Offset(x + r * 0.9f, y - r * 0.8f)
-                    )
+                    drawCircle(color = Color(0x44FF5722), radius = r * 1.35f, center = screenPos)
                 }
                 MapTheme.RAINBOW_CARNIVAL -> {
-                    drawCircle(
-                        color = Color(0x33FFD700),
-                        radius = r * 1.35f,
-                        center = screenPos
-                    )
-                    drawCircle(
-                        color = Color(0x55FF4081),
-                        radius = r * 1.2f,
-                        center = screenPos,
-                        style = Stroke(width = 1.2f * zoom)
-                    )
+                    drawCircle(color = Color(0x33FFD700), radius = r * 1.35f, center = screenPos)
                 }
             }
 
-            // Outer edge magical glow for dead worm food (efek cahaya hanya di pinggir seperti screenshot)
+            // Outer edge magical glow for dead worm food
             if (food.isDeathDrop || food.type == FoodType.DEATH_FEAST) {
-                // Outer magenta / purple fiery aura stroke along the outer edge
-                drawCircle(
-                    color = Color(0x75EC4899),
-                    radius = r * 1.32f,
-                    center = screenPos,
-                    style = Stroke(width = 3.2f * zoom)
-                )
-                drawCircle(
-                    color = Color(0x40A855F7),
-                    radius = r * 1.52f,
-                    center = screenPos,
-                    style = Stroke(width = 2.0f * zoom)
-                )
-                // Sparkle ember on perimeter edge
+                drawCircle(color = Color(0x75EC4899), radius = r * 1.32f, center = screenPos, style = Stroke(width = 3.2f * zoom))
+                drawCircle(color = Color(0x40A855F7), radius = r * 1.52f, center = screenPos, style = Stroke(width = 2.0f * zoom))
                 val emberAngle = (food.id * 1.45f).toFloat()
                 val ex = x + cos(emberAngle) * (r * 1.28f)
                 val ey = y + sin(emberAngle) * (r * 1.28f)
@@ -238,6 +186,345 @@ object WormsRenderer {
                 size = Size(r * 1.9f, r * 0.55f)
             )
 
+            // SPECIALIZED FOOD THEMES BASED ON USER SELECTION IN SETTINGS
+            if (food.type != FoodType.GOLDEN_COIN && food.type != FoodType.BOOST_DROP) {
+                when (foodSkinPack) {
+                    "SWEETS" -> {
+                        val variant = ((food.id and 0x7FFFFFFF) % 4).toInt()
+                        when (variant) {
+                            0 -> {
+                                // 1. Swirl Round Lollipop
+                                drawLine(
+                                    color = Color(0xFFE2E8F0),
+                                    start = Offset(x, y),
+                                    end = Offset(x + r * 0.85f, y + r * 1.35f),
+                                    strokeWidth = 3.2f * zoom,
+                                    cap = StrokeCap.Round
+                                )
+                                drawCircle(color = Color(0xFFEC4899), radius = r * 0.95f, center = screenPos)
+                                drawCircle(color = Color.White, radius = r * 0.68f, center = screenPos, style = Stroke(width = 2.6f * zoom))
+                                drawCircle(color = Color(0xFFFDE047), radius = r * 0.40f, center = screenPos)
+                                drawCircle(color = Color(0xFFA855F7), radius = r * 0.18f, center = screenPos)
+                                drawArc(
+                                    color = Color.White.copy(alpha = 0.65f),
+                                    startAngle = 200f,
+                                    sweepAngle = 90f,
+                                    useCenter = false,
+                                    topLeft = Offset(x - r * 0.75f, y - r * 0.75f),
+                                    size = Size(r * 1.5f, r * 1.5f),
+                                    style = Stroke(width = 2.5f * zoom, cap = StrokeCap.Round)
+                                )
+                            }
+                            1 -> {
+                                // 2. Wrapped Bonbon Candy
+                                val leftWrapper = Path().apply {
+                                    moveTo(x, y)
+                                    lineTo(x - r * 1.3f, y - r * 0.55f)
+                                    lineTo(x - r * 1.3f, y + r * 0.55f)
+                                    close()
+                                }
+                                val rightWrapper = Path().apply {
+                                    moveTo(x, y)
+                                    lineTo(x + r * 1.3f, y - r * 0.55f)
+                                    lineTo(x + r * 1.3f, y + r * 0.55f)
+                                    close()
+                                }
+                                drawPath(leftWrapper, color = Color(0xFF38BDF8))
+                                drawPath(rightWrapper, color = Color(0xFF38BDF8))
+                                drawOval(
+                                    color = Color(0xFFE11D48),
+                                    topLeft = Offset(x - r * 0.88f, y - r * 0.6f),
+                                    size = Size(r * 1.76f, r * 1.2f)
+                                )
+                                drawRoundRect(
+                                    color = Color(0xFFFDE047),
+                                    topLeft = Offset(x - r * 0.28f, y - r * 0.58f),
+                                    size = Size(r * 0.56f, r * 1.16f),
+                                    cornerRadius = CornerRadius(2f, 2f)
+                                )
+                                drawOval(
+                                    color = Color.White.copy(alpha = 0.65f),
+                                    topLeft = Offset(x - r * 0.55f, y - r * 0.4f),
+                                    size = Size(r * 0.9f, r * 0.3f)
+                                )
+                            }
+                            2 -> {
+                                // 3. Chocolate Bonbon
+                                drawRoundRect(
+                                    color = Color(0xFF451A03),
+                                    topLeft = Offset(x - r * 0.88f, y - r * 0.88f),
+                                    size = Size(r * 1.76f, r * 1.76f),
+                                    cornerRadius = CornerRadius(r * 0.45f, r * 0.45f)
+                                )
+                                drawLine(
+                                    color = Color(0xFFF59E0B),
+                                    start = Offset(x - r * 0.65f, y - r * 0.35f),
+                                    end = Offset(x + r * 0.65f, y - r * 0.15f),
+                                    strokeWidth = 2.8f * zoom,
+                                    cap = StrokeCap.Round
+                                )
+                                drawLine(
+                                    color = Color(0xFFF59E0B),
+                                    start = Offset(x - r * 0.55f, y + r * 0.2f),
+                                    end = Offset(x + r * 0.55f, y + r * 0.4f),
+                                    strokeWidth = 2.8f * zoom,
+                                    cap = StrokeCap.Round
+                                )
+                                drawCircle(color = Color(0xFF4ADE80), radius = 2.2f * zoom, center = Offset(x - r * 0.25f, y - r * 0.48f))
+                                drawCircle(color = Color(0xFFEC4899), radius = 2.2f * zoom, center = Offset(x + r * 0.3f, y + r * 0.1f))
+                                drawCircle(color = Color.White, radius = 2.0f * zoom, center = Offset(x - r * 0.35f, y + r * 0.35f))
+                            }
+                            else -> {
+                                // 4. Jelly Gumdrop
+                                drawArc(
+                                    color = Color(0xFFA855F7),
+                                    startAngle = 180f,
+                                    sweepAngle = 180f,
+                                    useCenter = true,
+                                    topLeft = Offset(x - r * 0.88f, y - r * 0.88f),
+                                    size = Size(r * 1.76f, r * 1.76f)
+                                )
+                                drawRoundRect(
+                                    color = Color(0xFF9333EA),
+                                    topLeft = Offset(x - r * 0.95f, y - r * 0.1f),
+                                    size = Size(r * 1.9f, r * 0.75f),
+                                    cornerRadius = CornerRadius(r * 0.35f, r * 0.35f)
+                                )
+                                drawCircle(color = Color.White.copy(0.7f), radius = 1.8f * zoom, center = Offset(x - r * 0.3f, y - r * 0.45f))
+                                drawCircle(color = Color.White.copy(0.7f), radius = 1.8f * zoom, center = Offset(x + r * 0.3f, y - r * 0.35f))
+                                drawCircle(color = Color.White.copy(0.7f), radius = 1.8f * zoom, center = Offset(x, y + r * 0.25f))
+                            }
+                        }
+                        return
+                    }
+
+                    "FRUITS" -> {
+                        val variant = ((food.id and 0x7FFFFFFF) % 4).toInt()
+                        when (variant) {
+                            0 -> {
+                                // 1. Red Apple
+                                drawCircle(color = Color(0xFFDC2626), radius = r * 0.95f, center = Offset(x, y + r * 0.08f))
+                                drawCircle(color = Color(0xFFB91C1C), radius = r * 0.35f, center = Offset(x, y - r * 0.65f))
+                                drawLine(
+                                    color = Color(0xFF78350F),
+                                    start = Offset(x, y - r * 0.65f),
+                                    end = Offset(x + r * 0.25f, y - r * 1.25f),
+                                    strokeWidth = 2.8f * zoom,
+                                    cap = StrokeCap.Round
+                                )
+                                val leafPath = Path().apply {
+                                    moveTo(x + r * 0.15f, y - r * 0.95f)
+                                    quadraticBezierTo(x + r * 0.75f, y - r * 1.25f, x + r * 0.85f, y - r * 0.85f)
+                                    quadraticBezierTo(x + r * 0.45f, y - r * 0.75f, x + r * 0.15f, y - r * 0.95f)
+                                    close()
+                                }
+                                drawPath(leafPath, color = Color(0xFF22C55E))
+                                drawOval(color = Color.White.copy(alpha = 0.6f), topLeft = Offset(x - r * 0.55f, y - r * 0.45f), size = Size(r * 0.45f, r * 0.75f))
+                            }
+                            1 -> {
+                                // 2. Watermelon Slice
+                                drawArc(color = Color(0xFF15803D), startAngle = 0f, sweepAngle = 180f, useCenter = true, topLeft = Offset(x - r, y - r), size = Size(r * 2f, r * 2f))
+                                drawArc(color = Color(0xFF86EFAC), startAngle = 0f, sweepAngle = 180f, useCenter = true, topLeft = Offset(x - r * 0.88f, y - r * 0.88f), size = Size(r * 1.76f, r * 1.76f))
+                                drawArc(color = Color(0xFFEF4444), startAngle = 0f, sweepAngle = 180f, useCenter = true, topLeft = Offset(x - r * 0.76f, y - r * 0.76f), size = Size(r * 1.52f, r * 1.52f))
+                                drawOval(color = Color(0xFF0F172A), topLeft = Offset(x - r * 0.45f, y + r * 0.18f), size = Size(r * 0.15f, r * 0.22f))
+                                drawOval(color = Color(0xFF0F172A), topLeft = Offset(x, y + r * 0.28f), size = Size(r * 0.15f, r * 0.22f))
+                                drawOval(color = Color(0xFF0F172A), topLeft = Offset(x + r * 0.45f, y + r * 0.18f), size = Size(r * 0.15f, r * 0.22f))
+                            }
+                            2 -> {
+                                // 3. Strawberry
+                                val berryPath = Path().apply {
+                                    moveTo(x, y + r * 1.05f)
+                                    cubicTo(x - r * 1.1f, y + r * 0.3f, x - r * 0.9f, y - r * 0.7f, x, y - r * 0.5f)
+                                    cubicTo(x + r * 0.9f, y - r * 0.7f, x + r * 1.1f, y + r * 0.3f, x, y + r * 1.05f)
+                                    close()
+                                }
+                                drawPath(berryPath, color = Color(0xFFE11D48))
+                                drawCircle(color = Color(0xFF22C55E), radius = r * 0.42f, center = Offset(x, y - r * 0.65f))
+                                drawCircle(color = Color(0xFFFDE047), radius = 1.8f * zoom, center = Offset(x - r * 0.35f, y - r * 0.15f))
+                                drawCircle(color = Color(0xFFFDE047), radius = 1.8f * zoom, center = Offset(x + r * 0.35f, y - r * 0.15f))
+                                drawCircle(color = Color(0xFFFDE047), radius = 1.8f * zoom, center = Offset(x, y + r * 0.25f))
+                                drawCircle(color = Color(0xFFFDE047), radius = 1.8f * zoom, center = Offset(x - r * 0.18f, y + r * 0.55f))
+                            }
+                            else -> {
+                                // 4. Sliced Orange
+                                drawCircle(color = Color(0xFFEA580C), radius = r * 0.95f, center = screenPos)
+                                drawCircle(color = Color(0xFFFFFBEB), radius = r * 0.84f, center = screenPos)
+                                drawCircle(color = Color(0xFFF97316), radius = r * 0.76f, center = screenPos)
+                                for (i in 0 until 6) {
+                                    val angle = (i * 60f) * (PI.toFloat() / 180f)
+                                    drawLine(
+                                        color = Color(0xFFFFFBEB),
+                                        start = screenPos,
+                                        end = Offset(x + cos(angle) * r * 0.76f, y + sin(angle) * r * 0.76f),
+                                        strokeWidth = 1.5f * zoom
+                                    )
+                                }
+                                drawCircle(color = Color(0xFFFFFBEB), radius = r * 0.18f, center = screenPos)
+                            }
+                        }
+                        return
+                    }
+
+                    "CRYSTALS" -> {
+                        val variant = ((food.id and 0x7FFFFFFF) % 4).toInt()
+                        when (variant) {
+                            0 -> {
+                                // 1. Diamond Gem
+                                val diamondPath = Path().apply {
+                                    moveTo(x - r * 0.65f, y - r * 0.45f)
+                                    lineTo(x + r * 0.65f, y - r * 0.45f)
+                                    lineTo(x + r * 0.95f, y - r * 0.15f)
+                                    lineTo(x, y + r * 0.95f)
+                                    lineTo(x - r * 0.95f, y - r * 0.15f)
+                                    close()
+                                }
+                                drawPath(diamondPath, color = Color(0xFF00E5FF))
+                                drawLine(color = Color(0xFFE0F2FE), start = Offset(x - r * 0.65f, y - r * 0.45f), end = Offset(x, y + r * 0.95f), strokeWidth = 1.5f * zoom)
+                                drawLine(color = Color(0xFFE0F2FE), start = Offset(x + r * 0.65f, y - r * 0.45f), end = Offset(x, y + r * 0.95f), strokeWidth = 1.5f * zoom)
+                                drawLine(color = Color.White, start = Offset(x - r * 0.95f, y - r * 0.15f), end = Offset(x + r * 0.95f, y - r * 0.15f), strokeWidth = 1.8f * zoom)
+                                drawCircle(color = Color.White, radius = 2.4f * zoom, center = Offset(x - r * 0.25f, y - r * 0.35f))
+                            }
+                            1 -> {
+                                // 2. Golden Star
+                                val starPath = Path()
+                                for (i in 0 until 10) {
+                                    val angle = (i * 36f - 90f) * (PI.toFloat() / 180f)
+                                    val rad = if (i % 2 == 0) r * 0.95f else r * 0.42f
+                                    val px = x + cos(angle) * rad
+                                    val py = y + sin(angle) * rad
+                                    if (i == 0) starPath.moveTo(px, py) else starPath.lineTo(px, py)
+                                }
+                                starPath.close()
+                                drawPath(starPath, color = Color(0xFFFACC15))
+                                drawCircle(color = Color(0xFFFEF08A), radius = r * 0.35f, center = screenPos)
+                                drawCircle(color = Color.White, radius = 2f * zoom, center = screenPos)
+                            }
+                            2 -> {
+                                // 3. Amethyst Crystal Shard
+                                val shardPath = Path().apply {
+                                    moveTo(x, y - r * 0.95f)
+                                    lineTo(x + r * 0.75f, y - r * 0.35f)
+                                    lineTo(x + r * 0.55f, y + r * 0.85f)
+                                    lineTo(x - r * 0.55f, y + r * 0.85f)
+                                    lineTo(x - r * 0.75f, y - r * 0.35f)
+                                    close()
+                                }
+                                drawPath(shardPath, color = Color(0xFFA855F7))
+                                drawLine(color = Color(0xFFE9D5FF), start = Offset(x, y - r * 0.95f), end = Offset(x, y + r * 0.85f), strokeWidth = 2f * zoom)
+                                drawCircle(color = Color.White, radius = 2.2f * zoom, center = Offset(x - r * 0.25f, y - r * 0.45f))
+                            }
+                            else -> {
+                                // 4. Cosmic Emerald Orb
+                                drawCircle(color = Color(0xFF10B981), radius = r * 0.85f, center = screenPos)
+                                drawOval(
+                                    color = Color(0xFF6EE7B7),
+                                    topLeft = Offset(x - r * 1.15f, y - r * 0.28f),
+                                    size = Size(r * 2.3f, r * 0.56f),
+                                    style = Stroke(width = 2.4f * zoom)
+                                )
+                                drawCircle(color = Color.White, radius = 2.5f * zoom, center = Offset(x - r * 0.35f, y - r * 0.35f))
+                            }
+                        }
+                        return
+                    }
+
+                    "FAST_FOOD" -> {
+                        val variant = ((food.id and 0x7FFFFFFF) % 4).toInt()
+                        when (variant) {
+                            0 -> {
+                                // 1. Burger
+                                drawRoundRect(
+                                    color = Color(0xFFC78338),
+                                    topLeft = Offset(x - r * 1.05f, y + r * 0.25f),
+                                    size = Size(r * 2.1f, r * 0.65f),
+                                    cornerRadius = CornerRadius(r * 0.35f, r * 0.35f)
+                                )
+                                drawRoundRect(
+                                    color = Color(0xFF3E2319),
+                                    topLeft = Offset(x - r * 1.0f, y - r * 0.02f),
+                                    size = Size(r * 2.0f, r * 0.45f),
+                                    cornerRadius = CornerRadius(r * 0.2f, r * 0.2f)
+                                )
+                                val cheesePath = Path().apply {
+                                    moveTo(x - r * 0.9f, y + r * 0.05f)
+                                    lineTo(x + r * 0.9f, y + r * 0.05f)
+                                    lineTo(x + r * 0.2f, y + r * 0.45f)
+                                    lineTo(x - r * 0.3f, y + r * 0.15f)
+                                    close()
+                                }
+                                drawPath(cheesePath, color = Color(0xFFFFC107), style = Fill)
+                                drawRoundRect(
+                                    color = Color(0xFF00E676),
+                                    topLeft = Offset(x - r * 1.1f, y - r * 0.32f),
+                                    size = Size(r * 2.2f, r * 0.36f),
+                                    cornerRadius = CornerRadius(r * 0.25f, r * 0.25f)
+                                )
+                                drawRoundRect(
+                                    color = Color(0xFFFF1744),
+                                    topLeft = Offset(x - r * 0.85f, y - r * 0.45f),
+                                    size = Size(r * 1.7f, r * 0.22f),
+                                    cornerRadius = CornerRadius(r * 0.1f, r * 0.1f)
+                                )
+                                drawRoundRect(
+                                    color = Color(0xFFFFA726),
+                                    topLeft = Offset(x - r * 1.05f, y - r * 1.05f),
+                                    size = Size(r * 2.1f, r * 0.95f),
+                                    cornerRadius = CornerRadius(r * 0.7f, r * 0.7f)
+                                )
+                                drawOval(color = Color(0xFFFFF9C4), topLeft = Offset(x - r * 0.3f, y - r * 0.7f), size = Size(r * 0.2f, r * 0.1f))
+                                drawOval(color = Color(0xFFFFF9C4), topLeft = Offset(x + r * 0.3f, y - r * 0.7f), size = Size(r * 0.2f, r * 0.1f))
+                            }
+                            1 -> {
+                                // 2. Donut
+                                drawCircle(color = Color(0xFFE0A96D), radius = r, center = screenPos)
+                                drawCircle(color = Color(0xFFFF4081), radius = r * 0.88f, center = screenPos)
+                                drawCircle(color = Color(0xFF101424), radius = r * 0.36f, center = screenPos)
+                                drawRoundRect(color = Color(0xFFFFEB3B), topLeft = Offset(x - r * 0.45f, y - r * 0.3f), size = Size(r * 0.3f, r * 0.12f), cornerRadius = CornerRadius(2f, 2f))
+                                drawRoundRect(color = Color(0xFF00E5FF), topLeft = Offset(x + r * 0.25f, y - r * 0.4f), size = Size(r * 0.12f, r * 0.3f), cornerRadius = CornerRadius(2f, 2f))
+                                drawRoundRect(color = Color(0xFFFFFFFF), topLeft = Offset(x - r * 0.3f, y + r * 0.35f), size = Size(r * 0.12f, r * 0.28f), cornerRadius = CornerRadius(2f, 2f))
+                            }
+                            2 -> {
+                                // 3. Pizza Slice
+                                val cheeseSlice = Path().apply {
+                                    moveTo(x - r * 0.85f, y - r * 0.6f)
+                                    lineTo(x + r * 0.85f, y - r * 0.6f)
+                                    lineTo(x, y + r * 0.9f)
+                                    close()
+                                }
+                                drawPath(cheeseSlice, color = Color(0xFFFFD54F), style = Fill)
+                                val crustPath = Path().apply {
+                                    moveTo(x - r * 0.85f, y - r * 0.8f)
+                                    lineTo(x + r * 0.85f, y - r * 0.8f)
+                                    lineTo(x + r * 0.95f, y - r * 0.55f)
+                                    lineTo(x - r * 0.95f, y - r * 0.55f)
+                                    close()
+                                }
+                                drawPath(crustPath, color = Color(0xFFC6843D), style = Fill)
+                                drawCircle(color = Color(0xFFC62828), radius = r * 0.22f, center = Offset(x - r * 0.25f, y - r * 0.2f))
+                                drawCircle(color = Color(0xFFC62828), radius = r * 0.22f, center = Offset(x + r * 0.2f, y - r * 0.15f))
+                                drawCircle(color = Color(0xFFC62828), radius = r * 0.22f, center = Offset(x, y + r * 0.28f))
+                            }
+                            else -> {
+                                // 4. Cupcake
+                                val cupPath = Path().apply {
+                                    moveTo(x - r * 0.7f, y)
+                                    lineTo(x + r * 0.7f, y)
+                                    lineTo(x + r * 0.5f, y + r * 0.8f)
+                                    lineTo(x - r * 0.5f, y + r * 0.8f)
+                                    close()
+                                }
+                                drawPath(cupPath, color = Color(0xFF90CAF9), style = Fill)
+                                drawCircle(color = Color(0xFFFF80AB), radius = r * 0.55f, center = Offset(x, y - r * 0.15f))
+                                drawCircle(color = Color(0xFFF48FB1), radius = r * 0.42f, center = Offset(x, y - r * 0.45f))
+                                drawCircle(color = Color(0xFFFF1744), radius = r * 0.2f, center = Offset(x, y - r * 0.95f))
+                            }
+                        }
+                        return
+                    }
+                }
+            }
+
+            // DEFAULT: FAST FOOD & SPECIAL FEASTS
             when (food.type) {
                 FoodType.BURGER -> {
                     // 1. Bottom toasted golden bun

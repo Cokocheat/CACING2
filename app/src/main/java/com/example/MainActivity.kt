@@ -19,6 +19,10 @@ class MainActivity : ComponentActivity() {
             android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN,
             android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN
         )
+        // Request high refresh rate mode (up to 120Hz) on supported hardware
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            window.attributes.preferredRefreshRate = 120f
+        }
         hideSystemBars()
         setContent {
             MyApplicationTheme {

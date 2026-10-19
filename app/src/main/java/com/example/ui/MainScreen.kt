@@ -86,6 +86,7 @@ fun MainScreen() {
                         onOpenProfile = { currentScreen = AppScreen.PROFILE },
                         onOpenCoinShop = { showCoinShopDialog = true },
                         onAddCoins = { userPrefs.addCoins(it) },
+                        onClaimLuckyBonus = { userPrefs.claimLuckyBonus(it) },
                         onBreakPiggyBank = { userPrefs.breakPiggyBank() },
                         onUpdateName = { userPrefs.updatePlayerName(it) },
                         onClaimDailyReward = { userPrefs.claimDailyReward() },

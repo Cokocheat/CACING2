@@ -56,6 +56,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -836,8 +839,15 @@ fun DailyLoginDialog(
                 // Status message & Claim button
                 if (canClaim) {
                     val rewardCoins = UserGameData.DAILY_REWARDS.getOrNull(nextDay - 1)?.coins ?: 200
+                    var hasClickedClaim by remember { mutableStateOf(false) }
                     Button(
-                        onClick = onClaimReward,
+                        onClick = {
+                            if (!hasClickedClaim) {
+                                hasClickedClaim = true
+                                onClaimReward()
+                            }
+                        },
+                        enabled = !hasClickedClaim,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp)
@@ -848,7 +858,7 @@ fun DailyLoginDialog(
                         shape = RoundedCornerShape(16.dp)
                     ) {
                         Text(
-                            text = "${StringsHelper.get("claim", lang)} (+ $rewardCoins ${StringsHelper.get("coins", lang)})",
+                            text = if (hasClickedClaim) "SEDANG MENGKLAIM..." else "${StringsHelper.get("claim", lang)} (+ $rewardCoins ${StringsHelper.get("coins", lang)})",
                             style = MaterialTheme.typography.titleSmall,
                             color = Color.Black,
                             fontWeight = FontWeight.Black
@@ -1173,17 +1183,21 @@ fun PiggyBankDialog(
     }
 }
 
-// LUCKY BONUS DIALOG
+// LUCKY BONUS DIALOG WITH COOLDOWN PROTECTION
 @Composable
 fun LuckyBonusDialog(
+    userData: UserGameData,
     onClaimBonus: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val canClaim = userData.canClaimLuckyBonus
+    var hasClaimedLocally by remember { mutableStateOf(false) }
+
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(24.dp),
             color = Color(0xFF1E293B),
-            border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFEF4444)),
+            border = androidx.compose.foundation.BorderStroke(2.dp, if (canClaim && !hasClaimedLocally) Color(0xFFEF4444) else Color(0xFF475569)),
             shadowElevation = 12.dp,
             modifier = Modifier.fillMaxWidth(0.9f)
         ) {
@@ -1192,41 +1206,69 @@ fun LuckyBonusDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Text("⭐", fontSize = 52.sp)
+                Text(if (canClaim && !hasClaimedLocally) "⭐" else "⏳", fontSize = 52.sp)
                 Text(
-                    text = "Bonus Harian Spesial!",
+                    text = if (canClaim && !hasClaimedLocally) "Bonus Harian Spesial!" else "Bonus Telah Diklaim",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Black,
-                    color = Color(0xFFFDE047)
+                    color = if (canClaim && !hasClaimedLocally) Color(0xFFFDE047) else Color(0xFF94A3B8)
                 )
                 Text(
-                    text = "Selamat! Anda mendapatkan hadiah koin kejutan harian sebesar:",
+                    text = if (canClaim && !hasClaimedLocally) {
+                        "Selamat! Anda mendapatkan hadiah koin kejutan harian sebesar:"
+                    } else {
+                        val hours = (userData.millisUntilNextBonus / (1000 * 60 * 60)).toInt()
+                        val minutes = ((userData.millisUntilNextBonus / (1000 * 60)) % 60).toInt()
+                        "Anda telah mengambil bonus ini. Silakan kembali lagi dalam:\n$hours Jam $minutes Menit"
+                    },
                     fontSize = 13.sp,
                     color = Color.White,
                     textAlign = TextAlign.Center
                 )
 
-                Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = Color(0xFF450A0A),
-                    border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFEF4444)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(14.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                if (canClaim && !hasClaimedLocally) {
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = Color(0xFF450A0A),
+                        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFEF4444)),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("+750 Koin Emas", fontSize = 24.sp, fontWeight = FontWeight.Black, color = Color(0xFFFDE047))
+                        Column(
+                            modifier = Modifier.padding(14.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text("+750 Koin Emas", fontSize = 24.sp, fontWeight = FontWeight.Black, color = Color(0xFFFDE047))
+                        }
                     }
-                }
 
-                Button(
-                    onClick = onClaimBonus,
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
-                    modifier = Modifier.fillMaxWidth().height(48.dp)
-                ) {
-                    Text("KLAIM SEKARANG!", fontWeight = FontWeight.Black, fontSize = 15.sp)
+                    Button(
+                        onClick = {
+                            if (!hasClaimedLocally) {
+                                hasClaimedLocally = true
+                                onClaimBonus()
+                            }
+                        },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
+                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                    ) {
+                        Text("KLAIM SEKARANG!", fontWeight = FontWeight.Black, fontSize = 15.sp)
+                    }
+                } else {
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = Color(0xFF1E2438),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "✓ Hadiah Hari Ini Sudah Diambil",
+                            color = Color(0xFF4ADE80),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(12.dp)
+                        )
+                    }
                 }
 
                 TextButton(onClick = onDismiss) {
