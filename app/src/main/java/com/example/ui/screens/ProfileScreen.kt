@@ -44,6 +44,18 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.SportsEsports
+import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Collections
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.FlashOn
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.MilitaryTech
+import androidx.compose.material.icons.filled.MonetizationOn
+import androidx.compose.material.icons.filled.RocketLaunch
+import androidx.compose.material.icons.filled.Stars
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -158,7 +170,12 @@ fun ProfileScreen(
                             modifier = Modifier.padding(start = 8.dp, end = 4.dp, top = 3.dp, bottom = 3.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("😊", fontSize = 16.sp)
+                            Icon(
+                                imageVector = Icons.Default.MonetizationOn,
+                                contentDescription = null,
+                                tint = Color(0xFFFFD700),
+                                modifier = Modifier.size(18.dp)
+                            )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = NumberFormat.getNumberInstance(Locale.US).format(userData.coins),
@@ -223,7 +240,12 @@ fun ProfileScreen(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("😊", fontSize = 18.sp)
+                        Icon(
+                            imageVector = Icons.Default.Badge,
+                            contentDescription = null,
+                            tint = if (isTab0) Color(0xFFFDE047) else Color(0xFF94A3B8),
+                            modifier = Modifier.size(18.dp)
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = StringsHelper.get("tab_archive", lang),
@@ -251,7 +273,12 @@ fun ProfileScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Box(contentAlignment = Alignment.TopEnd) {
-                            Text("🏆", fontSize = 18.sp)
+                            Icon(
+                                imageVector = Icons.Default.EmojiEvents,
+                                contentDescription = null,
+                                tint = if (isTab1) Color(0xFFFDE047) else Color(0xFF94A3B8),
+                                modifier = Modifier.size(18.dp)
+                            )
                             if (hasUnclaimedAchievements) {
                                 Box(
                                     modifier = Modifier
@@ -441,16 +468,24 @@ private fun BerkasTabContent(
                         modifier = Modifier.size(90.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            // Cute worm avatar
-                            Surface(
-                                shape = CircleShape,
-                                color = Color(0xFF64748B),
-                                border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFFDE047)),
-                                modifier = Modifier.size(56.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text("👀", fontSize = 28.sp)
-                                }
+                            Canvas(modifier = Modifier.size(56.dp)) {
+                                val cx = size.width / 2f
+                                val cy = size.height / 2f
+                                val r = size.minDimension / 2f - 2f
+                                // Head base circle
+                                drawCircle(color = Color(0xFF475569), radius = r, center = Offset(cx, cy))
+                                drawCircle(color = Color(0xFFFDE047), radius = r, center = Offset(cx, cy), style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.5f))
+                                // Left eye white
+                                drawCircle(color = Color.White, radius = r * 0.38f, center = Offset(cx - r * 0.32f, cy))
+                                // Right eye white
+                                drawCircle(color = Color.White, radius = r * 0.38f, center = Offset(cx + r * 0.32f, cy))
+                                // Left pupil
+                                drawCircle(color = Color.Black, radius = r * 0.22f, center = Offset(cx - r * 0.30f, cy))
+                                // Right pupil
+                                drawCircle(color = Color.Black, radius = r * 0.22f, center = Offset(cx + r * 0.34f, cy))
+                                // Eye shines
+                                drawCircle(color = Color.White, radius = r * 0.08f, center = Offset(cx - r * 0.35f, cy - r * 0.08f))
+                                drawCircle(color = Color.White, radius = r * 0.08f, center = Offset(cx + r * 0.29f, cy - r * 0.08f))
                             }
                         }
                     }
@@ -602,10 +637,10 @@ private fun BerkasTabContent(
             // Card 1: Skor Terbaik
             item {
                 StatCard(
-                    iconText = "🏋️",
+                    icon = Icons.Default.EmojiEvents,
                     title = "Skor Terbaik",
                     value = NumberFormat.getNumberInstance(Locale.US).format(userData.highScore),
-                    accentColor = Color(0xFF38BDF8)
+                    accentColor = Color(0xFFF59E0B)
                 )
             }
             // Card 2: Waktu Bertahan Hidup Terbaik
@@ -613,25 +648,25 @@ private fun BerkasTabContent(
                 val mins = userData.bestSurvivalSeconds / 60
                 val secs = userData.bestSurvivalSeconds % 60
                 StatCard(
-                    iconText = "⏰",
+                    icon = Icons.Default.Timer,
                     title = "Waktu Bertahan Hidup",
                     value = "${mins}m ${secs}d",
-                    accentColor = Color(0xFFF59E0B)
+                    accentColor = Color(0xFF38BDF8)
                 )
             }
             // Card 3: Cacing dikalahkan
             item {
                 StatCard(
-                    iconText = "💀",
+                    icon = Icons.Default.LocalFireDepartment,
                     title = "Cacing dikalahkan",
                     value = "${userData.totalKills}",
-                    accentColor = Color(0xFFEC4899)
+                    accentColor = Color(0xFFEF4444)
                 )
             }
             // Card 4: Game yang Dimainkan
             item {
                 StatCard(
-                    iconText = "🎮",
+                    icon = Icons.Default.SportsEsports,
                     title = "Game Dimainkan",
                     value = "${userData.totalGames}",
                     accentColor = Color(0xFFA855F7)
@@ -643,7 +678,7 @@ private fun BerkasTabContent(
                 val mins = (userData.totalPlayTimeSeconds % 3600) / 60
                 val secs = userData.totalPlayTimeSeconds % 60
                 StatCard(
-                    iconText = "⏳",
+                    icon = Icons.Default.History,
                     title = "Total Waktu Bermain",
                     value = "${hours}j ${mins}m ${secs}d",
                     accentColor = Color(0xFF10B981)
@@ -652,7 +687,7 @@ private fun BerkasTabContent(
             // Card 6: Cacing dikumpulkan
             item {
                 StatCard(
-                    iconText = "🃏",
+                    icon = Icons.Default.Collections,
                     title = "Cacing dikumpulkan",
                     value = "${userData.unlockedSkins.size}",
                     accentColor = Color(0xFFEAB308)
@@ -664,14 +699,14 @@ private fun BerkasTabContent(
 
 @Composable
 private fun StatCard(
-    iconText: String,
+    icon: ImageVector,
     title: String,
     value: String,
     accentColor: Color
 ) {
     Surface(
         shape = RoundedCornerShape(14.dp),
-        color = Color(0xFFE0F2FE), // Soft blue surface matching screenshot
+        color = Color(0xFFE0F2FE),
         border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFBAE6FD)),
         shadowElevation = 4.dp,
         modifier = Modifier.fillMaxWidth().height(105.dp)
@@ -692,7 +727,20 @@ private fun StatCard(
                 maxLines = 1
             )
 
-            Text(iconText, fontSize = 28.sp)
+            Surface(
+                shape = CircleShape,
+                color = accentColor.copy(alpha = 0.18f),
+                modifier = Modifier.size(36.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
 
             Text(
                 text = value,
@@ -756,7 +804,12 @@ private fun PrestasiTabContent(
                 ) {
                     // Bronze Statue (22/42)
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("🥉", fontSize = 28.sp)
+                        Icon(
+                            imageVector = Icons.Default.MilitaryTech,
+                            contentDescription = null,
+                            tint = Color(0xFFD97706),
+                            modifier = Modifier.size(32.dp)
+                        )
                         Surface(
                             shape = RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp),
                             color = Color(0xFFFED7AA),
@@ -771,7 +824,12 @@ private fun PrestasiTabContent(
 
                     // Silver Statue (10/42)
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("🥈", fontSize = 32.sp)
+                        Icon(
+                            imageVector = Icons.Default.MilitaryTech,
+                            contentDescription = null,
+                            tint = Color(0xFF94A3B8),
+                            modifier = Modifier.size(34.dp)
+                        )
                         Surface(
                             shape = RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp),
                             color = Color(0xFFE2E8F0),
@@ -786,7 +844,12 @@ private fun PrestasiTabContent(
 
                     // Gold Statue (4/47)
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("👑", fontSize = 36.sp)
+                        Icon(
+                            imageVector = Icons.Default.EmojiEvents,
+                            contentDescription = null,
+                            tint = Color(0xFFF59E0B),
+                            modifier = Modifier.size(38.dp)
+                        )
                         Surface(
                             shape = RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp),
                             color = Color(0xFFFEF08A),
@@ -821,7 +884,8 @@ private fun PrestasiTabContent(
                 val isClaimed = userData.claimedAchievements.contains("gold_rush")
                 AchievementCard(
                     title = "Demam Emas",
-                    icon = "⭐",
+                    icon = Icons.Default.Stars,
+                    iconTint = Color(0xFFEAB308),
                     isClaimable = !isClaimed,
                     isClaimed = isClaimed,
                     rewardCoins = 250,
@@ -834,7 +898,8 @@ private fun PrestasiTabContent(
             item {
                 AchievementCard(
                     title = "Rutin Tanpa Henti",
-                    icon = "📅",
+                    icon = Icons.Default.CalendarToday,
+                    iconTint = Color(0xFF0284C7),
                     isClaimable = false,
                     isClaimed = false,
                     rewardCoins = 250,
@@ -847,7 +912,8 @@ private fun PrestasiTabContent(
             item {
                 AchievementCard(
                     title = "Peningkatan",
-                    icon = "⚡",
+                    icon = Icons.Default.FlashOn,
+                    iconTint = Color(0xFFF59E0B),
                     isClaimable = false,
                     isClaimed = false,
                     rewardCoins = 500,
@@ -863,7 +929,8 @@ private fun PrestasiTabContent(
                 val canClaim = kills >= 400 && !isClaimed
                 AchievementCard(
                     title = "Predator Arena",
-                    icon = "🐉",
+                    icon = Icons.Default.LocalFireDepartment,
+                    iconTint = Color(0xFFEF4444),
                     isClaimable = canClaim,
                     isClaimed = isClaimed,
                     rewardCoins = 500,
@@ -876,7 +943,8 @@ private fun PrestasiTabContent(
             item {
                 AchievementCard(
                     title = "Kelas Berat",
-                    icon = "🥊",
+                    icon = Icons.Default.FitnessCenter,
+                    iconTint = Color(0xFFA855F7),
                     isClaimable = false,
                     isClaimed = false,
                     rewardCoins = 100,
@@ -889,7 +957,8 @@ private fun PrestasiTabContent(
             item {
                 AchievementCard(
                     title = "Blitz - Kecepatan",
-                    icon = "🚀",
+                    icon = Icons.Default.RocketLaunch,
+                    iconTint = Color(0xFF06B6D4),
                     isClaimable = false,
                     isClaimed = false,
                     rewardCoins = 500,
@@ -904,7 +973,8 @@ private fun PrestasiTabContent(
 @Composable
 private fun AchievementCard(
     title: String,
-    icon: String,
+    icon: ImageVector,
+    iconTint: Color,
     isClaimable: Boolean,
     isClaimed: Boolean,
     rewardCoins: Int,
@@ -934,7 +1004,15 @@ private fun AchievementCard(
                 maxLines = 1
             )
 
-            Text(icon, fontSize = 26.sp)
+            Surface(
+                shape = CircleShape,
+                color = iconTint.copy(alpha = 0.16f),
+                modifier = Modifier.size(36.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(imageVector = icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(20.dp))
+                }
+            }
 
             if (isClaimed) {
                 Surface(
@@ -963,9 +1041,13 @@ private fun AchievementCard(
                     border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF86EFAC)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(vertical = 4.dp)) {
+                    Row(
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            text = if (isClaiming) "Mengklaim..." else "Hadiah (+$rewardCoins 🪙)",
+                            text = if (isClaiming) "Mengklaim..." else "Klaim (+$rewardCoins)",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Black,
                             color = Color.White
@@ -984,7 +1066,7 @@ private fun AchievementCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(progressText, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                        Text("+$rewardCoins 🪙", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFDE047))
+                        Text("+$rewardCoins Koin", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFDE047))
                     }
                 }
             }

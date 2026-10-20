@@ -144,27 +144,26 @@ object WormsRenderer {
         foodSkinPack: String = "FAST_FOOD"
     ) {
         with(drawScope) {
-            val r = food.radius * zoom * 1.25f
+            val r = food.radius * zoom
             val x = screenPos.x
             val y = screenPos.y
 
-            // Theme-specific ambient food aura (optimized)
+            // Theme-specific ambient food aura (compact, crisp, and performant)
             when (mapTheme) {
                 MapTheme.CYBER_FUNK -> {
-                    drawCircle(color = Color(0x3300E5FF), radius = r * 1.35f, center = screenPos)
-                    drawCircle(color = Color(0x6600E5FF), radius = r * 1.2f, center = screenPos, style = Stroke(width = 1.2f * zoom))
+                    drawCircle(color = Color(0x2200E5FF), radius = r * 1.18f, center = screenPos)
                 }
                 MapTheme.COSMIC_SPACE -> {
-                    drawCircle(color = Color(0x337C4DFF), radius = r * 1.35f, center = screenPos)
+                    drawCircle(color = Color(0x227C4DFF), radius = r * 1.18f, center = screenPos)
                 }
                 MapTheme.SWEET_CANDY -> {
-                    drawCircle(color = Color(0x33FF4081), radius = r * 1.3f, center = screenPos)
+                    drawCircle(color = Color(0x22FF4081), radius = r * 1.18f, center = screenPos)
                 }
                 MapTheme.LAVA_VOLCANO -> {
-                    drawCircle(color = Color(0x44FF5722), radius = r * 1.35f, center = screenPos)
+                    drawCircle(color = Color(0x28FF5722), radius = r * 1.18f, center = screenPos)
                 }
                 MapTheme.RAINBOW_CARNIVAL -> {
-                    drawCircle(color = Color(0x33FFD700), radius = r * 1.35f, center = screenPos)
+                    drawCircle(color = Color(0x22FFD700), radius = r * 1.18f, center = screenPos)
                 }
             }
 
@@ -1059,6 +1058,12 @@ object WormsRenderer {
                     1f
                 }
                 val segR = baseR * taper
+
+                // Fast segment viewport culling: skip drawing segments outside the screen
+                if (screenX < -segR || screenX > size.width + segR ||
+                    screenY < -segR || screenY > size.height + segR) {
+                    continue
+                }
 
                 // Determine segment color based on skin pattern
                 val segColor = getSegmentColor(worm.skin, i, totalSegs)

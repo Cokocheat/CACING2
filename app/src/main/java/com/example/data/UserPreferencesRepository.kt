@@ -73,7 +73,10 @@ data class UserGameData(
     val showAnalogArrow: Boolean = true,
     val foodSkinPack: String = "FAST_FOOD",
     val highFpsEnabled: Boolean = true,
-    val lastBonusClaimTimestamp: Long = 0L
+    val lastBonusClaimTimestamp: Long = 0L,
+    val lastVideoRewardTime: Long = 0L,
+    val lastMysteryChestTime: Long = 0L,
+    val claimedShopPacks: Set<String> = emptySet()
 ) {
     companion object {
         val DAILY_REWARDS = listOf(
@@ -95,6 +98,7 @@ data class UserGameData(
         )
         const val ONE_DAY_MILLIS = 24 * 60 * 60 * 1000L
         const val BONUS_COOLDOWN_MILLIS = 8 * 60 * 60 * 1000L // 8 Hours Cooldown
+        const val VIDEO_COOLDOWN_MILLIS = 3 * 60 * 1000L // 3 Minutes Cooldown
     }
 
     val canClaimDailyToday: Boolean
@@ -116,6 +120,34 @@ data class UserGameData(
             if (canClaimLuckyBonus) return 0L
             val elapsed = System.currentTimeMillis() - lastBonusClaimTimestamp
             return (BONUS_COOLDOWN_MILLIS - elapsed).coerceAtLeast(0L)
+        }
+
+    val canClaimVideoReward: Boolean
+        get() {
+            if (lastVideoRewardTime == 0L) return true
+            val elapsed = System.currentTimeMillis() - lastVideoRewardTime
+            return elapsed >= VIDEO_COOLDOWN_MILLIS
+        }
+
+    val millisUntilNextVideo: Long
+        get() {
+            if (canClaimVideoReward) return 0L
+            val elapsed = System.currentTimeMillis() - lastVideoRewardTime
+            return (VIDEO_COOLDOWN_MILLIS - elapsed).coerceAtLeast(0L)
+        }
+
+    val canClaimMysteryChest: Boolean
+        get() {
+            if (lastMysteryChestTime == 0L) return true
+            val elapsed = System.currentTimeMillis() - lastMysteryChestTime
+            return elapsed >= ONE_DAY_MILLIS
+        }
+
+    val millisUntilNextChest: Long
+        get() {
+            if (canClaimMysteryChest) return 0L
+            val elapsed = System.currentTimeMillis() - lastMysteryChestTime
+            return (ONE_DAY_MILLIS - elapsed).coerceAtLeast(0L)
         }
 
     val nextDailyDay: Int
@@ -215,6 +247,9 @@ class UserPreferencesRepository(context: Context) {
         val foodPack = prefs.getString("food_skin_pack", "FAST_FOOD") ?: "FAST_FOOD"
         val highFps = prefs.getBoolean("high_fps_enabled", true)
         val lastBonusTime = prefs.getLong("last_bonus_claim_time", 0L)
+        val lastVideoTime = prefs.getLong("last_video_reward_time", 0L)
+        val lastChestTime = prefs.getLong("last_mystery_chest_time", 0L)
+        val shopPacks = prefs.getStringSet("claimed_shop_packs", emptySet()) ?: emptySet()
 
         return UserGameData(
             playerName = name,
@@ -256,8 +291,59 @@ class UserPreferencesRepository(context: Context) {
             showAnalogArrow = showArrow,
             foodSkinPack = foodPack,
             highFpsEnabled = highFps,
-            lastBonusClaimTimestamp = lastBonusTime
+            lastBonusClaimTimestamp = lastBonusTime,
+            lastVideoRewardTime = lastVideoTime,
+            lastMysteryChestTime = lastChestTime,
+            claimedShopPacks = shopPacks
         )
+    }
+
+    fun claimVideoReward(): Boolean {
+        val current = _userData.value
+        if (!current.canClaimVideoReward) return false
+        val now = System.currentTimeMillis()
+        val newCoins = current.coins + 500
+        prefs.edit()
+            .putLong("last_video_reward_time", now)
+            .putInt("coins", newCoins)
+            .apply()
+        _userData.value = current.copy(
+            coins = newCoins,
+            lastVideoRewardTime = now
+        )
+        return true
+    }
+
+    fun claimMysteryChest(): Boolean {
+        val current = _userData.value
+        if (!current.canClaimMysteryChest) return false
+        val now = System.currentTimeMillis()
+        val newCoins = current.coins + 1000
+        prefs.edit()
+            .putLong("last_mystery_chest_time", now)
+            .putInt("coins", newCoins)
+            .apply()
+        _userData.value = current.copy(
+            coins = newCoins,
+            lastMysteryChestTime = now
+        )
+        return true
+    }
+
+    fun claimShopPack(packId: String, coins: Int): Boolean {
+        val current = _userData.value
+        if (current.claimedShopPacks.contains(packId)) return false
+        val newPacks = current.claimedShopPacks + packId
+        val newCoins = current.coins + coins
+        prefs.edit()
+            .putStringSet("claimed_shop_packs", newPacks)
+            .putInt("coins", newCoins)
+            .apply()
+        _userData.value = current.copy(
+            coins = newCoins,
+            claimedShopPacks = newPacks
+        )
+        return true
     }
 
     fun claimAchievement(achievementId: String, rewardCoins: Int): Boolean {

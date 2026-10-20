@@ -175,9 +175,9 @@ fun MainScreen() {
             CoinShopDialog(
                 userData = userData,
                 lang = userData.language,
-                onAddCoins = { amount ->
-                    userPrefs.addCoins(amount)
-                },
+                onClaimVideo = { userPrefs.claimVideoReward() },
+                onClaimChest = { userPrefs.claimMysteryChest() },
+                onClaimPack = { packId, coins -> userPrefs.claimShopPack(packId, coins) },
                 onDismiss = {
                     showCoinShopDialog = false
                 }

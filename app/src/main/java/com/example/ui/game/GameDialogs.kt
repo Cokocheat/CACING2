@@ -41,9 +41,15 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SentimentVeryDissatisfied
 import androidx.compose.material.icons.filled.Stars
 import androidx.compose.material.icons.filled.Timeline
-import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VolumeMute
 import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.filled.Savings
+import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.Diamond
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.ui.text.style.TextOverflow
+import java.text.NumberFormat
+import java.util.Locale
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
@@ -218,7 +224,7 @@ fun PauseDialog(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Vibration,
+                                    imageVector = Icons.Default.Timeline,
                                     contentDescription = null,
                                     tint = Color(0xFFFF9100),
                                     modifier = Modifier.size(18.dp)
@@ -515,17 +521,17 @@ fun GameOverDialog(
             border = androidx.compose.foundation.BorderStroke(2.dp, if (isVictory) Color(0xFFFFD700) else Color(0xFFFF3366)),
             shadowElevation = 20.dp,
             modifier = Modifier
-                .widthIn(max = 560.dp)
-                .fillMaxWidth()
+                .widthIn(min = 460.dp, max = 590.dp)
+                .fillMaxWidth(0.92f)
                 .padding(8.dp)
                 .testTag("game_over_dialog")
         ) {
             Column(
                 modifier = Modifier
-                    .padding(18.dp)
+                    .padding(20.dp)
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Header Loss or Victory Banner (NO EMOJI)
                 Row(
@@ -536,7 +542,7 @@ fun GameOverDialog(
                         imageVector = if (isVictory) Icons.Default.EmojiEvents else Icons.Default.SentimentVeryDissatisfied,
                         contentDescription = null,
                         tint = if (isVictory) Color(0xFFFFD700) else Color(0xFFFF3366),
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(30.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -557,17 +563,19 @@ fun GameOverDialog(
                 // Landscape 2-column or Stats Summary
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Left Stats Box
                     Surface(
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(16.dp),
                         color = Color(0xFF1E243D),
-                        modifier = Modifier.weight(1.2f)
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C3454)),
+                        modifier = Modifier.weight(1.35f)
                     ) {
                         Column(
-                            modifier = Modifier.padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalArrangement = Arrangement.spacedBy(7.dp)
                         ) {
                             StatRow(title = StringsHelper.get("final_score", lang), value = "$score", icon = Icons.Default.Stars, highlight = true, lang = lang)
                             StatRow(title = StringsHelper.get("high_score", lang), value = "$highScore", icon = Icons.Default.EmojiEvents, highlight = false, lang = lang)
@@ -589,14 +597,21 @@ fun GameOverDialog(
                             onClick = onPlayAgain,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(52.dp)
+                                .height(50.dp)
                                 .testTag("game_over_play_again_button"),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4ADE80)),
                             shape = RoundedCornerShape(14.dp)
                         ) {
-                            Icon(imageVector = Icons.Default.Refresh, contentDescription = null, tint = Color.Black)
+                            Icon(imageVector = Icons.Default.Refresh, contentDescription = null, tint = Color.Black, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(StringsHelper.get("play_again", lang), style = MaterialTheme.typography.labelLarge, color = Color.Black, fontWeight = FontWeight.Black)
+                            Text(
+                                text = StringsHelper.get("play_again", lang),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = Color.Black,
+                                fontWeight = FontWeight.Black,
+                                maxLines = 1,
+                                softWrap = false
+                            )
                         }
 
                         FilledTonalButton(
@@ -608,9 +623,17 @@ fun GameOverDialog(
                             colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF2C3454)),
                             shape = RoundedCornerShape(14.dp)
                         ) {
-                            Icon(imageVector = Icons.Default.Home, contentDescription = null, tint = Color.White)
+                            Icon(imageVector = Icons.Default.Home, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(StringsHelper.get("back_to_menu", lang), style = MaterialTheme.typography.labelMedium, color = Color.White)
+                            Text(
+                                text = StringsHelper.get("back_to_menu", lang),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                softWrap = false,
+                                fontSize = 12.sp
+                            )
                         }
                     }
                 }
@@ -924,28 +947,51 @@ private fun StatRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(imageVector = icon, contentDescription = null, tint = if (highlight) Color(0xFFFFD700) else Color(0xFFA0AEC0), modifier = Modifier.size(16.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f, fill = false)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (highlight) Color(0xFFFFD700) else Color(0xFFA0AEC0),
+                modifier = Modifier.size(16.dp)
+            )
             Spacer(modifier = Modifier.width(6.dp))
-            Text(text = title, style = MaterialTheme.typography.bodySmall, color = Color(0xFFA0AEC0))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFFA0AEC0),
+                fontSize = 12.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
+        Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = value,
             style = if (highlight) MaterialTheme.typography.titleSmall else MaterialTheme.typography.bodySmall,
             color = valueColor,
-            fontWeight = if (highlight) FontWeight.Bold else FontWeight.Medium
+            fontWeight = if (highlight) FontWeight.Bold else FontWeight.Medium,
+            fontSize = if (highlight) 13.sp else 12.sp,
+            maxLines = 1,
+            softWrap = false
         )
     }
 }
 
-// COIN SHOP & FREE REWARDS DIALOG
+// COIN SHOP & FREE REWARDS DIALOG WITH STRICT COOLDOWN & ANTI-BUG PROTECTION
 @Composable
 fun CoinShopDialog(
     userData: UserGameData,
     lang: AppLanguage,
-    onAddCoins: (Int) -> Unit,
+    onClaimVideo: () -> Unit,
+    onClaimChest: () -> Unit,
+    onClaimPack: (String, Int) -> Unit,
     onDismiss: () -> Unit
 ) {
+    var isProcessingClick by remember { mutableStateOf(false) }
+
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(24.dp),
@@ -963,15 +1009,28 @@ fun CoinShopDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // Header
+                // Header (Polished Logo, NO EMOJI)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("🪙", fontSize = 26.sp)
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(
+                            shape = CircleShape,
+                            color = Color(0xFFEAB308).copy(alpha = 0.2f),
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.MonetizationOn,
+                                    contentDescription = null,
+                                    tint = Color(0xFFFDE047),
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             text = StringsHelper.get("coin_shop_title", lang),
                             fontSize = 20.sp,
@@ -991,75 +1050,118 @@ fun CoinShopDialog(
                     }
                 }
 
-                Text(
-                    text = "Koin saat ini: ${userData.coins} 🪙",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFF0F172A),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(Icons.Default.MonetizationOn, contentDescription = null, tint = Color(0xFFFFD700), modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Koin saat ini: ${NumberFormat.getNumberInstance(Locale.US).format(userData.coins)}",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
 
-                // Package 1: Watch Video +500 Coins
+                // Package 1: Watch Video +500 Coins (Cooldown 3 Min)
+                val canClaimVideo = userData.canClaimVideoReward
+                val videoMins = (userData.millisUntilNextVideo / (1000 * 60)).toInt()
+                val videoSecs = ((userData.millisUntilNextVideo / 1000) % 60).toInt()
                 CoinPackageItem(
-                    icon = "🎬",
+                    icon = Icons.Default.PlayCircle,
+                    iconTint = Color(0xFF22C55E),
                     title = "Tonton Video Singkat",
                     reward = "+500 Koin Gratis",
-                    badge = "GRATIS",
-                    badgeColor = Color(0xFF22C55E),
+                    badge = if (canClaimVideo) "GRATIS" else "${videoMins}m ${videoSecs}s",
+                    badgeColor = if (canClaimVideo) Color(0xFF22C55E) else Color(0xFF64748B),
+                    enabled = canClaimVideo && !isProcessingClick,
                     onClick = {
-                        onAddCoins(500)
-                        onDismiss()
+                        if (!isProcessingClick && canClaimVideo) {
+                            isProcessingClick = true
+                            onClaimVideo()
+                        }
                     }
                 )
 
-                // Package 2: Daily Mystery Chest +1000 Coins
+                // Package 2: Daily Mystery Chest +1000 Coins (24 Hour Cooldown)
+                val canClaimChest = userData.canClaimMysteryChest
+                val chestHours = (userData.millisUntilNextChest / (1000 * 60 * 60)).toInt()
+                val chestMins = ((userData.millisUntilNextChest / (1000 * 60)) % 60).toInt()
                 CoinPackageItem(
-                    icon = "🎁",
+                    icon = Icons.Default.CardGiftcard,
+                    iconTint = Color(0xFFEAB308),
                     title = "Peti Emas Misteri",
                     reward = "+1,000 Koin Emas",
-                    badge = "HARIAN",
-                    badgeColor = Color(0xFFEAB308),
+                    badge = if (canClaimChest) "HARIAN" else "${chestHours}j ${chestMins}m",
+                    badgeColor = if (canClaimChest) Color(0xFFEAB308) else Color(0xFF64748B),
+                    enabled = canClaimChest && !isProcessingClick,
                     onClick = {
-                        onAddCoins(1000)
-                        onDismiss()
+                        if (!isProcessingClick && canClaimChest) {
+                            isProcessingClick = true
+                            onClaimChest()
+                        }
                     }
                 )
 
-                // Package 3: Starter Pack +5000 Coins
+                // Package 3: Starter Pack +5000 Coins (One-time only!)
+                val isStarterClaimed = userData.claimedShopPacks.contains("starter_pack")
                 CoinPackageItem(
-                    icon = "💎",
+                    icon = Icons.Default.Diamond,
+                    iconTint = Color(0xFF38BDF8),
                     title = "Paket Pemula",
                     reward = "+5,000 Koin",
-                    badge = "POPULER",
-                    badgeColor = Color(0xFF38BDF8),
+                    badge = if (isStarterClaimed) "✓ DIMILIKI" else "POPULER",
+                    badgeColor = if (isStarterClaimed) Color(0xFF475569) else Color(0xFF38BDF8),
+                    enabled = !isStarterClaimed && !isProcessingClick,
                     onClick = {
-                        onAddCoins(5000)
-                        onDismiss()
+                        if (!isProcessingClick && !isStarterClaimed) {
+                            isProcessingClick = true
+                            onClaimPack("starter_pack", 5000)
+                        }
                     }
                 )
 
-                // Package 4: Sultan Pack +25000 Coins
+                // Package 4: Sultan Pack +25000 Coins (One-time only!)
+                val isSultanClaimed = userData.claimedShopPacks.contains("sultan_pack")
                 CoinPackageItem(
-                    icon = "👑",
+                    icon = Icons.Default.MilitaryTech,
+                    iconTint = Color(0xFFA855F7),
                     title = "Paket Sultan",
                     reward = "+25,000 Koin",
-                    badge = "HEMAT",
-                    badgeColor = Color(0xFFA855F7),
+                    badge = if (isSultanClaimed) "✓ DIMILIKI" else "HEMAT",
+                    badgeColor = if (isSultanClaimed) Color(0xFF475569) else Color(0xFFA855F7),
+                    enabled = !isSultanClaimed && !isProcessingClick,
                     onClick = {
-                        onAddCoins(25000)
-                        onDismiss()
+                        if (!isProcessingClick && !isSultanClaimed) {
+                            isProcessingClick = true
+                            onClaimPack("sultan_pack", 25000)
+                        }
                     }
                 )
 
-                // Package 5: Mega King Pack +100000 Coins
+                // Package 5: Mega King Pack +100000 Coins (One-time only!)
+                val isMegaClaimed = userData.claimedShopPacks.contains("mega_king_pack")
                 CoinPackageItem(
-                    icon = "🌟",
+                    icon = Icons.Default.AutoAwesome,
+                    iconTint = Color(0xFFEF4444),
                     title = "Paket Raja Cacing",
                     reward = "+100,000 Koin",
-                    badge = "MEGA BONUS",
-                    badgeColor = Color(0xFFEF4444),
+                    badge = if (isMegaClaimed) "✓ DIMILIKI" else "MEGA BONUS",
+                    badgeColor = if (isMegaClaimed) Color(0xFF475569) else Color(0xFFEF4444),
+                    enabled = !isMegaClaimed && !isProcessingClick,
                     onClick = {
-                        onAddCoins(100000)
-                        onDismiss()
+                        if (!isProcessingClick && !isMegaClaimed) {
+                            isProcessingClick = true
+                            onClaimPack("mega_king_pack", 100000)
+                        }
                     }
                 )
             }
@@ -1069,18 +1171,20 @@ fun CoinShopDialog(
 
 @Composable
 private fun CoinPackageItem(
-    icon: String,
+    icon: ImageVector,
+    iconTint: Color,
     title: String,
     reward: String,
     badge: String,
     badgeColor: Color,
+    enabled: Boolean,
     onClick: () -> Unit
 ) {
     Surface(
-        onClick = onClick,
+        onClick = { if (enabled) onClick() },
         shape = RoundedCornerShape(14.dp),
-        color = Color(0xFF0F172A),
-        border = androidx.compose.foundation.BorderStroke(1.5.dp, badgeColor.copy(alpha = 0.7f)),
+        color = if (enabled) Color(0xFF0F172A) else Color(0xFF131A2B),
+        border = androidx.compose.foundation.BorderStroke(1.5.dp, if (enabled) badgeColor.copy(alpha = 0.7f) else Color(0xFF334155)),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -1089,11 +1193,19 @@ private fun CoinPackageItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(icon, fontSize = 28.sp)
+                Surface(
+                    shape = CircleShape,
+                    color = iconTint.copy(alpha = 0.15f),
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(imageVector = icon, contentDescription = null, tint = if (enabled) iconTint else Color(0xFF64748B), modifier = Modifier.size(24.dp))
+                    }
+                }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
-                    Text(title, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 14.sp)
-                    Text(reward, fontWeight = FontWeight.Black, color = Color(0xFFFDE047), fontSize = 13.sp)
+                    Text(title, fontWeight = FontWeight.Bold, color = if (enabled) Color.White else Color(0xFF94A3B8), fontSize = 14.sp)
+                    Text(reward, fontWeight = FontWeight.Black, color = if (enabled) Color(0xFFFDE047) else Color(0xFF64748B), fontSize = 13.sp)
                 }
             }
             Surface(
@@ -1112,13 +1224,15 @@ private fun CoinPackageItem(
     }
 }
 
-// PIGGY BANK DIALOG
+// PIGGY BANK DIALOG (POLISHED LOGO, NO EMOJI, ANTI-SPAM)
 @Composable
 fun PiggyBankDialog(
     piggyCoins: Int,
     onBreak: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    var hasBrokenLocally by remember { mutableStateOf(false) }
+
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(24.dp),
@@ -1132,15 +1246,29 @@ fun PiggyBankDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Text("🐷", fontSize = 54.sp)
+                Surface(
+                    shape = CircleShape,
+                    color = Color(0xFFF472B6).copy(alpha = 0.2f),
+                    modifier = Modifier.size(72.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.Savings,
+                            contentDescription = null,
+                            tint = Color(0xFFF472B6),
+                            modifier = Modifier.size(44.dp)
+                        )
+                    }
+                }
+
                 Text(
-                    text = "Celengan Babi Nana",
+                    text = "Celengan Koin Nana",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Black,
                     color = Color(0xFFFDE047)
                 )
                 Text(
-                    text = "Celenganmu telah mengumpulkan koin dari pertandingan!",
+                    text = "Celenganmu telah mengumpulkan koin dari setiap pertandingan!",
                     fontSize = 13.sp,
                     color = Color.White,
                     textAlign = TextAlign.Center
@@ -1157,33 +1285,62 @@ fun PiggyBankDialog(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text("Total Tabungan Koin:", fontSize = 12.sp, color = Color(0xFFA0AEC0))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(Icons.Default.MonetizationOn, contentDescription = null, tint = Color(0xFFFACC15), modifier = Modifier.size(24.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "${NumberFormat.getNumberInstance(Locale.US).format(piggyCoins)}",
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color(0xFFFACC15)
+                            )
+                        }
+                    }
+                }
+
+                if (piggyCoins > 0 && !hasBrokenLocally) {
+                    Button(
+                        onClick = {
+                            if (!hasBrokenLocally) {
+                                hasBrokenLocally = true
+                                onBreak()
+                            }
+                        },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22C55E)),
+                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                    ) {
+                        Text("Pecahkan Celengan & Ambil Koin!", fontWeight = FontWeight.Black, fontSize = 14.sp)
+                    }
+                } else {
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = Color(0xFF1E2438),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         Text(
-                            text = "$piggyCoins 🪙",
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color(0xFFFACC15)
+                            text = "✓ Celengan Telah Diambil!",
+                            color = Color(0xFF4ADE80),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(12.dp)
                         )
                     }
                 }
 
-                Button(
-                    onClick = onBreak,
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22C55E)),
-                    modifier = Modifier.fillMaxWidth().height(48.dp)
-                ) {
-                    Text("Pecahkan Celengan & Ambil Koin!", fontWeight = FontWeight.Black, fontSize = 14.sp)
-                }
-
                 TextButton(onClick = onDismiss) {
-                    Text("Nanti Saja", color = Color(0xFFA0AEC0))
+                    Text("Tutup", color = Color(0xFFA0AEC0))
                 }
             }
         }
     }
 }
 
-// LUCKY BONUS DIALOG WITH COOLDOWN PROTECTION
+// LUCKY BONUS DIALOG WITH COOLDOWN PROTECTION (POLISHED LOGO, NO EMOJI)
 @Composable
 fun LuckyBonusDialog(
     userData: UserGameData,
@@ -1206,7 +1363,21 @@ fun LuckyBonusDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Text(if (canClaim && !hasClaimedLocally) "⭐" else "⏳", fontSize = 52.sp)
+                Surface(
+                    shape = CircleShape,
+                    color = (if (canClaim && !hasClaimedLocally) Color(0xFFEF4444) else Color(0xFF475569)).copy(alpha = 0.2f),
+                    modifier = Modifier.size(70.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = if (canClaim && !hasClaimedLocally) Icons.Default.Stars else Icons.Default.HourglassTop,
+                            contentDescription = null,
+                            tint = if (canClaim && !hasClaimedLocally) Color(0xFFFDE047) else Color(0xFFA0AEC0),
+                            modifier = Modifier.size(42.dp)
+                        )
+                    }
+                }
+
                 Text(
                     text = if (canClaim && !hasClaimedLocally) "Bonus Harian Spesial!" else "Bonus Telah Diklaim",
                     fontSize = 22.sp,
@@ -1233,10 +1404,13 @@ fun LuckyBonusDialog(
                         border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFEF4444)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column(
+                        Row(
                             modifier = Modifier.padding(14.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
+                            Icon(Icons.Default.MonetizationOn, contentDescription = null, tint = Color(0xFFFFD700), modifier = Modifier.size(24.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
                             Text("+750 Koin Emas", fontSize = 24.sp, fontWeight = FontWeight.Black, color = Color(0xFFFDE047))
                         }
                     }

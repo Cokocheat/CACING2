@@ -373,9 +373,9 @@ class WormsGameEngine(
             spawnProtectionTimer = (spawnProtectionTimer - dt).coerceAtLeast(0f)
         }
 
-        // Smooth camera zoom (zoomed in closer per request for larger worm, food, and clear immersion)
+        // Smooth camera zoom (balanced view so food and worms look proportional and crisp)
         val hasZoomPotion = player.hasPotion(PotionType.ZOOM)
-        val targetZoom = if (hasZoomPotion) 1.25f else (1.80f - (player.bodyPoints.size / 320f) * 0.40f).coerceIn(1.40f, 1.90f)
+        val targetZoom = if (hasZoomPotion) 0.95f else (1.20f - (player.bodyPoints.size / 360f) * 0.28f).coerceIn(1.00f, 1.25f)
         cameraZoom += (targetZoom - cameraZoom) * (dt * 3.5f).coerceAtMost(1f)
 
         // 1. Update player
@@ -618,7 +618,7 @@ class WormsGameEngine(
                     val other = bots[i]
                     if (other.id == bot.id || !other.isAlive) continue
                     // Skip if other bot is too far away to pose a collision hazard
-                    if (kotlin.math.abs(bot.head.x - other.head.x) > 380f && kotlin.math.abs(bot.head.y - other.head.y) > 380f) continue
+                    if (kotlin.math.abs(bot.head.x - other.head.x) > 380f || kotlin.math.abs(bot.head.y - other.head.y) > 380f) continue
                     for (pt in checkPoints) {
                         for (s in other.bodyPoints.indices step 2) {
                             val seg = other.bodyPoints[s]
@@ -823,22 +823,32 @@ class WormsGameEngine(
                 val radiusP = player.segmentRadius
                 val hitDist = (radiusA + radiusP) * 0.72f
                 val hitDistSq = hitDist * hitDist
-                val pSegments = player.bodyPoints
-                for (sIdx in 1 until pSegments.size) {
-                    if (headA.distanceSquaredTo(pSegments[sIdx]) < hitDistSq) {
-                        killWorm(botA, killer = player)
-                        break
+                val pHead = player.head
+                val playerSpan = player.bodyPoints.size * GameConfig.SEGMENT_SPACING + 60f
+                if (kotlin.math.abs(headA.x - pHead.x) <= playerSpan && kotlin.math.abs(headA.y - pHead.y) <= playerSpan) {
+                    val pSegments = player.bodyPoints
+                    for (sIdx in 1 until pSegments.size) {
+                        if (headA.distanceSquaredTo(pSegments[sIdx]) < hitDistSq) {
+                            killWorm(botA, killer = player)
+                            break
+                        }
                     }
                 }
             }
 
             if (!botA.isAlive) continue
 
-            // Check Bot A hitting other Bots' bodies
+            // Check Bot A hitting other Bots' bodies with fast bounding-box early out
             for (bIdx in 0 until totalBots) {
                 if (aIdx == bIdx) continue
                 val botB = bots[bIdx]
                 if (!botB.isAlive) continue
+
+                val bHead = botB.head
+                val botBSpan = botB.bodyPoints.size * GameConfig.SEGMENT_SPACING + 60f
+                if (kotlin.math.abs(headA.x - bHead.x) > botBSpan || kotlin.math.abs(headA.y - bHead.y) > botBSpan) {
+                    continue // Skip completely - too far away
+                }
 
                 val radiusB = botB.segmentRadius
                 val hitDist = (radiusA + radiusB) * 0.72f
