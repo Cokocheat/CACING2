@@ -333,7 +333,7 @@ fun ProfileScreen(
                                     action = Intent.ACTION_SEND
                                     putExtra(
                                         Intent.EXTRA_TEXT,
-                                        "Ayo tanding di Nana Tayantuh Worms Zone IO! Skor Terbaikku: ${userData.highScore} dengan ${userData.totalKills} cacing dikalahkan!"
+                                        "Ayo tanding di Cacing Besar Battle IO! Skor Terbaikku: ${userData.highScore} dengan ${userData.totalKills} cacing dikalahkan!"
                                     )
                                     type = "text/plain"
                                 }
@@ -618,7 +618,7 @@ private fun BerkasTabContent(
                     }
 
                     Text(
-                        text = "Nana Tayantuh • Worms Zone IO Edition",
+                        text = "Cacing Besar Battle • Worms Zone IO Edition",
                         fontSize = 9.sp,
                         color = Color(0x99FFFFFF),
                         textAlign = TextAlign.Center

@@ -3,10 +3,15 @@ package com.example.ui.screens
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -26,6 +31,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CardGiftcard
@@ -288,7 +294,7 @@ fun LobbyScreen(
                         modifier = Modifier.padding(start = 6.dp, end = 14.dp, top = 6.dp, bottom = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Avatar Circle with Level 16 badge
+                        // Avatar Circle with Level 16 badge (no emoji)
                         Box(contentAlignment = Alignment.BottomCenter) {
                             Surface(
                                 shape = CircleShape,
@@ -297,7 +303,12 @@ fun LobbyScreen(
                                 modifier = Modifier.size(46.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
-                                    Text("😊", fontSize = 24.sp)
+                                    Icon(
+                                        imageVector = Icons.Default.AccountCircle,
+                                        contentDescription = null,
+                                        tint = Color(0xFFFDE047),
+                                        modifier = Modifier.size(24.dp)
+                                    )
                                 }
                             }
                             Surface(
@@ -351,73 +362,31 @@ fun LobbyScreen(
                     }
                 }
 
-                // TOP-RIGHT: Apples (Energy) + Gold Coins
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                // TOP-RIGHT: Gold Coins Pill (No fruit, no plus button - clean and focused)
+                Surface(
+                    onClick = onOpenCoinShop,
+                    shape = RoundedCornerShape(18.dp),
+                    color = Color(0xEB28170B),
+                    border = androidx.compose.foundation.BorderStroke(1.8.dp, Color(0xFFFACC15)),
+                    shadowElevation = 6.dp
                 ) {
-                    // Apple Stamina Pill
-                    Surface(
-                        onClick = onOpenCoinShop,
-                        shape = RoundedCornerShape(16.dp),
-                        color = Color(0xEB28170B),
-                        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFF97316))
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier.padding(start = 8.dp, end = 4.dp, top = 3.dp, bottom = 3.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("🍎", fontSize = 16.sp)
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "85/20",
-                                color = Color.White,
-                                fontWeight = FontWeight.Black,
-                                fontSize = 13.sp
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = Color(0xFF38BDF8),
-                                modifier = Modifier.size(24.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(Icons.Default.Add, contentDescription = "Tambah Stamina", tint = Color.White, modifier = Modifier.size(15.dp))
-                                }
-                            }
-                        }
-                    }
-
-                    // Gold Coin Pill
-                    Surface(
-                        onClick = onOpenCoinShop,
-                        shape = RoundedCornerShape(16.dp),
-                        color = Color(0xEB28170B),
-                        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFACC15))
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(start = 8.dp, end = 4.dp, top = 3.dp, bottom = 3.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("😊", fontSize = 16.sp)
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "${userData.coins}",
-                                color = Color.White,
-                                fontWeight = FontWeight.Black,
-                                fontSize = 13.sp
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = Color(0xFF38BDF8),
-                                modifier = Modifier.size(24.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(Icons.Default.Add, contentDescription = "Tambah Koin", tint = Color.White, modifier = Modifier.size(15.dp))
-                                }
-                            }
-                        }
+                        Icon(
+                            imageVector = Icons.Default.MonetizationOn,
+                            contentDescription = null,
+                            tint = Color(0xFFFFD700),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = java.text.NumberFormat.getNumberInstance(java.util.Locale.US).format(userData.coins),
+                            color = Color(0xFFFEF08A),
+                            fontWeight = FontWeight.Black,
+                            fontSize = 14.sp
+                        )
                     }
                 }
             }
@@ -518,16 +487,16 @@ fun LobbyScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "WORMS",
-                                    fontSize = 24.sp,
+                                    text = "CACING BESAR",
+                                    fontSize = 20.sp,
                                     fontWeight = FontWeight.Black,
                                     color = Color(0xFFFDE047),
                                     letterSpacing = 1.sp
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "ZONE",
-                                    fontSize = 24.sp,
+                                    text = "BATTLE",
+                                    fontSize = 20.sp,
                                     fontWeight = FontWeight.Black,
                                     color = Color(0xFF38BDF8),
                                     letterSpacing = 1.sp
@@ -696,7 +665,7 @@ fun LobbyScreen(
                                 action = Intent.ACTION_SEND
                                 putExtra(
                                     Intent.EXTRA_TEXT,
-                                    "Ayo tanding di Nana Tayantuh Worms Zone IO! Skor Tertinggi: ${userData.highScore} dengan ${userData.totalKills} cacing dikalahkan!"
+                                    "Ayo tanding di Cacing Besar Battle IO! Skor Tertinggi: ${userData.highScore} dengan ${userData.totalKills} cacing dikalahkan!"
                                 )
                                 type = "text/plain"
                             }
@@ -758,26 +727,41 @@ fun LobbyScreen(
     }
 }
 
-// WARM CARTOON SQUARE BUTTON WITH GOLD BORDER (Signature style matching theme)
+// WARM CARTOON SQUARE BUTTON WITH ANIMATED TACTILE BOUNCE & GLOW
 @Composable
 private fun CartoonSquareButton(
     icon: ImageVector,
     testTag: String,
     onClick: () -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.88f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "buttonScale"
+    )
+
     Surface(
         onClick = onClick,
+        interactionSource = interactionSource,
         shape = RoundedCornerShape(14.dp),
-        color = Color(0xEB28170B), // Warm theme chocolate amber
-        border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFF59E0B)), // Warm orange-gold border
-        shadowElevation = 5.dp,
-        modifier = Modifier.size(46.dp).testTag(testTag)
+        color = if (isPressed) Color(0xFF3E2211) else Color(0xEB28170B),
+        border = androidx.compose.foundation.BorderStroke(
+            2.dp,
+            if (isPressed) Color(0xFFFDE047) else Color(0xFFF59E0B)
+        ),
+        shadowElevation = if (isPressed) 1.dp else 6.dp,
+        modifier = Modifier
+            .size(46.dp)
+            .scale(scale)
+            .testTag(testTag)
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = Color(0xFFFDE047), // Vibrant cartoon golden icon
+                tint = if (isPressed) Color(0xFFFFF9C4) else Color(0xFFFDE047),
                 modifier = Modifier.size(24.dp)
             )
         }

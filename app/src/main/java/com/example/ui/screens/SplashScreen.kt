@@ -244,11 +244,11 @@ fun SplashScreen(
 
                 // Game Title Logo - Rich dark amber / brown for high legibility on yellow
                 Text(
-                    text = "nana tayantuh",
+                    text = "Cacing Besar Battle",
                     style = MaterialTheme.typography.displayMedium,
                     color = Color(0xFF451A03),
                     fontWeight = FontWeight.Black,
-                    letterSpacing = 2.sp
+                    letterSpacing = 1.sp
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))

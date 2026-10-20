@@ -142,4 +142,112 @@ class GameSoundManager(private val context: Context) {
             }
         } catch (_: Exception) {}
     }
+
+    // Upbeat In-Game Background Music Player
+    private var bgmJob: kotlinx.coroutines.Job? = null
+    @Volatile
+    private var isBgmRunning = false
+    private var bgmAudioTrack: AudioTrack? = null
+
+    fun startBgm() {
+        if (isBgmRunning || !soundEnabled || soundVolumeFactor <= 0f) return
+        isBgmRunning = true
+        bgmJob = scope.launch {
+            try {
+                val bgmSampleRate = 22050
+                val minBufSize = AudioTrack.getMinBufferSize(
+                    bgmSampleRate,
+                    AudioFormat.CHANNEL_OUT_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT
+                )
+                val track = AudioTrack.Builder()
+                    .setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_GAME)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                            .build()
+                    )
+                    .setAudioFormat(
+                        AudioFormat.Builder()
+                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                            .setSampleRate(bgmSampleRate)
+                            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                            .build()
+                    )
+                    .setBufferSizeInBytes(minBufSize.coerceAtLeast(4096) * 2)
+                    .setTransferMode(AudioTrack.MODE_STREAM)
+                    .build()
+
+                bgmAudioTrack = track
+                track.play()
+
+                // Joyful retro-arcade worm IO game tune in C major & A minor pentatonic
+                val melody = floatArrayOf(
+                    261.63f, 329.63f, 392.00f, 523.25f, 392.00f, 523.25f, 659.25f, 523.25f,
+                    220.00f, 261.63f, 329.63f, 440.00f, 329.63f, 440.00f, 523.25f, 440.00f,
+                    174.61f, 220.00f, 261.63f, 349.23f, 261.63f, 349.23f, 440.00f, 349.23f,
+                    196.00f, 246.94f, 293.66f, 392.00f, 293.66f, 392.00f, 493.88f, 392.00f
+                )
+                val bass = floatArrayOf(
+                    130.81f, 130.81f, 130.81f, 130.81f,
+                    110.00f, 110.00f, 110.00f, 110.00f,
+                    87.31f, 87.31f, 87.31f, 87.31f,
+                    98.00f, 98.00f, 98.00f, 98.00f
+                )
+                val stepDurationMs = 145
+                val samplesPerStep = (bgmSampleRate * (stepDurationMs / 1000f)).toInt().coerceAtLeast(100)
+                val stepBuf = ShortArray(samplesPerStep)
+                var stepIndex = 0
+
+                while (isBgmRunning) {
+                    val mFreq = melody[stepIndex % melody.size]
+                    val bFreq = bass[(stepIndex / 2) % bass.size]
+                    val vol = 0.16f * soundVolumeFactor
+
+                    for (i in 0 until samplesPerStep) {
+                        val t = i.toFloat() / samplesPerStep
+                        // Smooth envelope to avoid clicks
+                        val env = (sin(PI * t)).toFloat()
+                        val mWave = sin(2.0 * PI * i * mFreq / bgmSampleRate) * 0.65
+                        val bWave = sin(2.0 * PI * i * bFreq / bgmSampleRate) * 0.45
+                        val sample = (mWave + bWave) * env * vol * Short.MAX_VALUE
+                        stepBuf[i] = sample.toInt().coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
+                    }
+
+                    track.write(stepBuf, 0, stepBuf.size)
+                    stepIndex++
+                }
+
+                track.stop()
+                track.release()
+                bgmAudioTrack = null
+            } catch (_: Exception) {
+                try {
+                    bgmAudioTrack?.release()
+                } catch (_: Exception) {}
+                bgmAudioTrack = null
+            }
+        }
+    }
+
+    fun pauseBgm() {
+        isBgmRunning = false
+        bgmJob?.cancel()
+        bgmJob = null
+        try {
+            bgmAudioTrack?.pause()
+            bgmAudioTrack?.flush()
+        } catch (_: Exception) {}
+    }
+
+    fun stopBgm() {
+        isBgmRunning = false
+        bgmJob?.cancel()
+        bgmJob = null
+        try {
+            bgmAudioTrack?.stop()
+            bgmAudioTrack?.release()
+            bgmAudioTrack = null
+        } catch (_: Exception) {}
+    }
 }

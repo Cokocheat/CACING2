@@ -613,7 +613,7 @@ private fun OpsiTabContent(
             title = { Text(StringsHelper.get("privacy_policy", lang), fontWeight = FontWeight.Black) },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Kebijakan Privasi Nana Tayantuh:", fontWeight = FontWeight.Bold)
+                    Text("Kebijakan Privasi Cacing Besar Battle:", fontWeight = FontWeight.Bold)
                     Text("Permainan ini menyimpan data rekor, skin yang dimiliki, koin, dan pengaturan kontrol secara lokal di perangkat Anda. Tidak ada data pribadi atau pelacakan privasi pihak ketiga.")
                 }
             },

@@ -1,4 +1,4 @@
-# Nana Tayantuh 🐛🎮 (Versi 1.1.0)
+# Cacing Besar Battle 🐛🎮 (Versi 1.1.0)
 
 **Game Cacing Seru Android dengan Arena Luar Luas, Bot AI Cerdas, Berbagai Mode Seru, Event 7 Hari Login, Notifikasi Kill, dan Kustomisasi Kontrol Penuh.**
 

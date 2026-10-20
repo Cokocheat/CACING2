@@ -7,6 +7,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -56,6 +57,22 @@ fun MainGameScreen(
             engine.isPaused = false
         } else {
             onBackToLobby()
+        }
+    }
+
+    // In-game background music control
+    DisposableEffect(Unit) {
+        engine.soundManager.startBgm()
+        onDispose {
+            engine.soundManager.stopBgm()
+        }
+    }
+
+    LaunchedEffect(isPaused, engine.isGameOver) {
+        if (isPaused || engine.isGameOver) {
+            engine.soundManager.pauseBgm()
+        } else {
+            engine.soundManager.startBgm()
         }
     }
 

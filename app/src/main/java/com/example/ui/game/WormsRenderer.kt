@@ -24,6 +24,7 @@ import com.example.model.PotionType
 import com.example.model.SkinId
 import com.example.model.Vec2
 import com.example.model.Worm
+import androidx.compose.ui.graphics.nativeCanvas
 import kotlin.math.PI
 import kotlin.math.ceil
 import kotlin.math.cos
@@ -31,6 +32,21 @@ import kotlin.math.floor
 import kotlin.math.sin
 
 object WormsRenderer {
+
+    private val nameTextPaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        typeface = android.graphics.Typeface.DEFAULT_BOLD
+        textAlign = android.graphics.Paint.Align.CENTER
+    }
+    private val nameBgPaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        style = android.graphics.Paint.Style.FILL
+    }
+    private val nameBorderPaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        style = android.graphics.Paint.Style.STROKE
+    }
+    private val tempNameRect = android.graphics.RectF()
 
     fun drawArenaBackground(
         drawScope: DrawScope,
@@ -1334,6 +1350,39 @@ object WormsRenderer {
                         style = Stroke(width = 2.8f * zoom, cap = StrokeCap.Round)
                     )
                 }
+            }
+
+            // 5. Draw Name Tag Pill above head (for enemy bots & player)
+            if (worm.name.isNotEmpty()) {
+                val badgeY = headPos.y - headR - 14f * zoom
+                val fontSize = (11.5f * zoom).coerceIn(10f, 18f)
+                nameTextPaint.textSize = fontSize
+                nameTextPaint.color = if (worm.isPlayer) android.graphics.Color.rgb(255, 215, 0) else android.graphics.Color.WHITE
+
+                val textWidth = nameTextPaint.measureText(worm.name)
+                val padX = 7f * zoom
+                val padY = 3.5f * zoom
+                tempNameRect.set(
+                    headPos.x - textWidth / 2f - padX,
+                    badgeY - fontSize - padY,
+                    headPos.x + textWidth / 2f + padX,
+                    badgeY + padY
+                )
+                nameBgPaint.color = if (worm.isPlayer) {
+                    android.graphics.Color.argb(190, 20, 24, 40)
+                } else {
+                    android.graphics.Color.argb(170, 15, 23, 42)
+                }
+                nameBorderPaint.strokeWidth = 1.2f * zoom
+                nameBorderPaint.color = if (worm.isPlayer) {
+                    android.graphics.Color.argb(220, 255, 215, 0)
+                } else {
+                    android.graphics.Color.argb(140, 100, 116, 139)
+                }
+                val rCorner = 5f * zoom
+                drawContext.canvas.nativeCanvas.drawRoundRect(tempNameRect, rCorner, rCorner, nameBgPaint)
+                drawContext.canvas.nativeCanvas.drawRoundRect(tempNameRect, rCorner, rCorner, nameBorderPaint)
+                drawContext.canvas.nativeCanvas.drawText(worm.name, headPos.x, badgeY - 2f * zoom, nameTextPaint)
             }
         }
     }

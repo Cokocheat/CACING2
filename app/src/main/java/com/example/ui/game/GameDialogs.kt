@@ -519,19 +519,19 @@ fun GameOverDialog(
             shape = RoundedCornerShape(24.dp),
             color = Color(0xFF141829),
             border = androidx.compose.foundation.BorderStroke(2.dp, if (isVictory) Color(0xFFFFD700) else Color(0xFFFF3366)),
-            shadowElevation = 20.dp,
+            shadowElevation = 24.dp,
             modifier = Modifier
-                .widthIn(min = 460.dp, max = 590.dp)
+                .widthIn(min = 520.dp, max = 660.dp)
                 .fillMaxWidth(0.92f)
                 .padding(8.dp)
                 .testTag("game_over_dialog")
         ) {
             Column(
                 modifier = Modifier
-                    .padding(20.dp)
+                    .padding(horizontal = 22.dp, vertical = 18.dp)
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 // Header Loss or Victory Banner (NO EMOJI)
                 Row(
@@ -542,9 +542,9 @@ fun GameOverDialog(
                         imageVector = if (isVictory) Icons.Default.EmojiEvents else Icons.Default.SentimentVeryDissatisfied,
                         contentDescription = null,
                         tint = if (isVictory) Color(0xFFFFD700) else Color(0xFFFF3366),
-                        modifier = Modifier.size(30.dp)
+                        modifier = Modifier.size(32.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         text = if (isVictory) StringsHelper.get("arena_winner", lang) else StringsHelper.get("game_over", lang),
                         style = MaterialTheme.typography.headlineMedium,
@@ -563,24 +563,24 @@ fun GameOverDialog(
                 // Landscape 2-column or Stats Summary
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Left Stats Box
+                    // Left Stats Box (spacious and clear)
                     Surface(
                         shape = RoundedCornerShape(16.dp),
                         color = Color(0xFF1E243D),
                         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C3454)),
-                        modifier = Modifier.weight(1.35f)
+                        modifier = Modifier.weight(1.6f)
                     ) {
                         Column(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                            verticalArrangement = Arrangement.spacedBy(7.dp)
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             StatRow(title = StringsHelper.get("final_score", lang), value = "$score", icon = Icons.Default.Stars, highlight = true, lang = lang)
                             StatRow(title = StringsHelper.get("high_score", lang), value = "$highScore", icon = Icons.Default.EmojiEvents, highlight = false, lang = lang)
                             StatRow(title = StringsHelper.get("enemies_slain", lang), value = "$kills", icon = Icons.Default.LocalFireDepartment, highlight = false, lang = lang)
-                            StatRow(title = StringsHelper.get("final_length", lang), value = "$length ${StringsHelper.get("segments", lang)}", icon = Icons.Default.Timeline, highlight = false, lang = lang)
+                            StatRow(title = StringsHelper.get("final_length", lang), value = "$length Ruas", icon = Icons.Default.Timeline, highlight = false, lang = lang)
                             StatRow(title = StringsHelper.get("coins_earned", lang), value = "+$coinsEarned", icon = Icons.Default.MonetizationOn, highlight = true, valueColor = Color(0xFFFFD700), lang = lang)
                         }
                     }
@@ -588,7 +588,7 @@ fun GameOverDialog(
                     // Right Actions Box
                     Column(
                         modifier = Modifier
-                            .weight(1f)
+                            .weight(1.0f)
                             .padding(vertical = 4.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
@@ -605,7 +605,7 @@ fun GameOverDialog(
                             Icon(imageVector = Icons.Default.Refresh, contentDescription = null, tint = Color.Black, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = StringsHelper.get("play_again", lang),
+                                text = "MAIN LAGI",
                                 style = MaterialTheme.typography.labelLarge,
                                 color = Color.Black,
                                 fontWeight = FontWeight.Black,
@@ -626,13 +626,13 @@ fun GameOverDialog(
                             Icon(imageVector = Icons.Default.Home, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = StringsHelper.get("back_to_menu", lang),
+                                text = "MENU UTAMA",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
                                 maxLines = 1,
                                 softWrap = false,
-                                fontSize = 12.sp
+                                fontSize = 13.sp
                             )
                         }
                     }
@@ -948,32 +948,32 @@ private fun StatRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f, fill = false)
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = if (highlight) Color(0xFFFFD700) else Color(0xFFA0AEC0),
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(17.dp)
             )
-            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFFA0AEC0),
-                fontSize = 12.sp,
+                color = Color(0xFFCBD5E1),
+                fontSize = 12.5.sp,
+                fontWeight = FontWeight.Medium,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                softWrap = false
             )
         }
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = value,
             style = if (highlight) MaterialTheme.typography.titleSmall else MaterialTheme.typography.bodySmall,
             color = valueColor,
-            fontWeight = if (highlight) FontWeight.Bold else FontWeight.Medium,
-            fontSize = if (highlight) 13.sp else 12.sp,
+            fontWeight = FontWeight.Black,
+            fontSize = if (highlight) 13.5.sp else 12.5.sp,
             maxLines = 1,
             softWrap = false
         )

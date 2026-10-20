@@ -58,7 +58,7 @@ data class EngineHudState(
 )
 
 class WormsGameEngine(
-    private val soundManager: GameSoundManager,
+    val soundManager: GameSoundManager,
     private val userData: UserGameData,
     var gameMode: GameMode = GameMode.OPEN_ARENA,
     var difficulty: GameDifficulty = userData.gameDifficulty

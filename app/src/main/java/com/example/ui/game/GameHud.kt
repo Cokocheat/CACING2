@@ -567,18 +567,26 @@ fun VirtualJoystick(
     onMove: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var isDragging by remember { mutableStateOf(false) }
     var thumbOffset by remember { mutableStateOf(Offset.Zero) }
+
+    val joyAlpha by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (isDragging) 0.95f else 0.08f,
+        animationSpec = androidx.compose.animation.core.tween(180),
+        label = "joyAlpha"
+    )
 
     Box(
         modifier = modifier
             .testTag("virtual_joystick")
             .clip(CircleShape)
-            .background(Color(0x77161B2E))
-            .border(2.5.dp, Color(0xAA4ADE80), CircleShape)
-            .shadow(8.dp, CircleShape)
+            .background(Color(0x77161B2E).copy(alpha = 0.45f * joyAlpha))
+            .border(2.5.dp, Color(0xAA4ADE80).copy(alpha = joyAlpha), CircleShape)
+            .shadow(if (isDragging) 8.dp else 0.dp, CircleShape)
             .pointerInput(Unit) {
                 detectDragGestures(
                     onDragStart = { offset ->
+                        isDragging = true
                         val center = Offset(size.width / 2f, size.height / 2f)
                         val maxRadius = (size.width / 2f) * 0.72f
                         val drag = offset - center
@@ -604,29 +612,36 @@ fun VirtualJoystick(
                         }
                     },
                     onDragEnd = {
+                        isDragging = false
                         thumbOffset = Offset.Zero
                     },
                     onDragCancel = {
+                        isDragging = false
                         thumbOffset = Offset.Zero
                     }
                 )
             },
         contentAlignment = Alignment.Center
     ) {
-        // Inner thumb knob
-        Box(
-            modifier = Modifier
-                .offset { IntOffset(thumbOffset.x.roundToInt(), thumbOffset.y.roundToInt()) }
-                .size(46.dp)
-                .clip(CircleShape)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(Color(0xFF4ADE80), Color(0xFF16A34A))
+        // Inner thumb knob (visible when touched)
+        if (joyAlpha > 0.05f) {
+            Box(
+                modifier = Modifier
+                    .offset { IntOffset(thumbOffset.x.roundToInt(), thumbOffset.y.roundToInt()) }
+                    .size(46.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(
+                                Color(0xFF4ADE80).copy(alpha = joyAlpha),
+                                Color(0xFF16A34A).copy(alpha = joyAlpha)
+                            )
+                        )
                     )
-                )
-                .border(2.dp, Color.White.copy(alpha = 0.85f), CircleShape)
-                .shadow(6.dp, CircleShape)
-        )
+                    .border(2.dp, Color.White.copy(alpha = 0.85f * joyAlpha), CircleShape)
+                    .shadow(if (isDragging) 6.dp else 0.dp, CircleShape)
+            )
+        }
     }
 }
 
@@ -683,7 +698,7 @@ fun DynamicVirtualJoystick(
     ) {
         if (isDragging && touchCenter != null) {
             val center = touchCenter!!
-            // Render floating joystick centered at thumb touch point
+            // Render floating joystick centered at thumb touch point (lights up when touching)
             Box(
                 modifier = Modifier
                     .offset {
@@ -715,22 +730,22 @@ fun DynamicVirtualJoystick(
                 )
             }
         } else {
-            // Idle hint ring at configured anchor position
+            // Idle hint ring - subtle transparent watermark
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(start = defaultOffsetX, bottom = defaultOffsetY)
                     .size(joySize)
                     .clip(CircleShape)
-                    .background(Color(0x33161B2E))
-                    .border(1.5.dp, Color(0x664ADE80), CircleShape),
+                    .background(Color(0x10161B2E))
+                    .border(1.5.dp, Color(0x224ADE80), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(36.dp)
                         .clip(CircleShape)
-                        .background(Color(0x444ADE80))
+                        .background(Color(0x184ADE80))
                 )
             }
         }
@@ -744,21 +759,39 @@ fun TurboBoostButton(
 ) {
     var isPressed by remember { mutableStateOf(false) }
 
+    val boostAlpha by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 0.08f,
+        animationSpec = androidx.compose.animation.core.tween(140),
+        label = "boostAlpha"
+    )
+    val boostScale by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (isPressed) 1.08f else 0.95f,
+        animationSpec = androidx.compose.animation.core.spring(
+            dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy
+        ),
+        label = "boostScale"
+    )
+
     Box(
         modifier = modifier
             .testTag("turbo_boost_button")
+            .scale(boostScale)
             .clip(CircleShape)
             .background(
                 Brush.verticalGradient(
                     colors = if (isPressed) {
-                        listOf(Color(0xFFFF3D00), Color(0xFFDD2C00))
+                        listOf(Color(0xFFFF3D00).copy(alpha = boostAlpha), Color(0xFFDD2C00).copy(alpha = boostAlpha))
                     } else {
-                        listOf(Color(0xFFFF9100), Color(0xFFFF6D00))
+                        listOf(Color(0xFFFF9100).copy(alpha = boostAlpha), Color(0xFFFF6D00).copy(alpha = boostAlpha))
                     }
                 )
             )
-            .border(3.dp, if (isPressed) Color(0xFFFFD600) else Color.White, CircleShape)
-            .shadow(if (isPressed) 14.dp else 8.dp, CircleShape)
+            .border(
+                2.5.dp,
+                if (isPressed) Color(0xFFFFD600).copy(alpha = boostAlpha) else Color.White.copy(alpha = boostAlpha.coerceAtLeast(0.15f)),
+                CircleShape
+            )
+            .shadow(if (isPressed) 14.dp else 0.dp, CircleShape)
             .pointerInput(Unit) {
                 detectTapGestures(
                     onPress = {
@@ -779,13 +812,13 @@ fun TurboBoostButton(
             Icon(
                 imageVector = Icons.Default.Bolt,
                 contentDescription = "Turbo Dorongan",
-                tint = Color.White,
+                tint = Color.White.copy(alpha = if (isPressed) 1f else 0.22f),
                 modifier = Modifier.size(34.dp)
             )
             Text(
                 text = "BOOST",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White,
+                color = Color.White.copy(alpha = if (isPressed) 1f else 0.22f),
                 fontWeight = FontWeight.Black,
                 fontSize = 11.sp
             )

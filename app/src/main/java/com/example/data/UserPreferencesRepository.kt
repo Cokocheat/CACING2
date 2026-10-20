@@ -30,7 +30,7 @@ data class DailyRewardInfo(
 )
 
 data class UserGameData(
-    val playerName: String = "Nana Tayantuh",
+    val playerName: String = "Cacing Besar",
     val coins: Int = 150,
     val highScore: Int = 0,
     val totalKills: Int = 0,
@@ -175,7 +175,7 @@ class UserPreferencesRepository(context: Context) {
     val userData: StateFlow<UserGameData> = _userData.asStateFlow()
 
     private fun loadData(): UserGameData {
-        val name = prefs.getString("player_name", "Nana Tayantuh") ?: "Nana Tayantuh"
+        val name = prefs.getString("player_name", "Cacing Besar") ?: "Cacing Besar"
         val coins = prefs.getInt("coins", 150)
         val highScore = prefs.getInt("high_score", 0)
         val totalKills = prefs.getInt("total_kills", 0)
@@ -400,7 +400,7 @@ class UserPreferencesRepository(context: Context) {
     fun resetAllUserData() {
         prefs.edit().clear().apply()
         _userData.value = UserGameData(
-            playerName = "Nana Tayantuh",
+            playerName = "Cacing Besar",
             coins = 1500,
             highScore = 0,
             totalKills = 0,
@@ -413,7 +413,7 @@ class UserPreferencesRepository(context: Context) {
     }
 
     fun updatePlayerName(newName: String) {
-        val trimmed = newName.trim().take(16).ifEmpty { "Nana Tayantuh" }
+        val trimmed = newName.trim().take(16).ifEmpty { "Cacing Besar" }
         prefs.edit().putString("player_name", trimmed).apply()
         _userData.value = _userData.value.copy(playerName = trimmed)
     }

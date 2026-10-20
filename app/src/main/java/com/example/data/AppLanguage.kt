@@ -32,7 +32,7 @@ object StringsHelper {
     }
 
     private val indonesianStrings = mapOf(
-        "app_name" to "nana tayantuh",
+        "app_name" to "Cacing Besar Battle",
         "play" to "MULAI MAIN",
         "outer_arena" to "Arena Luar",
         "time_attack" to "Time Attack",
@@ -126,7 +126,7 @@ object StringsHelper {
         "language" to "PILIHAN BAHASA",
         "select_language_desc" to "Pilih bahasa tampilan dalam permainan",
         "about_game" to "TENTANG PERMAINAN",
-        "version_title" to "nana tayantuh - Arena Luar Open World",
+        "version_title" to "Cacing Besar Battle - Arena Luar Open World",
         "version_info" to "Versi 1.3.0 • Radius Arena Luar 3800px (Area 7600x7600) • Event 7 Hari • 6 Bahasa",
         "credits" to "Dibuat untuk Pengalaman Bermain Cacing Terbaik",
         "virtual_joystick" to "Joystick Virtual",
@@ -259,7 +259,7 @@ object StringsHelper {
     )
 
     private val englishStrings = mapOf(
-        "app_name" to "nana tayantuh",
+        "app_name" to "Cacing Besar Battle",
         "play" to "PLAY NOW",
         "outer_arena" to "Outer Arena",
         "time_attack" to "Time Attack",
@@ -353,7 +353,7 @@ object StringsHelper {
         "language" to "LANGUAGE SELECTION",
         "select_language_desc" to "Choose game display language",
         "about_game" to "ABOUT GAME",
-        "version_title" to "nana tayantuh - Open World Outer Arena",
+        "version_title" to "Cacing Besar Battle - Open World Outer Arena",
         "version_info" to "Version 1.3.0 • Outer Arena Radius 3800px (7600x7600 Area) • 7-Day Event • 6 Languages",
         "credits" to "Built for the Ultimate Slither Experience",
         "virtual_joystick" to "Virtual Joystick",
@@ -486,7 +486,7 @@ object StringsHelper {
     )
 
     private val koreanStrings = mapOf(
-        "app_name" to "nana tayantuh",
+        "app_name" to "Cacing Besar Battle",
         "play" to "게임 시작",
         "outer_arena" to "외부 아레나",
         "time_attack" to "타임 어택",
@@ -530,7 +530,7 @@ object StringsHelper {
         "language" to "언어 설정",
         "select_language_desc" to "게임 화면 언어를 선택하세요",
         "about_game" to "게임 정보",
-        "version_title" to "nana tayantuh - 오픈 월드 아레나",
+        "version_title" to "Cacing Besar Battle - 오픈 월드 아레나",
         "version_info" to "버전 1.3.0 • 아레나 반경 3800px (7600x7600 영역) • 7일 출석 이벤트 • 6개 언어",
         "credits" to "최고의 지렁이 배틀 경험을 위해 제작되었습니다",
         "virtual_joystick" to "가상 조이스틱",
@@ -663,7 +663,7 @@ object StringsHelper {
     )
 
     private val turkishStrings = mapOf(
-        "app_name" to "nana tayantuh",
+        "app_name" to "Cacing Besar Battle",
         "play" to "OYNA",
         "outer_arena" to "Dış Arena",
         "time_attack" to "Zaman Saldırısı",
@@ -707,7 +707,7 @@ object StringsHelper {
         "language" to "DİL SEÇİMİ",
         "select_language_desc" to "Oyun görüntüleme dilini seçin",
         "about_game" to "OYUN HAKKINDA",
-        "version_title" to "nana tayantuh - Açık Dünya Dış Arena",
+        "version_title" to "Cacing Besar Battle - Açık Dünya Dış Arena",
         "version_info" to "Sürüm 1.3.0 • Arena Yarıçapı 3800px (7600x7600 Alan) • 7 Günlük Etkinlik • 6 Dil",
         "credits" to "En İyi Solucan Deneyimi İçin Geliştirildi",
         "virtual_joystick" to "Sanal Joystik",
@@ -840,7 +840,7 @@ object StringsHelper {
     )
 
     private val arabicStrings = mapOf(
-        "app_name" to "nana tayantuh",
+        "app_name" to "Cacing Besar Battle",
         "play" to "ابدأ اللعب",
         "outer_arena" to "الساحة الخارجية",
         "time_attack" to "هجوم الوقت",
@@ -884,7 +884,7 @@ object StringsHelper {
         "language" to "اختيار اللغة",
         "select_language_desc" to "اختر لغة عرض اللعبة",
         "about_game" to "عن اللعبة",
-        "version_title" to "nana tayantuh - ساحة العالم المفتوح",
+        "version_title" to "Cacing Besar Battle - ساحة العالم المفتوح",
         "version_info" to "الإصدار 1.3.0 • نصف قطر الساحة 3800 بكسل (منطقة 7600x7600) • فعالية 7 أيام • 6 لغات",
         "credits" to "صُممت لتقديم أفضل تجربة ديدان ملحمية",
         "virtual_joystick" to "عصا تحكم افتراضية",
@@ -1017,7 +1017,7 @@ object StringsHelper {
     )
 
     private val vietnameseStrings = mapOf(
-        "app_name" to "nana tayantuh",
+        "app_name" to "Cacing Besar Battle",
         "play" to "CHƠI NGAY",
         "outer_arena" to "Đấu Trường Mở",
         "time_attack" to "Chạy Đua Thời Gian",
@@ -1061,7 +1061,7 @@ object StringsHelper {
         "language" to "CHỌN NGÔN NGỮ",
         "select_language_desc" to "Chọn ngôn ngữ hiển thị trò chơi",
         "about_game" to "THÔNG TIN TRÒ CHƠI",
-        "version_title" to "nana tayantuh - Đấu Trường Thế Giới Mở",
+        "version_title" to "Cacing Besar Battle - Đấu Trường Thế Giới Mở",
         "version_info" to "Phiên bản 1.3.0 • Bán kính đấu trường 3800px (Khu vực 7600x7600) • Sự kiện 7 ngày • 6 Ngôn ngữ",
         "credits" to "Được tạo ra cho trải nghiệm sâu săn mồi đỉnh cao",
         "virtual_joystick" to "Joystick Ảo",
