@@ -1263,9 +1263,9 @@ object WormsRenderer {
                 )
             }
 
-            // 4. Direction Pointer Arrow (Panah Arah Analog di Depan Muka Cacing Player)
+            // 4. Single Direction Pointer Arrow (Further from head, no trailing arrow)
             if (worm.isPlayer && showAnalogArrow) {
-                val arrowDistance = (headR * 2.8f).coerceAtLeast(42f * zoom)
+                val arrowDistance = (headR * 3.4f).coerceAtLeast(62f * zoom)
                 val arrowAngle = worm.targetAngle // Exact analog steering angle
                 val arrowCenterX = headPos.x + cos(arrowAngle) * arrowDistance
                 val arrowCenterY = headPos.y + sin(arrowAngle) * arrowDistance
@@ -1281,14 +1281,14 @@ object WormsRenderer {
                 val sightSteps = 4
                 for (s in 1..sightSteps) {
                     val frac = s.toFloat() / (sightSteps + 1)
-                    val dotDist = headR * 1.2f + frac * (arrowDistance - headR * 1.7f)
+                    val dotDist = headR * 1.35f + frac * (arrowDistance - headR * 1.85f)
                     val dotPos = Offset(headPos.x + cos(arrowAngle) * dotDist, headPos.y + sin(arrowAngle) * dotDist)
                     val dotAlpha = 0.35f + 0.5f * frac
                     drawCircle(color = Color.Black.copy(alpha = 0.4f), radius = 3.5f * zoom, center = dotPos)
                     drawCircle(color = Color(0xFFFDE047).copy(alpha = dotAlpha), radius = 2.4f * zoom, center = dotPos)
                 }
 
-                // Main Pointer Arrow
+                // Single Distinct Front Pointer Arrow
                 rotate(degrees = angleDeg, pivot = arrowCenter) {
                     val arrowPath = Path().apply {
                         moveTo(arrowCenter.x + arrowLength * 0.55f, arrowCenter.y) // Sharp front tip
@@ -1328,40 +1328,19 @@ object WormsRenderer {
                     }
                     drawPath(path = innerPath, color = Color.White)
                 }
-
-                // Trailing mini chevron (>> flow indicator)
-                val trailDist = arrowDistance - arrowLength * 0.70f
-                val trailCenter = Offset(headPos.x + cos(arrowAngle) * trailDist, headPos.y + sin(arrowAngle) * trailDist)
-                rotate(degrees = angleDeg, pivot = trailCenter) {
-                    val trailPath = Path().apply {
-                        moveTo(trailCenter.x + arrowLength * 0.25f, trailCenter.y)
-                        lineTo(trailCenter.x - arrowLength * 0.20f, trailCenter.y - arrowWidth * 0.35f)
-                        moveTo(trailCenter.x + arrowLength * 0.25f, trailCenter.y)
-                        lineTo(trailCenter.x - arrowLength * 0.20f, trailCenter.y + arrowWidth * 0.35f)
-                    }
-                    drawPath(
-                        path = trailPath,
-                        color = Color.Black.copy(alpha = 0.5f),
-                        style = Stroke(width = 4.5f * zoom, cap = StrokeCap.Round)
-                    )
-                    drawPath(
-                        path = trailPath,
-                        color = Color(0xFF38BDF8),
-                        style = Stroke(width = 2.8f * zoom, cap = StrokeCap.Round)
-                    )
-                }
             }
 
-            // 5. Draw Name Tag Pill above head (for enemy bots & player)
+            // 5. Draw Highly-Visible Name Tag Pill above head (for enemy bots & player)
             if (worm.name.isNotEmpty()) {
-                val badgeY = headPos.y - headR - 14f * zoom
-                val fontSize = (11.5f * zoom).coerceIn(10f, 18f)
+                val badgeY = headPos.y - headR - 22f * zoom
+                val fontSize = (15f * zoom).coerceIn(13.5f, 26f)
                 nameTextPaint.textSize = fontSize
-                nameTextPaint.color = if (worm.isPlayer) android.graphics.Color.rgb(255, 215, 0) else android.graphics.Color.WHITE
+                nameTextPaint.color = if (worm.isPlayer) android.graphics.Color.rgb(255, 235, 59) else android.graphics.Color.WHITE
+                nameTextPaint.setShadowLayer(4f * zoom, 0f, 2f * zoom, android.graphics.Color.argb(220, 0, 0, 0))
 
                 val textWidth = nameTextPaint.measureText(worm.name)
-                val padX = 7f * zoom
-                val padY = 3.5f * zoom
+                val padX = 10f * zoom
+                val padY = 5.5f * zoom
                 tempNameRect.set(
                     headPos.x - textWidth / 2f - padX,
                     badgeY - fontSize - padY,
@@ -1369,20 +1348,20 @@ object WormsRenderer {
                     badgeY + padY
                 )
                 nameBgPaint.color = if (worm.isPlayer) {
-                    android.graphics.Color.argb(190, 20, 24, 40)
+                    android.graphics.Color.argb(235, 24, 16, 8)
                 } else {
-                    android.graphics.Color.argb(170, 15, 23, 42)
+                    android.graphics.Color.argb(230, 15, 23, 42)
                 }
-                nameBorderPaint.strokeWidth = 1.2f * zoom
+                nameBorderPaint.strokeWidth = 1.8f * zoom
                 nameBorderPaint.color = if (worm.isPlayer) {
-                    android.graphics.Color.argb(220, 255, 215, 0)
+                    android.graphics.Color.rgb(255, 215, 0)
                 } else {
-                    android.graphics.Color.argb(140, 100, 116, 139)
+                    android.graphics.Color.rgb(56, 189, 248)
                 }
-                val rCorner = 5f * zoom
+                val rCorner = 7f * zoom
                 drawContext.canvas.nativeCanvas.drawRoundRect(tempNameRect, rCorner, rCorner, nameBgPaint)
                 drawContext.canvas.nativeCanvas.drawRoundRect(tempNameRect, rCorner, rCorner, nameBorderPaint)
-                drawContext.canvas.nativeCanvas.drawText(worm.name, headPos.x, badgeY - 2f * zoom, nameTextPaint)
+                drawContext.canvas.nativeCanvas.drawText(worm.name, headPos.x, badgeY - 1f * zoom, nameTextPaint)
             }
         }
     }

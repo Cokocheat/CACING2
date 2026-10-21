@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import android.content.Intent
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -10,12 +11,12 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,28 +33,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CardGiftcard
-import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.MonetizationOn
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Upgrade
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -73,6 +66,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -83,8 +77,6 @@ import com.example.data.StringsHelper
 import com.example.data.UserGameData
 import com.example.model.GameConfig
 import com.example.model.GameDifficulty
-import android.content.Intent
-import androidx.compose.ui.platform.LocalContext
 import com.example.model.GameMode
 import com.example.model.MapTheme
 import com.example.model.Vec2
@@ -118,12 +110,12 @@ fun LobbyScreen(
     val context = LocalContext.current
     val lang = userData.language
 
-    val selectedMode by remember { mutableStateOf(GameMode.OPEN_ARENA) }
+    var selectedMode by remember { mutableStateOf(GameMode.OPEN_ARENA) }
     var showDailyLoginDialog by remember(userData.canClaimDailyToday) { mutableStateOf(userData.canClaimDailyToday) }
     var showBonusDialog by remember { mutableStateOf(false) }
     var showPiggyDialog by remember { mutableStateOf(false) }
 
-    // Pulsing and slithering animations
+    // Pulsing animation for main battle button
     val infiniteTransition = rememberInfiniteTransition(label = "lobbyAnimations")
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 1.0f,
@@ -135,7 +127,7 @@ fun LobbyScreen(
         label = "btnPulse"
     )
 
-    // Full-Screen In-Game Physics Worm wandering in lobby
+    // Full-Screen In-Game Physics Worm wandering in lobby (Preserved background canvas)
     var screenWidth by remember { mutableFloatStateOf(1000f) }
     var screenHeight by remember { mutableFloatStateOf(700f) }
     var frameTick by remember { mutableLongStateOf(0L) }
@@ -226,7 +218,7 @@ fun LobbyScreen(
             }
             .testTag("lobby_screen")
     ) {
-        // 1. In-Game Arena Background with warm terracotta checkerboard & dark vignette (matches screenshot!)
+        // 1. In-Game Arena Background with terracotta checkerboard & dynamic wandering worm (PRESERVED)
         Canvas(modifier = Modifier.fillMaxSize()) {
             val w = size.width
             val h = size.height
@@ -269,38 +261,37 @@ fun LobbyScreen(
             )
         }
 
-        // 2. FOREGROUND UI LAYOUT (EXACTLY MATCHING Screenshot_20261017-092349.jpg)
+        // 2. TOTAL REDESIGNED MODERN ARCADE FOREGROUND UI
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 18.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // TOP BAR: Player Profile (Left) & Energy + Coins (Right)
+            // TOP HEADER: Profile Card (Left) | Title Badge (Center) | Pure Coins Pill (Right - NON-CLICKABLE)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // TOP-LEFT: Warm Amber-Chocolate Profile Card (Blends seamlessly with the arena theme)
+                // TOP-LEFT: Polished Player Profile Pill
                 Surface(
                     onClick = onOpenProfile,
                     shape = RoundedCornerShape(16.dp),
-                    color = Color(0xEB28170B), // Warm chocolate amber matching theme
-                    border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFF59E0B)),
+                    color = Color(0xEB25160A),
+                    border = androidx.compose.foundation.BorderStroke(1.8.dp, Color(0xFFF59E0B)),
                     shadowElevation = 6.dp
                 ) {
                     Row(
-                        modifier = Modifier.padding(start = 6.dp, end = 14.dp, top = 6.dp, bottom = 6.dp),
+                        modifier = Modifier.padding(start = 6.dp, end = 12.dp, top = 5.dp, bottom = 5.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Avatar Circle with Level 16 badge (no emoji)
                         Box(contentAlignment = Alignment.BottomCenter) {
                             Surface(
                                 shape = CircleShape,
-                                color = Color(0xFF332012),
+                                color = Color(0xFF3B200E),
                                 border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFDE047)),
-                                modifier = Modifier.size(46.dp)
+                                modifier = Modifier.size(42.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
@@ -313,12 +304,11 @@ fun LobbyScreen(
                             }
                             Surface(
                                 shape = RoundedCornerShape(4.dp),
-                                color = Color(0xFFF59E0B),
-                                modifier = Modifier.padding(bottom = 0.dp)
+                                color = Color(0xFFF59E0B)
                             ) {
                                 Text(
                                     text = "16",
-                                    fontSize = 9.sp,
+                                    fontSize = 8.5.sp,
                                     fontWeight = FontWeight.Black,
                                     color = Color.Black,
                                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
@@ -326,30 +316,29 @@ fun LobbyScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.width(10.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
 
-                        // Profil label & Orange Energy Bar
                         Column {
                             Text(
                                 text = userData.playerName.ifBlank { StringsHelper.get("tab_profile", lang) },
-                                fontSize = 14.sp,
+                                fontSize = 13.5.sp,
                                 fontWeight = FontWeight.Black,
                                 color = Color.White
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(3.dp))
                             // Energy / XP Progress Bar
                             Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = Color(0xFF190E06),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF59E0B).copy(alpha = 0.7f)),
-                                modifier = Modifier.width(110.dp).height(12.dp)
+                                shape = RoundedCornerShape(4.dp),
+                                color = Color(0xFF140B04),
+                                border = androidx.compose.foundation.BorderStroke(0.8.dp, Color(0xFFF59E0B).copy(alpha = 0.7f)),
+                                modifier = Modifier.width(95.dp).height(8.dp)
                             ) {
                                 Box(modifier = Modifier.fillMaxSize()) {
                                     Box(
                                         modifier = Modifier
                                             .fillMaxHeight()
-                                            .fillMaxWidth(0.65f)
-                                            .clip(RoundedCornerShape(6.dp))
+                                            .fillMaxWidth(0.68f)
+                                            .clip(RoundedCornerShape(4.dp))
                                             .background(
                                                 Brush.horizontalGradient(
                                                     listOf(Color(0xFFF97316), Color(0xFFFBBF24))
@@ -362,36 +351,64 @@ fun LobbyScreen(
                     }
                 }
 
-                // TOP-RIGHT: Gold Coins Pill (No fruit, no plus button - clean and focused)
+                // TOP-CENTER: Brand Banner Logo "CACING BESAR BATTLE"
                 Surface(
-                    onClick = onOpenCoinShop,
-                    shape = RoundedCornerShape(18.dp),
-                    color = Color(0xEB28170B),
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color(0xF0201207),
+                    border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFFACC15)),
+                    shadowElevation = 8.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "CACING BESAR",
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color(0xFFFDE047),
+                            letterSpacing = 1.sp
+                        )
+                        Spacer(modifier = Modifier.width(5.dp))
+                        Text(
+                            text = "BATTLE",
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color(0xFF38BDF8),
+                            letterSpacing = 1.sp
+                        )
+                    }
+                }
+
+                // TOP-RIGHT: Pure Gold Coins Pill (NON-CLICKABLE per user request!)
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color(0xEB25160A),
                     border = androidx.compose.foundation.BorderStroke(1.8.dp, Color(0xFFFACC15)),
                     shadowElevation = 6.dp
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
                             imageVector = Icons.Default.MonetizationOn,
                             contentDescription = null,
                             tint = Color(0xFFFFD700),
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(19.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = java.text.NumberFormat.getNumberInstance(java.util.Locale.US).format(userData.coins),
                             color = Color(0xFFFEF08A),
                             fontWeight = FontWeight.Black,
-                            fontSize = 14.sp
+                            fontSize = 13.5.sp
                         )
                     }
                 }
             }
 
-            // MIDDLE AREA: Left Event Badges + Center Cartoon Logo & Action Buttons + Right Mascots
+            // MIDDLE AREA: Left Quick Events | Center Battle Hub | Right Game Features
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -400,148 +417,141 @@ fun LobbyScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // LEFT STACK: Event / Bonus Badges (Warm theme harmony)
+                // LEFT SIDEBAR: Events & Free Bonuses (Daily Event, Lucky Bonus, Piggy Bank)
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // 1. Bonus Harian / Lucky Bonus Button (With real status & cooldown)
-                    val canClaimBonus = userData.canClaimLuckyBonus
-                    Surface(
-                        onClick = { showBonusDialog = true },
-                        shape = CircleShape,
-                        color = if (canClaimBonus) Color(0xFFDC2626) else Color(0xFF334155),
-                        border = androidx.compose.foundation.BorderStroke(2.dp, if (canClaimBonus) Color(0xFFFDE047) else Color(0xFF64748B)),
-                        shadowElevation = 6.dp,
-                        modifier = Modifier.size(54.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                val bonusHours = (userData.millisUntilNextBonus / (1000 * 60 * 60)).toInt()
-                                val bonusMins = ((userData.millisUntilNextBonus / (1000 * 60)) % 60).toInt()
-                                Text(
-                                    text = if (canClaimBonus) "BONUS" else "${bonusHours}j ${bonusMins}m",
-                                    fontSize = if (canClaimBonus) 9.sp else 7.5.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = if (canClaimBonus) Color(0xFFFDE047) else Color(0xFFA0AEC0)
-                                )
-                                Text(if (canClaimBonus) "⭐" else "⏳", fontSize = 14.sp)
-                            }
-                        }
-                    }
+                    // 1. Calendar / 15-Hari Daily Login Gift ("Event 15 Hari")
+                    EventPillButton(
+                        icon = Icons.Default.CardGiftcard,
+                        iconTint = Color(0xFF38BDF8),
+                        title = "Event 15 Hari",
+                        badge = if (userData.canClaimDailyToday) "KLAIM!" else "Harian",
+                        isHighlight = userData.canClaimDailyToday,
+                        onClick = { showDailyLoginDialog = true }
+                    )
 
-                    // 2. Calendar / 15-Hari Daily Login Gift ("Event 15 Hari")
+                    // 2. Lucky Bonus Button
+                    val canClaimBonus = userData.canClaimLuckyBonus
+                    val bonusHours = (userData.millisUntilNextBonus / (1000 * 60 * 60)).toInt()
+                    val bonusMins = ((userData.millisUntilNextBonus / (1000 * 60)) % 60).toInt()
+                    EventPillButton(
+                        icon = Icons.Default.Star,
+                        iconTint = Color(0xFFFDE047),
+                        title = "Bonus Hoki",
+                        badge = if (canClaimBonus) "KLAIM!" else "${bonusHours}j ${bonusMins}m",
+                        isHighlight = canClaimBonus,
+                        onClick = { showBonusDialog = true }
+                    )
+
+                    // 3. Piggy Bank Button
+                    EventPillButton(
+                        icon = Icons.Default.MonetizationOn,
+                        iconTint = Color(0xFFFFD700),
+                        title = "Celengan",
+                        badge = "${userData.piggyBankCoins}",
+                        isHighlight = userData.piggyBankCoins >= 1000,
+                        onClick = { showPiggyDialog = true }
+                    )
+                }
+
+                // CENTER BATTLE HUB: Mode Selector, Difficulty Selector, Play Button & Wardrobe
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // 1. Game Mode Selector Row
                     Surface(
-                        onClick = { showDailyLoginDialog = true },
                         shape = RoundedCornerShape(14.dp),
-                        color = Color(0xEB28170B),
-                        border = androidx.compose.foundation.BorderStroke(1.5.dp, if (userData.canClaimDailyToday) Color(0xFFFACC15) else Color(0xFF78350F)),
-                        modifier = Modifier.width(66.dp).testTag("btn_daily_event")
+                        color = Color(0xEB201207),
+                        border = androidx.compose.foundation.BorderStroke(1.2.dp, Color(0xFFF59E0B).copy(alpha = 0.7f)),
+                        shadowElevation = 4.dp
                     ) {
-                        Column(
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        Row(
+                            modifier = Modifier.padding(4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Box(contentAlignment = Alignment.TopEnd) {
-                                Icon(Icons.Default.CardGiftcard, contentDescription = null, tint = Color(0xFF38BDF8), modifier = Modifier.size(26.dp))
-                                if (userData.canClaimDailyToday) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(9.dp)
-                                            .clip(CircleShape)
-                                            .background(Color(0xFFEF4444))
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(2.dp))
-                            val nextClaimHours = (userData.millisUntilNextClaim / (1000 * 60 * 60)).toInt()
-                            val nextClaimMins = ((userData.millisUntilNextClaim / (1000 * 60)) % 60).toInt()
-                            Text(
-                                text = if (userData.canClaimDailyToday) "KLAIM!" else "${nextClaimHours}j ${nextClaimMins}m",
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Black,
-                                color = if (userData.canClaimDailyToday) Color(0xFF4ADE80) else Color(0xCCFFFFFF)
+                            ModeChip(
+                                title = "Arena Luar",
+                                isSelected = selectedMode == GameMode.OPEN_ARENA,
+                                onClick = { selectedMode = GameMode.OPEN_ARENA }
+                            )
+                            ModeChip(
+                                title = "Time Attack",
+                                isSelected = selectedMode == GameMode.TIME_ATTACK,
+                                onClick = { selectedMode = GameMode.TIME_ATTACK }
+                            )
+                            ModeChip(
+                                title = "Battle Royale",
+                                isSelected = selectedMode == GameMode.BATTLE_ROYALE,
+                                onClick = { selectedMode = GameMode.BATTLE_ROYALE }
                             )
                         }
                     }
-                }
 
-                // CENTER COLUMN: Big Cartoon 3D Logo + Center Mascot + "Bertempur!" + "Lemari Cacing"
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    // Big Cartoon 3D Game Logo
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(bottom = 6.dp)
+                    // 2. Difficulty Level Selector Row (Mudah, Normal, Sulit - requested by user)
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = Color(0xEB201207),
+                        border = androidx.compose.foundation.BorderStroke(1.2.dp, Color(0xFFFACC15).copy(alpha = 0.8f)),
+                        shadowElevation = 4.dp
                     ) {
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = Color(0xFA2C170B), // Warm chocolate base banner
-                            border = androidx.compose.foundation.BorderStroke(2.5.dp, Color(0xFFFACC15)),
-                            shadowElevation = 8.dp
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 18.dp, vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "CACING BESAR",
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color(0xFFFDE047),
-                                    letterSpacing = 1.sp
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "BATTLE",
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color(0xFF38BDF8),
-                                    letterSpacing = 1.sp
-                                )
-                            }
+                            Text(
+                                text = "Tingkat AI:",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFCBD5E1)
+                            )
+
+                            DifficultyChip(
+                                label = "MUDAH",
+                                badgeColor = Color(0xFF22C55E),
+                                isSelected = userData.gameDifficulty == GameDifficulty.EASY,
+                                onClick = { onSetGameDifficulty(GameDifficulty.EASY) }
+                            )
+                            DifficultyChip(
+                                label = "NORMAL",
+                                badgeColor = Color(0xFFFACC15),
+                                isSelected = userData.gameDifficulty == GameDifficulty.NORMAL,
+                                onClick = { onSetGameDifficulty(GameDifficulty.NORMAL) }
+                            )
+                            DifficultyChip(
+                                label = "SULIT",
+                                badgeColor = Color(0xFFEF4444),
+                                isSelected = userData.gameDifficulty == GameDifficulty.HARD,
+                                onClick = { onSetGameDifficulty(GameDifficulty.HARD) }
+                            )
                         }
                     }
 
-                    // Center Mascot Worm with "▶ Video" Pill
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    ) {
-                        Text("🐛", fontSize = 38.sp)
-                        Surface(
-                            onClick = onOpenCoinShop,
-                            shape = RoundedCornerShape(8.dp),
-                            color = Color(0xEB28170B),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFACC15)),
-                            modifier = Modifier.padding(top = 2.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color(0xFFFDE047), modifier = Modifier.size(12.dp))
-                                Spacer(modifier = Modifier.width(3.dp))
-                                Text("Video", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                            }
-                        }
-                    }
+                    Spacer(modifier = Modifier.height(2.dp))
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    // 3. GIANT "BERTEMPUR!" PLAY BUTTON
+                    val playInteractionSource = remember { MutableInteractionSource() }
+                    val isPlayPressed by playInteractionSource.collectIsPressedAsState()
+                    val playScale by animateFloatAsState(
+                        targetValue = if (isPlayPressed) 0.92f else pulseScale,
+                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                        label = "playScale"
+                    )
 
-                    // GIANT "Bertempur!" PLAY BUTTON (Glossy Green with Golden Border like screenshot!)
                     Surface(
                         onClick = { onPlayClick(selectedMode) },
+                        interactionSource = playInteractionSource,
                         shape = RoundedCornerShape(26.dp),
-                        color = Color(0xFF22C55E), // Vibrant glossy green
-                        border = androidx.compose.foundation.BorderStroke(3.5.dp, Color(0xFFFACC15)), // Thick gold stroke
-                        shadowElevation = 10.dp,
+                        color = Color(0xFF16A34A),
+                        border = androidx.compose.foundation.BorderStroke(3.5.dp, Color(0xFFFACC15)),
+                        shadowElevation = if (isPlayPressed) 4.dp else 10.dp,
                         modifier = Modifier
-                            .scale(pulseScale)
-                            .width(230.dp)
-                            .height(58.dp)
+                            .scale(playScale)
+                            .width(225.dp)
+                            .height(54.dp)
                             .testTag("play_button")
                     ) {
                         Box(
@@ -550,7 +560,7 @@ fun LobbyScreen(
                         ) {
                             Text(
                                 text = StringsHelper.get("battle_btn", lang),
-                                fontSize = 26.sp,
+                                fontSize = 24.sp,
                                 fontWeight = FontWeight.Black,
                                 color = Color.White,
                                 letterSpacing = 1.sp
@@ -558,89 +568,41 @@ fun LobbyScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // BLUE PILL BUTTON: "Lemari Cacing" with red notification dot
+                    // 4. "Lemari Skin Cacing" Button
                     Surface(
                         onClick = onOpenWardrobe,
-                        shape = RoundedCornerShape(16.dp),
-                        color = Color(0xFF0284C7), // Glossy cyan-blue
-                        border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFF59E0B)),
-                        shadowElevation = 6.dp,
-                        modifier = Modifier.width(180.dp).height(38.dp).testTag("btn_wardrobe")
+                        shape = RoundedCornerShape(14.dp),
+                        color = Color(0xFF0284C7),
+                        border = androidx.compose.foundation.BorderStroke(1.8.dp, Color(0xFFF59E0B)),
+                        shadowElevation = 5.dp,
+                        modifier = Modifier
+                            .width(175.dp)
+                            .height(36.dp)
+                            .testTag("btn_wardrobe")
                     ) {
-                        Box(
-                            contentAlignment = Alignment.Center,
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = StringsHelper.get("wardrobe_btn", lang),
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color.White
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .size(8.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(0xFFEF4444))
-                                )
-                            }
+                            Icon(Icons.Default.Palette, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = StringsHelper.get("wardrobe_btn", lang),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color.White
+                            )
                         }
-                    }
-
-                    // Subtitle below button with cozy translucent pill
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = Color(0xCC1E1208),
-                        modifier = Modifier.padding(top = 4.dp)
-                    ) {
-                        Text(
-                            text = StringsHelper.get("choose_theme_sub", lang),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFFDE047),
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                        )
                     }
                 }
 
-                // RIGHT STACK: Piggy bank & Mascot
+                // RIGHT SIDEBAR: Records, Upgrades, Settings, Share
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("🐍", fontSize = 34.sp)
-
-                    Surface(
-                        onClick = { showPiggyDialog = true },
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color(0xEB28170B),
-                        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFACC15)),
-                        modifier = Modifier.width(64.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(4.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text("🐷", fontSize = 22.sp)
-                            Text("23j 55m", fontSize = 9.sp, fontWeight = FontWeight.Black, color = Color.White)
-                        }
-                    }
-                }
-            }
-
-            // BOTTOM BAR: Left (Leaderboard, Upgrades) & Right (Share, Settings)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Bottom-Left Buttons
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    // Leaderboard / Records
+                    // Leaderboard / Rekor
                     CartoonSquareButton(
                         icon = Icons.Default.Leaderboard,
                         testTag = "btn_records",
@@ -652,11 +614,13 @@ fun LobbyScreen(
                         testTag = "btn_upgrades",
                         onClick = onOpenUpgrades
                     )
-                }
-
-                // Bottom-Right Buttons (Share & Settings)
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    // Share
+                    // Settings / Pengaturan
+                    CartoonSquareButton(
+                        icon = Icons.Default.Settings,
+                        testTag = "settings_button",
+                        onClick = onOpenSettings
+                    )
+                    // Share Profil
                     CartoonSquareButton(
                         icon = Icons.Default.Share,
                         testTag = "btn_share",
@@ -672,11 +636,26 @@ fun LobbyScreen(
                             context.startActivity(Intent.createChooser(sendIntent, StringsHelper.get("share_profile", lang)))
                         }
                     )
-                    // Settings
-                    CartoonSquareButton(
-                        icon = Icons.Default.Settings,
-                        testTag = "settings_button",
-                        onClick = onOpenSettings
+                }
+            }
+
+            // BOTTOM BAR: Footer note (Crisp, clean and minimal)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color(0x991E1208),
+                    modifier = Modifier.padding(bottom = 2.dp)
+                ) {
+                    Text(
+                        text = "Cacing Besar Battle • Edisi Arena Luar Bebas Lag",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xBBFDE047),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
                     )
                 }
             }
@@ -727,6 +706,132 @@ fun LobbyScreen(
     }
 }
 
+// MODERN EVENT PILL BUTTON FOR SIDEBAR
+@Composable
+private fun EventPillButton(
+    icon: ImageVector,
+    iconTint: Color,
+    title: String,
+    badge: String,
+    isHighlight: Boolean,
+    onClick: () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.90f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "eventPillScale"
+    )
+
+    Surface(
+        onClick = onClick,
+        interactionSource = interactionSource,
+        shape = RoundedCornerShape(14.dp),
+        color = if (isHighlight) Color(0xEB3F1A08) else Color(0xEB25160A),
+        border = androidx.compose.foundation.BorderStroke(
+            1.8.dp,
+            if (isHighlight) Color(0xFFFACC15) else Color(0xFF78350F)
+        ),
+        shadowElevation = if (isHighlight) 6.dp else 3.dp,
+        modifier = Modifier
+            .width(82.dp)
+            .scale(scale)
+    ) {
+        Column(
+            modifier = Modifier.padding(vertical = 5.dp, horizontal = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(imageVector = icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(20.dp))
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = title,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                maxLines = 1
+            )
+            Text(
+                text = badge,
+                fontSize = 8.5.sp,
+                fontWeight = FontWeight.Black,
+                color = if (isHighlight) Color(0xFF4ADE80) else Color(0xFFFEF08A)
+            )
+        }
+    }
+}
+
+// GAME MODE CHIP
+@Composable
+private fun ModeChip(
+    title: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(10.dp),
+        color = if (isSelected) Color(0xFFF59E0B) else Color.Transparent,
+        border = if (isSelected) androidx.compose.foundation.BorderStroke(1.2.dp, Color(0xFFFDE047)) else null
+    ) {
+        Text(
+            text = title,
+            fontSize = 11.sp,
+            fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold,
+            color = if (isSelected) Color.Black else Color(0xFFCBD5E1),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+        )
+    }
+}
+
+// DIFFICULTY CHIP
+@Composable
+private fun DifficultyChip(
+    label: String,
+    badgeColor: Color,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.88f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "diffScale"
+    )
+
+    Surface(
+        onClick = onClick,
+        interactionSource = interactionSource,
+        shape = RoundedCornerShape(8.dp),
+        color = if (isSelected) badgeColor.copy(alpha = 0.28f) else Color(0x33000000),
+        border = androidx.compose.foundation.BorderStroke(
+            if (isSelected) 1.8.dp else 1.dp,
+            if (isSelected) badgeColor else Color(0x5564748B)
+        ),
+        modifier = Modifier.scale(scale)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(7.dp)
+                    .clip(CircleShape)
+                    .background(badgeColor)
+            )
+            Spacer(modifier = Modifier.width(5.dp))
+            Text(
+                text = label,
+                fontSize = 10.sp,
+                fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold,
+                color = if (isSelected) Color.White else Color(0xFFA0AEC0)
+            )
+        }
+    }
+}
+
 // WARM CARTOON SQUARE BUTTON WITH ANIMATED TACTILE BOUNCE & GLOW
 @Composable
 private fun CartoonSquareButton(
@@ -753,7 +858,7 @@ private fun CartoonSquareButton(
         ),
         shadowElevation = if (isPressed) 1.dp else 6.dp,
         modifier = Modifier
-            .size(46.dp)
+            .size(44.dp)
             .scale(scale)
             .testTag(testTag)
     ) {
@@ -762,7 +867,7 @@ private fun CartoonSquareButton(
                 imageVector = icon,
                 contentDescription = null,
                 tint = if (isPressed) Color(0xFFFFF9C4) else Color(0xFFFDE047),
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(22.dp)
             )
         }
     }

@@ -1,9 +1,9 @@
 package com.example.model
 
-enum class GameMode {
-    OPEN_ARENA,
-    TIME_ATTACK,
-    BATTLE_ROYALE
+enum class GameMode(val title: String) {
+    OPEN_ARENA("Arena Luar"),
+    TIME_ATTACK("Time Attack"),
+    BATTLE_ROYALE("Battle Royale")
 }
 
 enum class GameDifficulty(

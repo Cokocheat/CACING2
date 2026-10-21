@@ -2,6 +2,7 @@ package com.example.model
 
 import kotlin.math.PI
 import kotlin.math.atan2
+import kotlin.math.pow
 import kotlin.math.sqrt
 
 enum class BotPersonality {
@@ -42,14 +43,16 @@ data class Worm(
 ) {
     val segmentRadius: Float
         get() {
-            // Grows gradually with square root of mass
-            return (GameConfig.BASE_SEGMENT_RADIUS + sqrt(mass.coerceAtLeast(10f)) * 0.45f).coerceIn(16f, 52f)
+            // Scales dynamically with mass/points without an artificial early cap
+            val extraMass = (mass - 10f).coerceAtLeast(0f)
+            return (13.5f + extraMass.toDouble().pow(0.40).toFloat() * 1.05f).coerceIn(13.5f, 125f)
         }
 
     val targetLength: Int
         get() {
-            // Number of segments based on mass
-            return (GameConfig.INITIAL_SEGMENTS + (sqrt(mass) * 1.8f).toInt()).coerceIn(12, 180)
+            // Scales length dynamically with mass/points
+            val extraMass = (mass - 10f).coerceAtLeast(0f)
+            return (15 + (extraMass.toDouble().pow(0.50) * 2.4).toInt()).coerceIn(15, 650)
         }
 
     fun hasPotion(type: PotionType): Boolean = (activePotions[type] ?: 0f) > 0f

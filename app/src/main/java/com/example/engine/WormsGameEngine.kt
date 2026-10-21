@@ -150,6 +150,7 @@ class WormsGameEngine(
 
     fun startNewGame(mode: GameMode = gameMode) {
         this.gameMode = mode
+        this.difficulty = userData.gameDifficulty
         isGameOver = false
         isVictory = false
         isPaused = false
@@ -373,10 +374,12 @@ class WormsGameEngine(
             spawnProtectionTimer = (spawnProtectionTimer - dt).coerceAtLeast(0f)
         }
 
-        // Smooth camera zoom (balanced view so food and worms look proportional and crisp)
+        // Smooth dynamic camera zoom (widens gracefully as player grows so massive worms look epic and arena stays readable)
         val hasZoomPotion = player.hasPotion(PotionType.ZOOM)
-        val targetZoom = if (hasZoomPotion) 0.95f else (1.20f - (player.bodyPoints.size / 360f) * 0.28f).coerceIn(1.00f, 1.25f)
-        cameraZoom += (targetZoom - cameraZoom) * (dt * 3.5f).coerceAtMost(1f)
+        val sizeGrowthRatio = ((player.segmentRadius - 13.5f) / 80f).coerceIn(0f, 1f)
+        val baseTargetZoom = 1.25f - sizeGrowthRatio * 0.55f
+        val targetZoom = if (hasZoomPotion) (baseTargetZoom * 0.80f).coerceAtLeast(0.50f) else baseTargetZoom.coerceIn(0.65f, 1.25f)
+        cameraZoom += (targetZoom - cameraZoom) * (dt * 3.0f).coerceAtMost(1f)
 
         // 1. Update player
         updateWorm(player, dt)
@@ -532,13 +535,13 @@ class WormsGameEngine(
         val velocity = Vec2.fromAngle(worm.angle, worm.speed * dt)
         worm.head = worm.head + velocity
 
-        // Follow body segments
+        // Follow body segments - spacing adapts to worm radius for natural slither curvature
         var prevPoint = worm.head
+        val desiredDist = (worm.segmentRadius * 0.50f).coerceIn(GameConfig.SEGMENT_SPACING, 32f)
         for (i in worm.bodyPoints.indices) {
             val current = worm.bodyPoints[i]
             val diff = current - prevPoint
             val dist = diff.length()
-            val desiredDist = GameConfig.SEGMENT_SPACING
 
             if (dist > 0.001f) {
                 worm.bodyPoints[i] = prevPoint + diff.normalized() * desiredDist
@@ -550,7 +553,7 @@ class WormsGameEngine(
         val desiredLength = worm.targetLength
         if (worm.bodyPoints.size < desiredLength) {
             val last = worm.bodyPoints.lastOrNull() ?: worm.head
-            val dir = Vec2.fromAngle(worm.angle + PI.toFloat(), GameConfig.SEGMENT_SPACING)
+            val dir = Vec2.fromAngle(worm.angle + PI.toFloat(), desiredDist)
             worm.bodyPoints.add(last + dir)
         } else if (worm.bodyPoints.size > desiredLength && worm.bodyPoints.size > 10) {
             worm.bodyPoints.removeAt(worm.bodyPoints.lastIndex)
@@ -975,8 +978,6 @@ class WormsGameEngine(
                             if (food.type == FoodType.GOLDEN_COIN) {
                                 coinsCollectedInSession += 2
                             }
-
-                            soundManager.playEatSound()
 
                             if (particles.size < 35) {
                                 particles.add(

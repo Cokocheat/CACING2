@@ -92,8 +92,7 @@ class GameSoundManager(private val context: Context) {
     }
 
     fun playEatSound() {
-        playTone(floatArrayOf(587.33f, 880.0f), 70, 0.25f)
-        vibrate(15)
+        // Disabled to guarantee 100% lag-free food collection during intense worm matches
     }
 
     fun playPotionSound() {
@@ -181,20 +180,49 @@ class GameSoundManager(private val context: Context) {
                 bgmAudioTrack = track
                 track.play()
 
-                // Joyful retro-arcade worm IO game tune in C major & A minor pentatonic
+                // Extended Thematic "Cacing Besar Battle" Arcade Soundtrack (4 Movements: Crawl, Snack, Battle Duel, & Victory Arena)
                 val melody = floatArrayOf(
-                    261.63f, 329.63f, 392.00f, 523.25f, 392.00f, 523.25f, 659.25f, 523.25f,
-                    220.00f, 261.63f, 329.63f, 440.00f, 329.63f, 440.00f, 523.25f, 440.00f,
-                    174.61f, 220.00f, 261.63f, 349.23f, 261.63f, 349.23f, 440.00f, 349.23f,
-                    196.00f, 246.94f, 293.66f, 392.00f, 293.66f, 392.00f, 493.88f, 392.00f
+                    // Movement 1: Playful Slither & Crawl (C Major)
+                    261.63f, 329.63f, 392.00f, 329.63f, 261.63f, 392.00f, 440.00f, 392.00f,
+                    349.23f, 440.00f, 523.25f, 440.00f, 392.00f, 329.63f, 293.66f, 392.00f,
+                    329.63f, 392.00f, 523.25f, 493.88f, 440.00f, 523.25f, 392.00f, 329.63f,
+                    293.66f, 349.23f, 440.00f, 493.88f, 523.25f, 392.00f, 329.63f, 261.63f,
+
+                    // Movement 2: Happy Munching & Noodle Growth (Bouncy Pentatonic)
+                    329.63f, 329.63f, 392.00f, 440.00f, 392.00f, 329.63f, 293.66f, 261.63f,
+                    293.66f, 293.66f, 349.23f, 392.00f, 349.23f, 293.66f, 261.63f, 246.94f,
+                    261.63f, 329.63f, 392.00f, 523.25f, 587.33f, 523.25f, 493.88f, 440.00f,
+                    392.00f, 440.00f, 493.88f, 587.33f, 523.25f, 392.00f, 329.63f, 261.63f,
+
+                    // Movement 3: Turbo Boost Duel & Rival Clashes (Dynamic & Driving)
+                    440.00f, 523.25f, 659.25f, 587.33f, 523.25f, 440.00f, 392.00f, 329.63f,
+                    349.23f, 440.00f, 523.25f, 587.33f, 659.25f, 587.33f, 523.25f, 440.00f,
+                    293.66f, 349.23f, 440.00f, 523.25f, 587.33f, 523.25f, 440.00f, 392.00f,
+                    329.63f, 392.00f, 493.88f, 587.33f, 659.25f, 523.25f, 392.00f, 329.63f,
+
+                    // Movement 4: Arena King Triumphant Fanfare (Climbing crescendo resolving into crawl)
+                    523.25f, 392.00f, 329.63f, 392.00f, 523.25f, 659.25f, 783.99f, 659.25f,
+                    698.46f, 659.25f, 587.33f, 523.25f, 493.88f, 440.00f, 392.00f, 349.23f,
+                    329.63f, 392.00f, 523.25f, 659.25f, 587.33f, 493.88f, 392.00f, 493.88f,
+                    523.25f, 659.25f, 523.25f, 392.00f, 329.63f, 293.66f, 261.63f, 0f
                 )
+
                 val bass = floatArrayOf(
-                    130.81f, 130.81f, 130.81f, 130.81f,
-                    110.00f, 110.00f, 110.00f, 110.00f,
-                    87.31f, 87.31f, 87.31f, 87.31f,
-                    98.00f, 98.00f, 98.00f, 98.00f
+                    // Bass Movement 1 (Walking roots & fifths in C & F)
+                    130.81f, 130.81f, 196.00f, 130.81f, 174.61f, 174.61f, 220.00f, 174.61f,
+                    164.81f, 164.81f, 196.00f, 164.81f, 196.00f, 196.00f, 246.94f, 196.00f,
+                    // Bass Movement 2 (Bouncy crawling bass)
+                    130.81f, 196.00f, 130.81f, 196.00f, 146.83f, 220.00f, 146.83f, 220.00f,
+                    130.81f, 196.00f, 164.81f, 196.00f, 196.00f, 246.94f, 196.00f, 130.81f,
+                    // Bass Movement 3 (Driving minor energy in A & D)
+                    110.00f, 110.00f, 164.81f, 110.00f, 87.31f, 87.31f, 130.81f, 87.31f,
+                    146.83f, 146.83f, 220.00f, 146.83f, 164.81f, 164.81f, 196.00f, 164.81f,
+                    // Bass Movement 4 (Heroic walking turnaround)
+                    130.81f, 130.81f, 196.00f, 261.63f, 174.61f, 174.61f, 220.00f, 174.61f,
+                    164.81f, 196.00f, 146.83f, 196.00f, 130.81f, 196.00f, 130.81f, 130.81f
                 )
-                val stepDurationMs = 145
+
+                val stepDurationMs = 150
                 val samplesPerStep = (bgmSampleRate * (stepDurationMs / 1000f)).toInt().coerceAtLeast(100)
                 val stepBuf = ShortArray(samplesPerStep)
                 var stepIndex = 0
@@ -208,8 +236,8 @@ class GameSoundManager(private val context: Context) {
                         val t = i.toFloat() / samplesPerStep
                         // Smooth envelope to avoid clicks
                         val env = (sin(PI * t)).toFloat()
-                        val mWave = sin(2.0 * PI * i * mFreq / bgmSampleRate) * 0.65
-                        val bWave = sin(2.0 * PI * i * bFreq / bgmSampleRate) * 0.45
+                        val mWave = if (mFreq > 20f) sin(2.0 * PI * i * mFreq / bgmSampleRate) * 0.65 else 0.0
+                        val bWave = if (bFreq > 20f) sin(2.0 * PI * i * bFreq / bgmSampleRate) * 0.45 else 0.0
                         val sample = (mWave + bWave) * env * vol * Short.MAX_VALUE
                         stepBuf[i] = sample.toInt().coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
                     }
