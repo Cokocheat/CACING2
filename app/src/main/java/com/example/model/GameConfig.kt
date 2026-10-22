@@ -20,7 +20,7 @@ enum class GameDifficulty(
     EASY(
         id = "easy",
         titleResKey = "diff_easy",
-        badge = "🟢",
+        badge = "1.0x",
         decisionCooldownMin = 0.50f,
         decisionCooldownMax = 0.85f,
         lookAheadDist = 80f,
@@ -31,7 +31,7 @@ enum class GameDifficulty(
     NORMAL(
         id = "normal",
         titleResKey = "diff_normal",
-        badge = "🟡",
+        badge = "1.5x",
         decisionCooldownMin = 0.22f,
         decisionCooldownMax = 0.42f,
         lookAheadDist = 130f,
@@ -42,7 +42,7 @@ enum class GameDifficulty(
     HARD(
         id = "hard",
         titleResKey = "diff_hard",
-        badge = "🔴",
+        badge = "2.0x",
         decisionCooldownMin = 0.08f,
         decisionCooldownMax = 0.16f,
         lookAheadDist = 190f,

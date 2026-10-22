@@ -35,10 +35,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Fastfood
+import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material.icons.filled.Gamepad
+import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
@@ -180,35 +184,29 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    // Coins Pill (Smiling Coin face + amount + blue plus button)
+                    // Non-clickable Coins Badge (No event, no emoji, no plus button)
                     Surface(
-                        onClick = onOpenCoinShop,
                         shape = RoundedCornerShape(20.dp),
                         color = Color(0xFF1E293B),
                         border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFACC15))
                     ) {
                         Row(
-                            modifier = Modifier.padding(start = 8.dp, end = 4.dp, top = 3.dp, bottom = 3.dp),
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("😊", fontSize = 16.sp)
+                            Icon(
+                                imageVector = Icons.Default.MonetizationOn,
+                                contentDescription = null,
+                                tint = Color(0xFFFFD700),
+                                modifier = Modifier.size(18.dp)
+                            )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "${userData.coins}",
+                                text = java.text.NumberFormat.getNumberInstance(java.util.Locale.US).format(userData.coins),
                                 color = Color.White,
                                 fontWeight = FontWeight.Black,
                                 fontSize = 14.sp
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = Color(0xFF38BDF8),
-                                modifier = Modifier.size(24.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(Icons.Default.Add, contentDescription = "Tambah Koin", tint = Color.White, modifier = Modifier.size(16.dp))
-                                }
-                            }
                         }
                     }
 
@@ -526,7 +524,12 @@ private fun OpsiTabContent(
                 modifier = Modifier.size(48.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text("🎵", fontSize = 22.sp)
+                    Icon(
+                        imageVector = Icons.Default.MusicNote,
+                        contentDescription = "TikTok",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
             }
             // YouTube
@@ -923,7 +926,12 @@ private fun ArenaTabContent(
                                 .border(2.dp, theme.borderColor, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(theme.icon, fontSize = 16.sp)
+                            Icon(
+                                imageVector = Icons.Default.GridOn,
+                                contentDescription = null,
+                                tint = theme.glowColor,
+                                modifier = Modifier.size(18.dp)
+                            )
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
@@ -956,9 +964,9 @@ private fun MakananTabContent(
     onSetFoodSkinPack: (String) -> Unit
 ) {
     val foodPacks = listOf(
-        Triple("SWEETS", StringsHelper.get("sweets", lang), "🍭 🍬 🍫"),
-        Triple("FRUITS", StringsHelper.get("fruits", lang), "🍎 🍉 🍓"),
-        Triple("FAST_FOOD", StringsHelper.get("fast_food", lang), "🍔 🍕 🍩")
+        Triple("SWEETS", StringsHelper.get("sweets", lang), Icons.Default.Cake),
+        Triple("FRUITS", StringsHelper.get("fruits", lang), Icons.Default.Spa),
+        Triple("FAST_FOOD", StringsHelper.get("fast_food", lang), Icons.Default.Fastfood)
     )
 
     Column(
@@ -976,7 +984,7 @@ private fun MakananTabContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            foodPacks.forEach { (id, title, icons) ->
+            foodPacks.forEach { (id, title, iconVector) ->
                 val isSelected = userData.foodSkinPack == id
                 Surface(
                     onClick = { onSetFoodSkinPack(id) },
@@ -994,7 +1002,7 @@ private fun MakananTabContent(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(icons, fontSize = 18.sp)
+                            Icon(iconVector, contentDescription = null, tint = if (isSelected) Color(0xFFFDE047) else Color(0xFF38BDF8), modifier = Modifier.size(24.dp))
                             if (isSelected) {
                                 Surface(shape = CircleShape, color = Color(0xFFFDE047), modifier = Modifier.size(20.dp)) {
                                     Box(contentAlignment = Alignment.Center) {
@@ -1027,7 +1035,11 @@ private fun MakananTabContent(
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("🍔 Makanan Lezat Arena:", fontWeight = FontWeight.Black, color = Color.White)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Fastfood, contentDescription = null, tint = Color(0xFFFDE047), modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Makanan Lezat Arena:", fontWeight = FontWeight.Black, color = Color.White)
+                }
                 Text("• Makanan memberikan massa untuk cacingmu bertambah panjang dan gesit.", fontSize = 12.sp, color = Color(0xDDFFFFFF))
                 Text("• Cacing yang gugur meninggalkan santapan berenergi tinggi dengan pendaran kilau luar!", fontSize = 12.sp, color = Color(0xFF38BDF8))
             }
@@ -1040,11 +1052,15 @@ private fun MakananTabContent(
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("🧲 Spell & Ramuan Ajaib:", fontWeight = FontWeight.Black, color = Color(0xFFFDE047))
-                Text("• 🧲 Magnet: Menyedot seluruh makanan di sekitar tanpa harus disentuh.", fontSize = 12.sp, color = Color.White)
-                Text("• ⚡ Kilat Lari: Lari kencang tanpa mengurangi panjang badan cacing.", fontSize = 12.sp, color = Color.White)
-                Text("• ✖️2 Poin Ganda: Menggandakan skor setiap makanan yang dimakan.", fontSize = 12.sp, color = Color.White)
-                Text("• 🔍 Mata Elang / Zoom: Memperluas jarak pandang kamera di arena.", fontSize = 12.sp, color = Color.White)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Bolt, contentDescription = null, tint = Color(0xFFFDE047), modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Spell & Ramuan Ajaib:", fontWeight = FontWeight.Black, color = Color(0xFFFDE047))
+                }
+                Text("• Magnet: Menyedot seluruh makanan di sekitar tanpa harus disentuh.", fontSize = 12.sp, color = Color.White)
+                Text("• Kilat Lari: Lari kencang tanpa mengurangi panjang badan cacing.", fontSize = 12.sp, color = Color.White)
+                Text("• Poin Ganda: Menggandakan skor setiap makanan yang dimakan.", fontSize = 12.sp, color = Color.White)
+                Text("• Mata Elang / Zoom: Memperluas jarak pandang kamera di arena.", fontSize = 12.sp, color = Color.White)
             }
         }
     }
@@ -1152,7 +1168,7 @@ private fun BahasaTabContent(
                         Text(appLang.displayName, fontWeight = FontWeight.Bold, color = if (isSelected) Color.Black else Color.White, fontSize = 12.sp)
                         if (isSelected) {
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text("✓", fontWeight = FontWeight.Black, color = Color.Black, fontSize = 12.sp)
+                            Icon(Icons.Default.Check, contentDescription = null, tint = Color.Black, modifier = Modifier.size(14.dp))
                         }
                     }
                 }
@@ -1181,7 +1197,7 @@ private fun BahasaTabContent(
                         Text(appLang.displayName, fontWeight = FontWeight.Bold, color = if (isSelected) Color.Black else Color.White, fontSize = 12.sp)
                         if (isSelected) {
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text("✓", fontWeight = FontWeight.Black, color = Color.Black, fontSize = 12.sp)
+                            Icon(Icons.Default.Check, contentDescription = null, tint = Color.Black, modifier = Modifier.size(14.dp))
                         }
                     }
                 }

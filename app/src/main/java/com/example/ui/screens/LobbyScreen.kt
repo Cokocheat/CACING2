@@ -29,19 +29,24 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Upgrade
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -456,143 +461,240 @@ fun LobbyScreen(
                     )
                 }
 
-                // CENTER BATTLE HUB: Mode Selector, Difficulty Selector, Play Button & Wardrobe
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                // CENTER BATTLE HUB: Modern Arcade Battle Deck with Tabs & Mode Descriptions
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = Color(0xF21C1108),
+                    border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFF59E0B)),
+                    shadowElevation = 10.dp,
+                    modifier = Modifier.widthIn(min = 340.dp, max = 390.dp)
                 ) {
-                    // 1. Game Mode Selector Row
-                    Surface(
-                        shape = RoundedCornerShape(14.dp),
-                        color = Color(0xEB201207),
-                        border = androidx.compose.foundation.BorderStroke(1.2.dp, Color(0xFFF59E0B).copy(alpha = 0.7f)),
-                        shadowElevation = 4.dp
+                    Column(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
+                        // 1. Clean Mode Tab Bar (Di-tapihkan / Tab-based Mode Selector)
                         Row(
-                            modifier = Modifier.padding(4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFF0F0804))
+                                .padding(3.dp),
+                            horizontalArrangement = Arrangement.spacedBy(3.dp)
                         ) {
-                            ModeChip(
+                            ModernModeTab(
                                 title = "Arena Luar",
+                                icon = Icons.Default.Public,
                                 isSelected = selectedMode == GameMode.OPEN_ARENA,
+                                modifier = Modifier.weight(1f),
                                 onClick = { selectedMode = GameMode.OPEN_ARENA }
                             )
-                            ModeChip(
+                            ModernModeTab(
                                 title = "Time Attack",
+                                icon = Icons.Default.Timer,
                                 isSelected = selectedMode == GameMode.TIME_ATTACK,
+                                modifier = Modifier.weight(1f),
                                 onClick = { selectedMode = GameMode.TIME_ATTACK }
                             )
-                            ModeChip(
+                            ModernModeTab(
                                 title = "Battle Royale",
+                                icon = Icons.Default.Shield,
                                 isSelected = selectedMode == GameMode.BATTLE_ROYALE,
+                                modifier = Modifier.weight(1f),
                                 onClick = { selectedMode = GameMode.BATTLE_ROYALE }
                             )
                         }
-                    }
 
-                    // 2. Difficulty Level Selector Row (Mudah, Normal, Sulit - requested by user)
-                    Surface(
-                        shape = RoundedCornerShape(14.dp),
-                        color = Color(0xEB201207),
-                        border = androidx.compose.foundation.BorderStroke(1.2.dp, Color(0xFFFACC15).copy(alpha = 0.8f)),
-                        shadowElevation = 4.dp
-                    ) {
+                        // 2. Keterangan Battle Mode (Mode Description Box)
+                        val (modeTitle, modeDesc, modeBadge) = when (selectedMode) {
+                            GameMode.OPEN_ARENA -> Triple(
+                                "Arena Luar Bebas",
+                                "Bebas tanpa batas waktu. Santap santapan lezat, tumbuhkan cacing hingga raksasa, dan kuasai arena!",
+                                "Klasik Bebas"
+                            )
+                            GameMode.TIME_ATTACK -> Triple(
+                                "Tantangan Waktu 3 Menit",
+                                "Berpacu melawan detik! Kumpulkan skor tertinggi dan taklukkan sebanyak mungkin rival sebelum waktu habis.",
+                                "Aksi Cepat 180s"
+                            )
+                            GameMode.BATTLE_ROYALE -> Triple(
+                                "Zona Bahaya Bertahan Hidup",
+                                "Batas lingkaran arena terus menyusut! Waspadai gas racun dan jadilah satu-satunya cacing terkuat yang bertahan.",
+                                "Survival Eliminasi"
+                            )
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = Color(0x66000000),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x40F59E0B)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Default.Info,
+                                            contentDescription = null,
+                                            tint = Color(0xFFFDE047),
+                                            modifier = Modifier.size(13.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = modeTitle,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = Color(0xFFFDE047)
+                                        )
+                                    }
+                                    Surface(
+                                        shape = RoundedCornerShape(4.dp),
+                                        color = Color(0x33F97316)
+                                    ) {
+                                        Text(
+                                            text = modeBadge,
+                                            fontSize = 8.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFFFDBA74),
+                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = modeDesc,
+                                    fontSize = 9.5.sp,
+                                    lineHeight = 12.5.sp,
+                                    color = Color(0xFFE2E8F0)
+                                )
+                            }
+                        }
+
+                        // 3. Tingkat AI Lawan (AI Difficulty Selection - clearly separated)
                         Row(
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFF140A04))
+                                .padding(horizontal = 8.dp, vertical = 3.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
                                 text = "Tingkat AI:",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
+                                fontSize = 10.5.sp,
+                                fontWeight = FontWeight.Black,
                                 color = Color(0xFFCBD5E1)
                             )
-
-                            DifficultyChip(
-                                label = "MUDAH",
-                                badgeColor = Color(0xFF22C55E),
-                                isSelected = userData.gameDifficulty == GameDifficulty.EASY,
-                                onClick = { onSetGameDifficulty(GameDifficulty.EASY) }
-                            )
-                            DifficultyChip(
-                                label = "NORMAL",
-                                badgeColor = Color(0xFFFACC15),
-                                isSelected = userData.gameDifficulty == GameDifficulty.NORMAL,
-                                onClick = { onSetGameDifficulty(GameDifficulty.NORMAL) }
-                            )
-                            DifficultyChip(
-                                label = "SULIT",
-                                badgeColor = Color(0xFFEF4444),
-                                isSelected = userData.gameDifficulty == GameDifficulty.HARD,
-                                onClick = { onSetGameDifficulty(GameDifficulty.HARD) }
-                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                                ModernDifficultyChip(
+                                    label = "MUDAH",
+                                    multiplier = "1.0x",
+                                    color = Color(0xFF22C55E),
+                                    isSelected = userData.gameDifficulty == GameDifficulty.EASY,
+                                    onClick = { onSetGameDifficulty(GameDifficulty.EASY) }
+                                )
+                                ModernDifficultyChip(
+                                    label = "NORMAL",
+                                    multiplier = "1.5x",
+                                    color = Color(0xFFFACC15),
+                                    isSelected = userData.gameDifficulty == GameDifficulty.NORMAL,
+                                    onClick = { onSetGameDifficulty(GameDifficulty.NORMAL) }
+                                )
+                                ModernDifficultyChip(
+                                    label = "SULIT",
+                                    multiplier = "2.0x",
+                                    color = Color(0xFFEF4444),
+                                    isSelected = userData.gameDifficulty == GameDifficulty.HARD,
+                                    onClick = { onSetGameDifficulty(GameDifficulty.HARD) }
+                                )
+                            }
                         }
-                    }
 
-                    Spacer(modifier = Modifier.height(2.dp))
-
-                    // 3. GIANT "BERTEMPUR!" PLAY BUTTON
-                    val playInteractionSource = remember { MutableInteractionSource() }
-                    val isPlayPressed by playInteractionSource.collectIsPressedAsState()
-                    val playScale by animateFloatAsState(
-                        targetValue = if (isPlayPressed) 0.92f else pulseScale,
-                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-                        label = "playScale"
-                    )
-
-                    Surface(
-                        onClick = { onPlayClick(selectedMode) },
-                        interactionSource = playInteractionSource,
-                        shape = RoundedCornerShape(26.dp),
-                        color = Color(0xFF16A34A),
-                        border = androidx.compose.foundation.BorderStroke(3.5.dp, Color(0xFFFACC15)),
-                        shadowElevation = if (isPlayPressed) 4.dp else 10.dp,
-                        modifier = Modifier
-                            .scale(playScale)
-                            .width(225.dp)
-                            .height(54.dp)
-                            .testTag("play_button")
-                    ) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            Text(
-                                text = StringsHelper.get("battle_btn", lang),
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Black,
-                                color = Color.White,
-                                letterSpacing = 1.sp
-                            )
-                        }
-                    }
-
-                    // 4. "Lemari Skin Cacing" Button
-                    Surface(
-                        onClick = onOpenWardrobe,
-                        shape = RoundedCornerShape(14.dp),
-                        color = Color(0xFF0284C7),
-                        border = androidx.compose.foundation.BorderStroke(1.8.dp, Color(0xFFF59E0B)),
-                        shadowElevation = 5.dp,
-                        modifier = Modifier
-                            .width(175.dp)
-                            .height(36.dp)
-                            .testTag("btn_wardrobe")
-                    ) {
+                        // 4. Action Row: GIANT "BERTEMPUR!" PLAY BUTTON + "Lemari Cacing" Button
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.Palette, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = StringsHelper.get("wardrobe_btn", lang),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Black,
-                                color = Color.White
+                            // Giant Bertempur Play Button
+                            val playInteractionSource = remember { MutableInteractionSource() }
+                            val isPlayPressed by playInteractionSource.collectIsPressedAsState()
+                            val playScale by animateFloatAsState(
+                                targetValue = if (isPlayPressed) 0.94f else pulseScale,
+                                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                                label = "playScale"
                             )
+
+                            Surface(
+                                onClick = { onPlayClick(selectedMode) },
+                                interactionSource = playInteractionSource,
+                                shape = RoundedCornerShape(14.dp),
+                                color = Color(0xFF16A34A),
+                                border = androidx.compose.foundation.BorderStroke(2.5.dp, Color(0xFFFACC15)),
+                                shadowElevation = if (isPlayPressed) 3.dp else 8.dp,
+                                modifier = Modifier
+                                    .weight(1.35f)
+                                    .height(44.dp)
+                                    .scale(playScale)
+                                    .testTag("play_button")
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PlayArrow,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = StringsHelper.get("battle_btn", lang),
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color.White,
+                                        letterSpacing = 1.sp
+                                    )
+                                }
+                            }
+
+                            // Lemari Cacing Wardrobe Button
+                            Surface(
+                                onClick = onOpenWardrobe,
+                                shape = RoundedCornerShape(14.dp),
+                                color = Color(0xFF0284C7),
+                                border = androidx.compose.foundation.BorderStroke(1.8.dp, Color(0xFF38BDF8)),
+                                shadowElevation = 5.dp,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp)
+                                    .testTag("btn_wardrobe")
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    Icon(Icons.Default.Palette, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = StringsHelper.get("wardrobe_btn", lang),
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color.White
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -761,34 +863,62 @@ private fun EventPillButton(
     }
 }
 
-// GAME MODE CHIP
+// MODERN ARCADE MODE TAB (Di-tapihkan dengan Ikon Resmi & Status Aktif)
 @Composable
-private fun ModeChip(
+private fun ModernModeTab(
     title: String,
+    icon: ImageVector,
     isSelected: Boolean,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.94f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "modeTabScale"
+    )
+
     Surface(
         onClick = onClick,
+        interactionSource = interactionSource,
         shape = RoundedCornerShape(10.dp),
         color = if (isSelected) Color(0xFFF59E0B) else Color.Transparent,
-        border = if (isSelected) androidx.compose.foundation.BorderStroke(1.2.dp, Color(0xFFFDE047)) else null
+        border = if (isSelected) androidx.compose.foundation.BorderStroke(1.2.dp, Color(0xFFFDE047)) else null,
+        shadowElevation = if (isSelected) 4.dp else 0.dp,
+        modifier = modifier.scale(scale)
     ) {
-        Text(
-            text = title,
-            fontSize = 11.sp,
-            fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold,
-            color = if (isSelected) Color.Black else Color(0xFFCBD5E1),
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-        )
+        Row(
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (isSelected) Color.Black else Color(0xFF94A3B8),
+                modifier = Modifier.size(13.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = title,
+                fontSize = 10.5.sp,
+                fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold,
+                color = if (isSelected) Color.Black else Color(0xFFCBD5E1),
+                maxLines = 1,
+                softWrap = false
+            )
+        }
     }
 }
 
-// DIFFICULTY CHIP
+// MODERN ARCADE DIFFICULTY CHIP (Dengan Multiplier Bonus)
 @Composable
-private fun DifficultyChip(
+private fun ModernDifficultyChip(
     label: String,
-    badgeColor: Color,
+    multiplier: String,
+    color: Color,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
@@ -804,27 +934,27 @@ private fun DifficultyChip(
         onClick = onClick,
         interactionSource = interactionSource,
         shape = RoundedCornerShape(8.dp),
-        color = if (isSelected) badgeColor.copy(alpha = 0.28f) else Color(0x33000000),
+        color = if (isSelected) color.copy(alpha = 0.28f) else Color(0x33000000),
         border = androidx.compose.foundation.BorderStroke(
-            if (isSelected) 1.8.dp else 1.dp,
-            if (isSelected) badgeColor else Color(0x5564748B)
+            if (isSelected) 1.5.dp else 1.dp,
+            if (isSelected) color else Color(0x4064748B)
         ),
         modifier = Modifier.scale(scale)
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(7.dp)
+                    .size(6.dp)
                     .clip(CircleShape)
-                    .background(badgeColor)
+                    .background(color)
             )
-            Spacer(modifier = Modifier.width(5.dp))
+            Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = label,
-                fontSize = 10.sp,
+                text = "$label $multiplier",
+                fontSize = 9.sp,
                 fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold,
                 color = if (isSelected) Color.White else Color(0xFFA0AEC0)
             )

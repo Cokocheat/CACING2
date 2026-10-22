@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -588,7 +589,7 @@ fun GameOverDialog(
                     // Right Actions Box
                     Column(
                         modifier = Modifier
-                            .weight(1.0f)
+                            .weight(1.1f)
                             .padding(vertical = 4.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
@@ -599,6 +600,7 @@ fun GameOverDialog(
                                 .fillMaxWidth()
                                 .height(50.dp)
                                 .testTag("game_over_play_again_button"),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4ADE80)),
                             shape = RoundedCornerShape(14.dp)
                         ) {
@@ -610,7 +612,8 @@ fun GameOverDialog(
                                 color = Color.Black,
                                 fontWeight = FontWeight.Black,
                                 maxLines = 1,
-                                softWrap = false
+                                softWrap = false,
+                                fontSize = 13.sp
                             )
                         }
 
@@ -620,6 +623,7 @@ fun GameOverDialog(
                                 .fillMaxWidth()
                                 .height(46.dp)
                                 .testTag("game_over_lobby_button"),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                             colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF2C3454)),
                             shape = RoundedCornerShape(14.dp)
                         ) {
@@ -632,7 +636,7 @@ fun GameOverDialog(
                                 fontWeight = FontWeight.Bold,
                                 maxLines = 1,
                                 softWrap = false,
-                                fontSize = 13.sp
+                                fontSize = 12.sp
                             )
                         }
                     }
@@ -1118,7 +1122,7 @@ fun CoinShopDialog(
                     iconTint = Color(0xFF38BDF8),
                     title = "Paket Pemula",
                     reward = "+5,000 Koin",
-                    badge = if (isStarterClaimed) "✓ DIMILIKI" else "POPULER",
+                    badge = if (isStarterClaimed) "DIMILIKI" else "POPULER",
                     badgeColor = if (isStarterClaimed) Color(0xFF475569) else Color(0xFF38BDF8),
                     enabled = !isStarterClaimed && !isProcessingClick,
                     onClick = {
@@ -1136,7 +1140,7 @@ fun CoinShopDialog(
                     iconTint = Color(0xFFA855F7),
                     title = "Paket Sultan",
                     reward = "+25,000 Koin",
-                    badge = if (isSultanClaimed) "✓ DIMILIKI" else "HEMAT",
+                    badge = if (isSultanClaimed) "DIMILIKI" else "HEMAT",
                     badgeColor = if (isSultanClaimed) Color(0xFF475569) else Color(0xFFA855F7),
                     enabled = !isSultanClaimed && !isProcessingClick,
                     onClick = {
@@ -1154,7 +1158,7 @@ fun CoinShopDialog(
                     iconTint = Color(0xFFEF4444),
                     title = "Paket Raja Cacing",
                     reward = "+100,000 Koin",
-                    badge = if (isMegaClaimed) "✓ DIMILIKI" else "MEGA BONUS",
+                    badge = if (isMegaClaimed) "DIMILIKI" else "MEGA BONUS",
                     badgeColor = if (isMegaClaimed) Color(0xFF475569) else Color(0xFFEF4444),
                     enabled = !isMegaClaimed && !isProcessingClick,
                     onClick = {
@@ -1321,14 +1325,22 @@ fun PiggyBankDialog(
                         color = Color(0xFF1E2438),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            text = "✓ Celengan Telah Diambil!",
-                            color = Color(0xFF4ADE80),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(12.dp)
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Check, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Celengan Telah Diambil!",
+                                color = Color(0xFF4ADE80),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
+                        }
                     }
                 }
 
@@ -1434,14 +1446,22 @@ fun LuckyBonusDialog(
                         color = Color(0xFF1E2438),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            text = "✓ Hadiah Hari Ini Sudah Diambil",
-                            color = Color(0xFF4ADE80),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(12.dp)
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Check, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Hadiah Hari Ini Sudah Diambil",
+                                color = Color(0xFF4ADE80),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
+                        }
                     }
                 }
 

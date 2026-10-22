@@ -15,7 +15,7 @@ enum class MapTheme(
     CYBER_FUNK(
         id = "cyber_funk",
         title = "Terracotta Klasik (Classic Arena)",
-        icon = "🧱",
+        icon = "",
         bgColor = Color(0xFF6B383D), // Warm terracotta / cocoa maroon exactly like the screenshot
         gridColor = Color(0xFF55252A), // Checkerboard tile line tone
         borderColor = Color(0xFFFF5722), // Vibrant danger boundary
@@ -25,7 +25,7 @@ enum class MapTheme(
     RAINBOW_CARNIVAL(
         id = "rainbow_carnival",
         title = "Langit Malam (Midnight Slate)",
-        icon = "🌌",
+        icon = "",
         bgColor = Color(0xFF26334D), // Deep slate blue checkered
         gridColor = Color(0xFF1B2538),
         borderColor = Color(0xFF8B5CF6),
@@ -35,7 +35,7 @@ enum class MapTheme(
     SWEET_CANDY(
         id = "sweet_candy",
         title = "Permen Berry (Berry Maroon)",
-        icon = "🍭",
+        icon = "",
         bgColor = Color(0xFF4D243B), // Deep berry maroon checkered
         gridColor = Color(0xFF3B182B),
         borderColor = Color(0xFFEC4899),
@@ -45,7 +45,7 @@ enum class MapTheme(
     COSMIC_SPACE(
         id = "green_meadow",
         title = "Hutan Lumut (Deep Forest)",
-        icon = "🌲",
+        icon = "",
         bgColor = Color(0xFF263A29), // Deep forest moss checkered
         gridColor = Color(0xFF1B2B1D),
         borderColor = Color(0xFF4ADE80),
@@ -55,7 +55,7 @@ enum class MapTheme(
     LAVA_VOLCANO(
         id = "lava_volcano",
         title = "Batu Magma (Ember Stone)",
-        icon = "🌋",
+        icon = "",
         bgColor = Color(0xFF3D2321), // Deep volcanic chocolate checkered
         gridColor = Color(0xFF2E1715),
         borderColor = Color(0xFFDC2626),

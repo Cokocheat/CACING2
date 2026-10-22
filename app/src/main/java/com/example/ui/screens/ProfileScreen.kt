@@ -160,14 +160,14 @@ fun ProfileScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    // Coin pill with Plus button
+                    // Non-clickable Coins Badge (No event, no plus button)
                     Surface(
                         shape = RoundedCornerShape(20.dp),
                         color = Color(0xFF1E293B),
                         border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFACC15))
                     ) {
                         Row(
-                            modifier = Modifier.padding(start = 8.dp, end = 4.dp, top = 3.dp, bottom = 3.dp),
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
@@ -183,17 +183,6 @@ fun ProfileScreen(
                                 fontWeight = FontWeight.Black,
                                 fontSize = 14.sp
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Surface(
-                                onClick = onOpenCoinShop,
-                                shape = RoundedCornerShape(8.dp),
-                                color = Color(0xFF38BDF8),
-                                modifier = Modifier.size(24.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(Icons.Default.Add, contentDescription = "Tambah Koin", tint = Color.White, modifier = Modifier.size(16.dp))
-                                }
-                            }
                         }
                     }
 
@@ -576,7 +565,7 @@ private fun BerkasTabContent(
                     }
                 }
 
-                // BOTTOM ACTION BUTTONS: Red Trash [🗑️] + Blue Share [🔗]
+                // BOTTOM ACTION BUTTONS: Red Trash + Blue Share
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -1019,13 +1008,19 @@ private fun AchievementCard(
                     shape = RoundedCornerShape(8.dp),
                     color = Color(0xFFE2E8F0)
                 ) {
-                    Text(
-                        text = "✓ Selesai",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF64748B),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Check, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Text(
+                            text = "Selesai",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF64748B)
+                        )
+                    }
                 }
             } else if (isClaimable) {
                 var isClaiming by remember { mutableStateOf(false) }

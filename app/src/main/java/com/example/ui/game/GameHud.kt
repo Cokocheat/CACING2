@@ -45,11 +45,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.Adjust
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.MilitaryTech
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Stars
 import androidx.compose.material.icons.filled.Timer
 import com.example.data.JoystickMode
@@ -290,17 +294,18 @@ fun GameHud(
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    val iconSymbol = when (type) {
-                                        PotionType.MAGNET -> "🧲"
-                                        PotionType.SPEED_BOOST -> "⚡"
-                                        PotionType.MULTIPLIER -> "⭐"
-                                        PotionType.RADAR -> "📡"
-                                        PotionType.ZOOM -> "🔍"
+                                    val iconVector = when (type) {
+                                        PotionType.MAGNET -> Icons.Default.Adjust
+                                        PotionType.SPEED_BOOST -> Icons.Default.Bolt
+                                        PotionType.MULTIPLIER -> Icons.Default.Star
+                                        PotionType.RADAR -> Icons.Default.Sensors
+                                        PotionType.ZOOM -> Icons.Default.Search
                                     }
-                                    Text(
-                                        text = iconSymbol,
-                                        fontSize = 12.sp,
-                                        modifier = Modifier.padding(end = 4.dp)
+                                    Icon(
+                                        imageVector = iconVector,
+                                        contentDescription = null,
+                                        tint = type.color,
+                                        modifier = Modifier.size(14.dp).padding(end = 2.dp)
                                     )
                                     val potionName = when (type) {
                                         PotionType.SPEED_BOOST -> StringsHelper.get("potion_speed", lang)

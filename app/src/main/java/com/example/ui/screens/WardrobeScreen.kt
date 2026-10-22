@@ -415,9 +415,25 @@ fun WardrobeScreen(
                                             },
                                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9100)),
                                             shape = RoundedCornerShape(10.dp),
-                                            modifier = Modifier.weight(1.2f)
-                                        ) {
-                                            Text("🪙 ${skin.price}", fontSize = 11.sp, color = Color.Black, fontWeight = FontWeight.Black)
+                                            ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.MonetizationOn,
+                                                    contentDescription = null,
+                                                    tint = Color.Black,
+                                                    modifier = Modifier.size(13.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(3.dp))
+                                                Text(
+                                                    text = "${skin.price}",
+                                                    fontSize = 11.sp,
+                                                    color = Color.Black,
+                                                    fontWeight = FontWeight.Black
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -554,9 +570,25 @@ fun WardrobeScreen(
                                             },
                                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9100)),
                                             shape = RoundedCornerShape(10.dp),
-                                            modifier = Modifier.weight(1.2f)
                                         ) {
-                                            Text("🪙 ${acc.price}", fontSize = 11.sp, color = Color.Black, fontWeight = FontWeight.Black)
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.MonetizationOn,
+                                                    contentDescription = null,
+                                                    tint = Color.Black,
+                                                    modifier = Modifier.size(13.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(3.dp))
+                                                Text(
+                                                    text = "${acc.price}",
+                                                    fontSize = 11.sp,
+                                                    color = Color.Black,
+                                                    fontWeight = FontWeight.Black
+                                                )
+                                            }
                                         }
                                     }
                                 }
